@@ -3,8 +3,12 @@
 import { createProduct } from '@/app/actions/product-actions';
 import { UploadCloud, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import ImageUpload from '@/components/admin/ImageUpload';
+import { useState } from 'react';
 
 export default function NewProductPage() {
+    const [imageUrl, setImageUrl] = useState('');
+
     return (
         <div className="p-10 max-w-3xl mx-auto">
             <div className="mb-8">
@@ -56,26 +60,18 @@ export default function NewProductPage() {
                     </div>
                 </div>
 
-                {/* Image Upload (Mock) */}
+                {/* Image Upload */}
                 <div className="space-y-4 pt-6 border-t border-stone-100">
-                    <label className="text-sm font-medium text-stone-900 block">תמונת מוצר</label>
+                    <label className="text-sm font-medium text-stone-900 block">תמונות מוצר</label>
 
-                    {/* For demo purposes, we usually use a text input for URL, but UI looks like upload */}
-                    <div className="flex items-center gap-4">
-                        <input
-                            name="imageUrl"
-                            type="url"
-                            required
-                            defaultValue="https://images.unsplash.com/photo-1596627006880-6029968434d3?auto=format&fit=crop&q=80"
-                            className="flex-1 p-3 text-sm text-stone-500 bg-stone-50 border border-stone-200 rounded-md font-mono ltr"
-                        />
-                        <div className="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center border border-dashed border-stone-300">
-                            <UploadCloud className="w-5 h-5 text-stone-400" />
-                        </div>
-                    </div>
-                    <p className="text-xs text-stone-400">
-                        * להדגמה: הזן קישור לתמונה (Unsplash). בעתיד נוסיף כאן העלאת קבצים אמיתית לענן.
-                    </p>
+                    {/* Hidden input to send data to server action */}
+                    <input type="hidden" name="imageUrl" value={imageUrl} />
+
+                    <ImageUpload
+                        value={imageUrl ? [imageUrl] : []}
+                        onChange={(url) => setImageUrl(url)}
+                        onRemove={() => setImageUrl('')}
+                    />
                 </div>
 
                 <div className="pt-6">

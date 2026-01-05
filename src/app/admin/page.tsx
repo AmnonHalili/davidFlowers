@@ -1,6 +1,35 @@
 import { Package, ShoppingCart, TrendingUp, Users } from 'lucide-react';
+import { PrismaClient } from '@prisma/client';
 
-export default function AdminDashboard() {
+const prisma = new PrismaClient();
+
+async function getStats() {
+    const totalRevenue = await prisma.order.aggregate({
+        _sum: { totalAmount: true },
+        where: { status: { not: 'CANCELLED' } }
+    });
+
+    const pendingOrders = await prisma.order.count({
+        where: { status: 'PENDING' }
+    });
+
+    const totalProducts = await prisma.product.count();
+
+    const lowStockProducts = await prisma.product.count({
+        where: { stock: { lte: 5 } }
+    });
+
+    return {
+        revenue: totalRevenue._sum.totalAmount || 0,
+        pendingOrders,
+        totalProducts,
+        lowStockProducts
+    };
+}
+
+export default async function AdminDashboard() {
+    const stats = await getStats();
+
     return (
         <div className="p-10 space-y-10">
 
@@ -18,26 +47,26 @@ export default function AdminDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatsCard
-                    title="הכנסות החודש"
-                    value="₪42,500"
-                    trend="+12%"
+                    title="הכנסות (סה״כ)"
+                    value={`₪${Number(stats.revenue).toLocaleString()}`}
+                    trend="" // Todo: Calculate trend vs last month
                     icon={TrendingUp}
                 />
                 <StatsCard
-                    title="הזמנות חדשות"
-                    value="18"
-                    trend="+5%"
+                    title="הזמנות להכנה"
+                    value={stats.pendingOrders.toString()}
+                    trend={stats.pendingOrders > 0 ? "דרוש טיפול" : "הכל מוכן"}
                     icon={ShoppingCart}
                 />
                 <StatsCard
-                    title="מנויים פעילים"
-                    value="124"
-                    trend="+3"
-                    icon={Users}
+                    title="מוצרים במלאי נמוך"
+                    value={stats.lowStockProducts.toString()}
+                    trend={stats.lowStockProducts > 0 ? "הזמן סחורה" : "מלאי תקין"}
+                    icon={Users} // Keeping icon visually consistent but logic changed
                 />
                 <StatsCard
-                    title="סה״כ מוצרים"
-                    value="32"
+                    title="סה״כ מוצרים בקטלוג"
+                    value={stats.totalProducts.toString()}
                     trend=""
                     icon={Package}
                 />

@@ -2,6 +2,7 @@ import { getOrders } from '@/app/actions/order-actions';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import OrderStatusSelect from '@/components/admin/OrderStatusSelect';
 import { Clock, MapPin, Package, User } from 'lucide-react';
+import Link from 'next/link';
 
 // Client component for the button to avoid making the page dynamic if not needed, 
 // strictly speaking server actions can be called from client components.
@@ -48,7 +49,9 @@ export default async function AdminOrdersPage() {
                                 <tr key={order.id} className="hover:bg-stone-50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-col">
-                                            <span className="font-mono text-sm text-stone-900">#{order.id.slice(-6).toUpperCase()}</span>
+                                            <Link href={`/admin/orders/${order.id}`} className="font-mono text-sm text-stone-900 font-bold hover:text-blue-600 hover:underline">
+                                                #{order.id.slice(-6).toUpperCase()}
+                                            </Link>
                                             <span className="text-xs text-stone-400 flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
                                                 {new Date(order.createdAt).toLocaleDateString('he-IL')}

@@ -1,12 +1,27 @@
 import Link from 'next/link';
 import { PrismaClient } from '@prisma/client';
-import { Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import ProductRowActions from '@/components/admin/ProductRowActions';
+import SearchInput from '@/components/admin/SearchInput';
 
 const prisma = new PrismaClient();
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+    searchParams,
+}: {
+    searchParams?: {
+        search?: string;
+    };
+}) {
+    const query = searchParams?.search || '';
+
     const products = await prisma.product.findMany({
+        where: {
+            name: {
+                contains: query,
+                mode: 'insensitive',
+            },
+        },
         include: {
             categories: true,
             images: true,
@@ -32,16 +47,9 @@ export default async function ProductsPage() {
                 </Link>
             </div>
 
-            {/* Filter / Search Bar (Visual only for now) */}
+            {/* Filter / Search Bar */}
             <div className="bg-white p-4 rounded-lg border border-stone-200 shadow-sm flex gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
-                    <input
-                        type="text"
-                        placeholder="חיפוש לפי שם זר..."
-                        className="w-full pr-10 pl-4 py-2 bg-stone-50 border-none rounded-md focus:ring-1 focus:ring-stone-900 text-sm"
-                    />
-                </div>
+                <SearchInput />
             </div>
 
             {/* Products Table */}
@@ -86,8 +94,8 @@ export default async function ProductsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.stock === 0 ? 'bg-red-50 text-red-700' :
-                                                product.stock < 5 ? 'bg-amber-50 text-amber-700' :
-                                                    'bg-stone-50 text-stone-600'
+                                            product.stock < 5 ? 'bg-amber-50 text-amber-700' :
+                                                'bg-stone-50 text-stone-600'
                                             }`}>
                                             {product.stock} יח'
                                         </div>

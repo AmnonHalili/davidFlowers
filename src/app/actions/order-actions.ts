@@ -46,3 +46,28 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
         return { success: false, error: 'Failed to update status' };
     }
 }
+
+export async function getOrder(id: string) {
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        email: true,
+                    }
+                },
+                items: {
+                    include: {
+                        product: true
+                    }
+                }
+            }
+        });
+        return { success: true, data: order };
+    } catch (error) {
+        console.error('Failed to fetch order:', error);
+        return { success: false, error: 'Failed to fetch order' };
+    }
+}
