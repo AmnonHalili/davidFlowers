@@ -23,6 +23,9 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const isHomePage = pathname === '/';
+    const textColor = isHomePage && !isScrolled ? 'text-white' : 'text-stone-900';
+
     if (pathname?.startsWith('/admin')) return null;
 
     return (
@@ -33,27 +36,27 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
             >
                 <div className="max-w-screen-2xl mx-auto px-6 grid grid-cols-3 items-center">
 
-                    {/* Right: Mobile Menu & Search (RTL: actually visually Right because of flex order in RTL layout? No, grid cols. RTL flips grid columns visually. So col-1 is Rightmost) */}
+                    {/* Right: Mobile Menu & Search */}
                     <div className="flex items-center gap-6">
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
-                            className={`p-1 transition-colors ${isScrolled ? 'text-stone-900' : 'text-stone-900'}`}
+                            className={`p-1 transition-colors ${textColor}`}
                         >
                             <Menu className="w-5 h-5" strokeWidth={1.5} />
                         </button>
-                        <button className={`p-1 hidden md:block transition-colors hover:opacity-70 ${isScrolled ? 'text-stone-900' : 'text-stone-900'}`}>
+                        <button className={`p-1 hidden md:block transition-colors hover:opacity-70 ${textColor}`}>
                             <Search className="w-5 h-5" strokeWidth={1.5} />
                         </button>
                     </div>
 
                     {/* Center: Logo */}
                     <div className="flex justify-center">
-                        <Link href="/" className={`font-serif text-lg md:text-2xl tracking-widest uppercase text-center transition-colors duration-500 whitespace-nowrap ${isScrolled ? 'text-stone-900' : 'text-stone-900'}`}>
+                        <Link href="/" className={`font-serif text-lg md:text-2xl tracking-widest uppercase text-center transition-colors duration-500 whitespace-nowrap ${textColor}`}>
                             David Flowers
                         </Link>
                     </div>
 
-                    {/* Left: Cart & Account (RTL: Visually Leftmost) */}
+                    {/* Left: Cart & Account */}
                     <div className="flex items-center justify-end gap-6">
                         <SignedIn>
                             <div className="scale-75 origin-right" dir="ltr">
@@ -61,21 +64,21 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                             </div>
                         </SignedIn>
                         <SignedOut>
-                            <Link href="/sign-in" className={`p-1 hidden md:block transition-opacity hover:opacity-70 ${isScrolled ? 'text-stone-900' : 'text-stone-900'}`}>
+                            <Link href="/sign-in" className={`p-1 hidden md:block transition-opacity hover:opacity-70 ${textColor}`}>
                                 <User className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
                         </SignedOut>
 
                         {/* Admin Link */}
                         {isAdmin && (
-                            <Link href="/admin" className={`p-1 hidden md:block transition-opacity hover:opacity-70 ${isScrolled ? 'text-stone-900' : 'text-stone-900'}`} title="ניהול האתר">
+                            <Link href="/admin" className={`p-1 hidden md:block transition-opacity hover:opacity-70 ${textColor}`} title="ניהול האתר">
                                 <Lock className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
                         )}
 
                         <button
                             onClick={openCart}
-                            className={`p-1 relative transition-opacity hover:opacity-70 ${isScrolled ? 'text-stone-900' : 'text-stone-900'}`}
+                            className={`p-1 relative transition-opacity hover:opacity-70 ${textColor}`}
                         >
                             <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
                             {itemsCount > 0 && (
@@ -107,7 +110,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                             className="fixed top-0 right-0 bottom-0 w-[300px] bg-white z-[60] p-8 shadow-2xl"
                         >
                             <div className="flex justify-between items-center mb-12">
-                                <span className="font-serif text-lg tracking-widest">תפריט</span>
+                                <span className="font-serif text-lg tracking-widest text-stone-900">תפריט</span>
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="text-stone-400 hover:text-stone-900">
                                     סגירה
                                 </button>

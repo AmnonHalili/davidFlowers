@@ -2,21 +2,22 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Flower2 } from 'lucide-react';
 
 export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-screen w-full overflow-hidden">
-        {/* Background Image / Video Mock */}
-        <div className="absolute inset-0 bg-stone-200">
+        {/* Background Image */}
+        <div className="absolute inset-0 bg-stone-900">
           <img
-            src="https://images.unsplash.com/photo-1563241527-3004b7be025f?q=80&w=2560&auto=format&fit=crop"
-            alt="David Flowers Hero"
-            className="w-full h-full object-cover transition-transform duration-[20s] hover:scale-105"
+            src="/hero-bg.jpg"
+            alt="חנות פרחים דוד"
+            className="w-full h-full object-cover transition-transform duration-[20s] hover:scale-105 opacity-90"
           />
-          <div className="absolute inset-0 bg-black/10" />
+          {/* Professional Gradient Overlay for Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30 md:via-transparent" />
         </div>
 
         {/* Hero Content */}
@@ -28,7 +29,7 @@ export default function Home() {
             className="space-y-6 max-w-2xl"
           >
             <h2 className="text-[10px] md:text-sm tracking-[0.3em] uppercase font-medium text-white/90">
-              קולקציית חורף 24
+              קולקציית חורף 2026
             </h2>
             <h1 className="font-serif text-[3.5rem] leading-[1.1] md:text-7xl lg:text-8xl tracking-tight md:leading-tight">
               פרחים, <br className="md:hidden" /> ברמה אחרת.
@@ -114,11 +115,7 @@ export default function Home() {
       {/* Value Proposition */}
       <section className="bg-stone-50 py-24 px-6 border-y border-stone-200">
         <div className="max-w-4xl mx-auto text-center space-y-12">
-          <img
-            src="/flower-icon.svg"
-            alt=""
-            className="w-12 h-12 mx-auto text-stone-300 opacity-50"
-          />
+          <Flower2 className="w-12 h-12 mx-auto text-stone-300 opacity-50" strokeWidth={1} />
           <h2 className="font-serif text-3xl md:text-5xl leading-tight text-stone-900">
             "אנחנו מאמינים שפרחים הם לא סתם קישוט. <br /> הם אומנות חיה שמשנה את האווירה בבית."
           </h2>

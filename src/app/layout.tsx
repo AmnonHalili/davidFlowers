@@ -25,6 +25,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { heIL } from '@clerk/localizations';
 import { currentUser } from '@clerk/nextjs/server';
 import { PrismaClient } from '@prisma/client';
+import WhatsAppButton from '@/components/WhatsAppButton';
 
 const prisma = new PrismaClient();
 
@@ -60,6 +61,7 @@ export default async function RootLayout({
             {children}
             <Footer />
             <CartDrawer />
+            <WhatsAppButton />
           </CartProvider>
         </body>
       </html>

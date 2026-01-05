@@ -8,6 +8,26 @@ import Image from 'next/image';
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, cartTotal } = useCart();
 
+    const handleCheckout = async () => {
+        try {
+            const response = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ items }),
+            });
+
+            if (!response.ok) throw new Error('Checkout failed');
+
+            const data = await response.json();
+            window.location.href = data.url;
+        } catch (error) {
+            console.error('Checkout error:', error);
+            alert('אירעה שגיאה במעבר לתשלום. אנא נסה שנית.');
+        }
+    };
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -114,7 +134,10 @@ export default function CartDrawer() {
                                 <p className="text-[10px] text-stone-400 text-center">
                                     המשלוח מחושב בשלב הבא
                                 </p>
-                                <button className="w-full bg-stone-900 text-white py-4 font-medium tracking-wide flex items-center justify-center gap-2 hover:bg-stone-800 transition-colors">
+                                <button
+                                    onClick={handleCheckout}
+                                    className="w-full bg-stone-900 text-white py-4 font-medium tracking-wide flex items-center justify-center gap-2 hover:bg-stone-800 transition-colors"
+                                >
                                     <Lock className="w-4 h-4" />
                                     <span>מעבר לתשלום מאובטח</span>
                                 </button>

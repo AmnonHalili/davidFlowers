@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { notFound } from 'next/navigation';
 import ProductSubscriptionForm from '@/components/ProductSubscriptionForm';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
 const prisma = new PrismaClient();
 
@@ -19,7 +20,8 @@ async function getProduct(slug: string) {
 }
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-    const product = await getProduct(params.slug);
+    const decodedSlug = decodeURIComponent(params.slug);
+    const product = await getProduct(decodedSlug);
 
     if (!product) {
         notFound();
@@ -30,15 +32,26 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
     return (
         <div className="min-h-screen bg-white pb-32">
-            <div className="max-w-screen-xl mx-auto md:px-6 md:pt-32">
+            <div className="max-w-screen-xl mx-auto md:px-6 md:pt-32 pt-20">
 
-                {/* Breadcrumb (Hidden on Mobile) */}
-                <div className="hidden md:flex gap-2 text-xs text-stone-400 mb-8 uppercase tracking-widest">
-                    <Link href="/" className="hover:text-stone-900">בית</Link>
-                    <span>/</span>
-                    <Link href="/shop" className="hover:text-stone-900">חנות</Link>
-                    <span>/</span>
-                    <span className="text-stone-900 font-medium">{product.name}</span>
+                {/* Back Button (Mobile & Desktop) */}
+                <div className="flex justify-between items-center px-6 md:px-0 mb-6 md:mb-8">
+                    <Link
+                        href="/shop"
+                        className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition-colors group"
+                    >
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        <span>חזרה לחנות</span>
+                    </Link>
+
+                    {/* Breadcrumb (Desktop Only) */}
+                    <div className="hidden md:flex gap-2 text-xs text-stone-400 uppercase tracking-widest">
+                        <span className="text-stone-900 font-medium">{product.name}</span>
+                        <span>/</span>
+                        <Link href="/shop" className="hover:text-stone-900">חנות</Link>
+                        <span>/</span>
+                        <Link href="/" className="hover:text-stone-900">בית</Link>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-16">
