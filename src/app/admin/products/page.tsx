@@ -53,6 +53,7 @@ export default async function ProductsPage() {
                                 <th className="px-6 py-3 text-right text-xs font-bold text-stone-500 uppercase tracking-wider">מוצר</th>
                                 <th className="px-6 py-3 text-right text-xs font-bold text-stone-500 uppercase tracking-wider">קטגוריה</th>
                                 <th className="px-6 py-3 text-right text-xs font-bold text-stone-500 uppercase tracking-wider">מחיר</th>
+                                <th className="px-6 py-3 text-right text-xs font-bold text-stone-500 uppercase tracking-wider">מלאי</th>
                                 <th className="px-6 py-3 text-right text-xs font-bold text-stone-500 uppercase tracking-wider">סטטוס</th>
                                 <th className="px-6 py-3 text-right text-xs font-bold text-stone-500 uppercase tracking-wider">פעולות</th>
                             </tr>
@@ -84,9 +85,19 @@ export default async function ProductsPage() {
                                         ₪{Number(product.price).toFixed(2)}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                            במלאי
+                                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.stock === 0 ? 'bg-red-50 text-red-700' :
+                                                product.stock < 5 ? 'bg-amber-50 text-amber-700' :
+                                                    'bg-stone-50 text-stone-600'
+                                            }`}>
+                                            {product.stock} יח'
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${product.stock > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                                            }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${product.stock > 0 ? 'bg-emerald-500' : 'bg-red-500'
+                                                }`} />
+                                            {product.stock > 0 ? 'במלאי' : 'אזל'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">

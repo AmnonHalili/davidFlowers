@@ -81,6 +81,7 @@ export default async function ShopPage() {
                                 image={mainImage}
                                 slug={product.slug}
                                 category={categoryName}
+                                stock={product.stock}
                             />
                         );
                     })}

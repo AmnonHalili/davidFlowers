@@ -10,17 +10,27 @@ interface ProductCardProps {
     image: string;
     slug: string;
     category?: string;
+    stock: number;
 }
 
-export default function ProductCard({ name, price, image, slug, category }: ProductCardProps) {
+export default function ProductCard({ name, price, image, slug, category, stock }: ProductCardProps) {
+    const isOutOfStock = stock <= 0;
+
     return (
         <Link href={`/product/${slug}`} className="group block space-y-4">
             <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
                 <img
                     src={image}
                     alt={name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${isOutOfStock ? 'grayscale opacity-80' : ''}`}
                 />
+
+                {isOutOfStock && (
+                    <div className="absolute top-3 left-3 bg-white/90 text-stone-900 text-[10px] font-bold px-2 py-1 uppercase tracking-widest backdrop-blur-sm z-30">
+                        אזל מהמלאי
+                    </div>
+                )}
+
                 <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Quick Add Overlay */}

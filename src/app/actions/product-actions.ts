@@ -9,6 +9,7 @@ const prisma = new PrismaClient();
 export async function createProduct(formData: FormData) {
     const name = formData.get('name') as string;
     const price = parseFloat(formData.get('price') as string);
+    const stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
     const categoryName = formData.get('category') as string;
     const imageUrl = formData.get('imageUrl') as string;
@@ -21,6 +22,7 @@ export async function createProduct(formData: FormData) {
             slug: slug + '-' + Math.random().toString(36).substr(2, 4),
             description,
             price,
+            stock,
             categories: {
                 connectOrCreate: {
                     where: { name: categoryName },
@@ -45,6 +47,7 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(id: string, formData: FormData) {
     const name = formData.get('name') as string;
     const price = parseFloat(formData.get('price') as string);
+    const stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
     const imageUrl = formData.get('imageUrl') as string;
     // Note: Updating category is more complex with Prisma (disconnect/connect), skipping for this MVP iteration unless requested.
@@ -55,6 +58,7 @@ export async function updateProduct(id: string, formData: FormData) {
             name, // slug usually doesn't change to preserve SEO
             description,
             price,
+            stock,
             images: {
                 deleteMany: {}, // brutally simple image update: clear and add new one
                 create: {
