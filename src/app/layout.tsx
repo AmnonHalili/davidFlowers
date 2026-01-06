@@ -26,6 +26,7 @@ import { heIL } from '@clerk/localizations';
 import { currentUser } from '@clerk/nextjs/server';
 import { PrismaClient } from '@prisma/client';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import AccessibilityWidget from '@/components/AccessibilityWidget';
 
 const prisma = new PrismaClient();
 
@@ -62,6 +63,7 @@ export default async function RootLayout({
             <Footer />
             <CartDrawer />
             <WhatsAppButton />
+            <AccessibilityWidget />
           </CartProvider>
         </body>
       </html>
