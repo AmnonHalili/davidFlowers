@@ -131,7 +131,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
                         {/* Purchase Logic */}
                         <div id="purchase-form" className="border-t border-stone-100 pt-8 md:pt-10">
                             {product.stock > 0 ? (
-                                <ProductSubscriptionForm />
+                                <ProductSubscriptionForm product={{
+                                    id: product.id,
+                                    name: product.name,
+                                    price: Number(product.price),
+                                    image: mainImage
+                                }} />
                             ) : (
                                 <div className="bg-stone-100 p-6 rounded-lg text-center space-y-2">
                                     <span className="block text-stone-900 font-medium">המוצר אזל מהמלאי זמנית</span>

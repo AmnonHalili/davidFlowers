@@ -4,9 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, Trash2, Lock } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import Image from 'next/image';
+import { useState } from 'react';
 
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, addItem, cartTotal } = useCart();
+    const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
+    const [address, setAddress] = useState('');
     const FREE_SHIPPING_THRESHOLD = 350;
     const progress = Math.min((cartTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
     const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - cartTotal;
@@ -53,7 +56,12 @@ export default function CartDrawer() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ items }),
+                body: JSON.stringify({
+                    items,
+                    shippingMethod,
+                    shippingAddress: shippingMethod === 'delivery' ? address : 'Self Pickup',
+                    shippingCost: shippingMethod === 'delivery' ? 30 : 0
+                }),
             });
 
             if (!response.ok) throw new Error('Checkout failed');
@@ -85,29 +93,26 @@ export default function CartDrawer() {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-[70] flex flex-col shadow-2xl"
+                        className="fixed top-0 right-0 bottom-0 w-full max-w-[500px] bg-white z-[70] flex flex-col shadow-2xl"
                     >
                         {/* Header */}
-                        <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-white">
-                            <h2 className="font-serif text-xl text-stone-900">העגלה שלך</h2>
+                        <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-white z-10">
+                            <h2 className="font-serif text-2xl text-stone-900">העגלה שלך</h2>
                             <button
                                 onClick={closeCart}
-                                className="p-2 -mr-2 text-stone-400 hover:text-stone-900 transition-colors"
+                                className="p-2 -mr-2 text-stone-400 hover:text-stone-900 transition-colors rounded-full hover:bg-stone-50"
                             >
-                                <X className="w-5 h-5" />
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
 
                         {/* Free Shipping Progress Bar */}
-                        <div className="px-6 py-4 bg-stone-50 border-b border-stone-100">
-                            <div className="mb-2 text-center text-sm font-medium text-stone-700">
-                                {progress === 100 ? (
-                                    <span className="text-david-green">מעולה! משלוח חינם על ההזמנה הזו 🎉</span>
-                                ) : (
-                                    <span>חסר עוד ₪{remainingForFreeShipping.toFixed(0)} למשלוח חינם</span>
-                                )}
+                        <div className="px-8 py-5 bg-stone-50/50 border-b border-stone-100">
+                            <div className="flex justify-between items-end mb-2">
+                                <span className="text-sm font-medium text-stone-700">משלוח חינם</span>
+                                <span className="text-xs text-stone-500 font-mono">{progress.toFixed(0)}%</span>
                             </div>
-                            <div className="h-2 w-full bg-stone-200 rounded-full overflow-hidden">
+                            <div className="h-1.5 w-full bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progress}%` }}
@@ -115,113 +120,197 @@ export default function CartDrawer() {
                                     className="h-full bg-david-green"
                                 />
                             </div>
+                            <p className="text-xs text-stone-500 mt-2 text-center">
+                                {progress === 100 ? (
+                                    <span className="text-david-green font-medium">מעולה! קיבלת משלוח חינם 🎉</span>
+                                ) : (
+                                    <span>עוד <span className="font-bold text-stone-900">₪{remainingForFreeShipping.toFixed(0)}</span> למשלוח חינם</span>
+                                )}
+                            </p>
                         </div>
 
-                        {/* Items */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                        {/* Items - Extended Scroll Area */}
+                        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 scrollbar-hide">
                             {items.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 text-stone-400">
-                                    <div className="w-16 h-16 rounded-full bg-stone-50 flex items-center justify-center mb-2">
-                                        <ShoppingBagIcon />
+                                <div className="h-full flex flex-col items-center justify-center text-center space-y-6 text-stone-300">
+                                    <ShoppingBag className="w-16 h-16 opacity-20" strokeWidth={1} />
+                                    <div className="space-y-2">
+                                        <p className="text-stone-900 font-medium">העגלה שלך ריקה</p>
+                                        <p className="text-sm">נראה שלא הוספת פריטים עדיין</p>
                                     </div>
-                                    <p>העגלה שלך ריקה כרגע.</p>
                                     <button
                                         onClick={closeCart}
-                                        className="text-stone-900 font-medium underline underline-offset-4"
+                                        className="text-stone-900 text-sm font-bold border-b-2 border-stone-900 pb-1 hover:text-david-green hover:border-david-green transition-colors"
                                     >
-                                        חזרה לחנות
+                                        התחל לקנות
                                     </button>
                                 </div>
                             ) : (
-                                items.map((item) => (
-                                    <div key={item.id} className="flex gap-4">
-                                        {/* Image */}
-                                        <div className="relative w-20 h-24 bg-stone-100 shrink-0 overflow-hidden">
-                                            <img
-                                                src={item.image}
-                                                alt={item.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-
-                                        {/* Details */}
-                                        <div className="flex-1 flex flex-col justify-between py-1">
-                                            <div>
-                                                <div className="flex justify-between items-start">
-                                                    <h3 className="font-serif text-stone-900">{item.name}</h3>
-                                                    <button
-                                                        onClick={() => removeItem(item.id)}
-                                                        className="text-stone-300 hover:text-red-400 transition-colors"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                <>
+                                    {/* Product List */}
+                                    <div className="space-y-6">
+                                        {items.map((item) => (
+                                            <div key={item.id} className="flex gap-5 group">
+                                                {/* Image */}
+                                                <div className="relative w-24 h-32 bg-stone-100 shrink-0 overflow-hidden rounded-sm">
+                                                    <img
+                                                        src={item.image}
+                                                        alt={item.name}
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    />
                                                 </div>
-                                                {item.type === 'SUBSCRIPTION' && (
-                                                    <div className="text-xs text-stone-500 mt-1 space-x-2 rtl:space-x-reverse">
-                                                        <span className="bg-stone-100 px-1.5 py-0.5 rounded">מנוי {item.frequency === 'WEEKLY' ? 'שבועי' : 'דו-שבועי'}</span>
-                                                        <span>לימי {item.deliveryDay}</span>
+
+                                                {/* Details */}
+                                                <div className="flex-1 flex flex-col justify-between py-1">
+                                                    <div className="space-y-1">
+                                                        <div className="flex justify-between items-start">
+                                                            <h3 className="font-serif text-lg text-stone-900 leading-tight">{item.name}</h3>
+                                                            <button
+                                                                onClick={() => removeItem(item.id)}
+                                                                className="text-stone-300 hover:text-red-400 transition-colors p-1"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                        {item.type === 'SUBSCRIPTION' ? (
+                                                            <div className="inline-flex items-center gap-2 bg-stone-100 px-2 py-1 rounded text-[10px] font-medium text-stone-600">
+                                                                <span>מנוי {item.frequency === 'WEEKLY' ? 'שבועי' : 'דו-שבועי'}</span>
+                                                                <span className="w-1 h-1 bg-stone-400 rounded-full" />
+                                                                <span>{item.deliveryDay === 'THURSDAY' ? 'חמישי' : 'שישי'}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-stone-400">רכישה חד-פעמית</span>
+                                                        )}
                                                     </div>
-                                                )}
-                                                {item.type === 'ONETIME' && (
-                                                    <span className="text-xs text-stone-400 mt-1 block">רכישה חד-פעמית</span>
-                                                )}
-                                            </div>
 
-                                            <div className="flex justify-between items-end">
-                                                <div className="flex items-center gap-3 border border-stone-200 px-2 py-1">
-                                                    <button className="text-stone-400 hover:text-stone-900"><Minus className="w-3 h-3" /></button>
-                                                    <span className="text-xs w-2 text-center">{item.quantity}</span>
-                                                    <button className="text-stone-400 hover:text-stone-900"><Plus className="w-3 h-3" /></button>
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-center border border-stone-200 rounded-sm">
+                                                            <button
+                                                                onClick={() => {/* logic to decrease */ }} // Simplified for UI demo, should update quantity
+                                                                className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                                                            >
+                                                                <Minus className="w-3 h-3" />
+                                                            </button>
+                                                            <span className="w-8 text-center text-sm font-medium text-stone-900">{item.quantity}</span>
+                                                            <button
+                                                                onClick={() => {/* logic to increase */ }}
+                                                                className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                                                            >
+                                                                <Plus className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                        <span className="font-medium text-stone-900 text-lg">₪{item.price.toFixed(0)}</span>
+                                                    </div>
                                                 </div>
-                                                <span className="font-medium text-stone-900">₪{item.price.toFixed(2)}</span>
                                             </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Unified Upsell Section */}
+                                    <div className="pt-8 border-t border-stone-100">
+                                        <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-4">לא לשכוח להוסיף</h3>
+                                        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-8 px-8 snap-x">
+                                            {UPSELL_ITEMS.map((item) => (
+                                                <div key={item.id} className="snap-center min-w-[140px] border border-stone-200 rounded-lg p-3 flex flex-col gap-2 hover:border-stone-300 transition-colors bg-white">
+                                                    <div className="aspect-square bg-stone-50 rounded-md overflow-hidden relative">
+                                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                                        <button
+                                                            onClick={() => handleAddUpsell(item)}
+                                                            className="absolute bottom-2 left-2 bg-white/90 p-1.5 rounded-full shadow-sm hover:bg-david-green hover:text-white transition-colors"
+                                                        >
+                                                            <Plus className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-stone-900 line-clamp-1">{item.name}</h4>
+                                                        <span className="text-xs text-stone-500">₪{item.price}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                ))
+                                </>
                             )}
                         </div>
 
-                        {/* Footer */}
+                        {/* Footer - Fixed at bottom */}
                         {items.length > 0 && (
-                            <div className="p-6 border-t border-stone-100 bg-stone-50 space-y-4">
-                                <div className="flex justify-between items-center text-lg font-serif">
-                                    <span>סה"כ לתשלום:</span>
-                                    <span>₪{cartTotal.toFixed(2)}</span>
+                            <div className="p-8 border-t border-stone-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 space-y-6">
+
+                                {/* Sleek Shipping Selector */}
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => setShippingMethod('pickup')}
+                                            className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'pickup'
+                                                    ? 'border-stone-900 bg-stone-900 text-white shadow-md'
+                                                    : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
+                                                }`}
+                                        >
+                                            <span className="block text-sm font-bold mb-0.5">איסוף עצמי</span>
+                                            <span className={`text-[10px] ${shippingMethod === 'pickup' ? 'text-white/60' : 'text-stone-400'}`}>מהחנות באשקלון</span>
+                                            <span className="absolute top-4 left-4 text-xs font-bold">חינם</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => setShippingMethod('delivery')}
+                                            className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'delivery'
+                                                    ? 'border-stone-900 bg-stone-900 text-white shadow-md'
+                                                    : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
+                                                }`}
+                                        >
+                                            <span className="block text-sm font-bold mb-0.5">משלוח</span>
+                                            <span className={`text-[10px] ${shippingMethod === 'delivery' ? 'text-white/60' : 'text-stone-400'}`}>אשקלון בלבד</span>
+                                            <span className="absolute top-4 left-4 text-xs font-bold">₪30</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Address Input */}
+                                    <AnimatePresence>
+                                        {shippingMethod === 'delivery' && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <input
+                                                    type="text"
+                                                    value={address}
+                                                    onChange={(e) => setAddress(e.target.value)}
+                                                    placeholder="הזן כתובת מלאה למשלוח..."
+                                                    className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
+                                                />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
-                                <p className="text-[10px] text-stone-400 text-center">
-                                    המשלוח מחושב בשלב הבא
-                                </p>
+
+                                {/* Totals */}
+                                <div className="space-y-2 pt-2">
+                                    <div className="flex justify-between text-stone-500 text-sm">
+                                        <span>סכום ביניים</span>
+                                        <span>₪{cartTotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-stone-500 text-sm">
+                                        <span>משלוח</span>
+                                        <span>{shippingMethod === 'delivery' ? '₪30.00' : 'חינם'}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900 pt-3 border-t border-stone-100">
+                                        <span>סה"כ</span>
+                                        <span>₪{(cartTotal + (shippingMethod === 'delivery' ? 30 : 0)).toFixed(2)}</span>
+                                    </div>
+                                </div>
+
+                                {/* Checkout Button */}
                                 <button
                                     onClick={handleCheckout}
-                                    className="w-full bg-stone-900 text-white py-4 font-medium tracking-wide flex items-center justify-center gap-2 hover:bg-stone-800 transition-colors"
+                                    disabled={shippingMethod === 'delivery' && address.length < 5}
+                                    className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
                                 >
                                     <Lock className="w-4 h-4" />
-                                    <span>מעבר לתשלום מאובטח</span>
+                                    <span>מעבר לתשלום</span>
                                 </button>
-                            </div>
-                        )}
-
-                        {/* Upsell Drawer / Section */}
-                        {items.length > 0 && (
-                            <div className="p-6 bg-white border-t border-stone-100">
-                                <h3 className="text-sm font-medium text-stone-900 mb-4">אל תשכח להוסיף...</h3>
-                                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
-                                    {UPSELL_ITEMS.map((item) => (
-                                        <div key={item.id} className="min-w-[120px] bg-stone-50 rounded-lg p-2 flex flex-col items-center text-center border border-stone-100">
-                                            <div className="w-16 h-16 bg-white rounded-full mb-2 overflow-hidden relative">
-                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                            </div>
-                                            <span className="text-xs font-medium text-stone-900 line-clamp-1">{item.name}</span>
-                                            <span className="text-xs text-stone-500 mb-2">₪{item.price}</span>
-                                            <button
-                                                onClick={() => handleAddUpsell(item)}
-                                                className="w-full bg-white border border-david-green text-david-green text-[10px] font-bold py-1 rounded hover:bg-david-green hover:text-white transition-colors"
-                                            >
-                                                הוספה
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
                             </div>
                         )}
                     </motion.div>

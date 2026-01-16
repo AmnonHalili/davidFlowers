@@ -117,7 +117,7 @@ export default function Home() {
               },
               {
                 name: 'כלות ואירועים',
-                image: 'https://images.unsplash.com/photo-1507290439931-a861b5a38200?q=80&w=1000&auto=format&fit=crop',
+                image: '/AVIRA-T-55.jpg',
                 link: '/category/wedding'
               },
               {

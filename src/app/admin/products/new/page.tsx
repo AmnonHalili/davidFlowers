@@ -4,6 +4,7 @@ import { createProduct } from '@/app/actions/product-actions';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
+import SubmitButton from '@/components/admin/SubmitButton';
 import { useState } from 'react';
 import { CATEGORIES } from '@/lib/categories';
 
@@ -101,12 +102,7 @@ export default function NewProductPage() {
                 </div>
 
                 <div className="pt-6">
-                    <button
-                        type="submit"
-                        className="w-full bg-stone-900 text-white py-4 font-medium rounded-lg hover:bg-stone-800 transition-all shadow-lg active:scale-[0.98]"
-                    >
-                        שמור מוצר בקטלוג
-                    </button>
+                    <SubmitButton />
                 </div>
             </form>
         </div>

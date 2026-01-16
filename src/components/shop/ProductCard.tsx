@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ShoppingBag, Eye } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 
 interface ProductCardProps {
     id: string;
@@ -14,8 +15,9 @@ interface ProductCardProps {
     hoverImage?: string; // Optional second image for hover
 }
 
-export default function ProductCard({ name, price, image, slug, category, stock, hoverImage }: ProductCardProps) {
+export default function ProductCard({ id, name, price, image, slug, category, stock, hoverImage }: ProductCardProps) {
     const isOutOfStock = stock <= 0;
+    const { addItem } = useCart();
 
     return (
         <Link href={`/product/${slug}`} className="group block space-y-4 rtl relative" dir="rtl">
@@ -49,9 +51,24 @@ export default function ProductCard({ name, price, image, slug, category, stock,
 
                 {/* "Quick Actions" Bottom Up Slide */}
                 <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-20">
-                    <button className="w-full bg-david-green text-david-beige py-3 uppercase text-xs tracking-widest font-bold hover:bg-david-green/90 transition-colors flex items-center justify-center gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            if (isOutOfStock) return;
+                            addItem({
+                                id: id,
+                                productId: id,
+                                name: name,
+                                price: parseFloat(price.replace(/[^\d.]/g, '')), // Clean price string (e.g. "₪120.00" -> 120.00)
+                                image: image,
+                                quantity: 1,
+                                type: 'ONETIME'
+                            });
+                        }}
+                        className="w-full bg-david-green text-david-beige py-3 uppercase text-xs tracking-widest font-bold hover:bg-david-green/90 transition-colors flex items-center justify-center gap-2"
+                    >
                         <ShoppingBag className="w-4 h-4" />
-                        הוסף לסל
+                        {isOutOfStock ? 'אזל מהמלאי' : 'הוסף לסל'}
                     </button>
                 </div>
             </div>

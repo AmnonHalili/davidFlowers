@@ -1,5 +1,6 @@
 import { getOrders } from "@/app/actions/order-actions";
 import StatusBadge from "@/components/admin/StatusBadge";
+import QuickShipButton from "@/components/admin/QuickShipButton";
 import Link from "next/link";
 import { Eye } from "lucide-react";
 import { format } from "date-fns";
@@ -51,7 +52,8 @@ export default async function AdminOrdersPage() {
                                     <td className="px-6 py-4">
                                         <StatusBadge status={order.status} />
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 flex items-center gap-2">
+                                        <QuickShipButton orderId={order.id} currentStatus={order.status} />
                                         <Link
                                             href={`/admin/orders/${order.id}`}
                                             className="inline-flex items-center gap-1 text-david-green hover:underline text-xs font-medium"

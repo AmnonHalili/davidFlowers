@@ -10,21 +10,29 @@ type PurchaseType = 'SUBSCRIPTION' | 'ONETIME';
 type Frequency = 'WEEKLY' | 'BIWEEKLY';
 type DayOfWeek = 'THURSDAY' | 'FRIDAY';
 
-export default function ProductSubscriptionForm() {
+interface ProductSubscriptionFormProps {
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  }
+}
+
+export default function ProductSubscriptionForm({ product }: ProductSubscriptionFormProps) {
   const { addItem } = useCart();
-  const [purchaseType, setPurchaseType] = useState<PurchaseType>('SUBSCRIPTION');
+  const [purchaseType, setPurchaseType] = useState<PurchaseType>('ONETIME');
   const [frequency, setFrequency] = useState<Frequency>('WEEKLY');
   const [deliveryDay, setDeliveryDay] = useState<DayOfWeek>('FRIDAY');
   const [giftNote, setGiftNote] = useState('');
 
   const handleAddToCart = () => {
-    // In a real app, this data would come from props or a query
     const newItem: CartItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      productId: 'the-noble-peony',
-      name: 'The Noble Peony',
-      price: purchaseType === 'SUBSCRIPTION' ? 220 : 250,
-      image: 'https://images.unsplash.com/photo-1563241527-3004b7be025f?auto=format&fit=crop&q=80',
+      id: `${product.id}-${Date.now()}`,
+      productId: product.id,
+      name: product.name,
+      price: purchaseType === 'SUBSCRIPTION' ? product.price * 0.85 : product.price, // 15% discount logic
+      image: product.image,
       quantity: 1,
       type: purchaseType,
       frequency: purchaseType === 'SUBSCRIPTION' ? frequency : undefined,
@@ -41,8 +49,8 @@ export default function ProductSubscriptionForm() {
         <button
           onClick={() => setPurchaseType('SUBSCRIPTION')}
           className={`flex-1 py-3 text-sm font-medium rounded-md transition-all ${purchaseType === 'SUBSCRIPTION'
-              ? 'bg-white text-stone-900 shadow-sm'
-              : 'text-stone-500 hover:text-stone-700'
+            ? 'bg-white text-stone-900 shadow-sm'
+            : 'text-stone-500 hover:text-stone-700'
             }`}
         >
           מנוי קבוע (חסוך 15%)
@@ -50,8 +58,8 @@ export default function ProductSubscriptionForm() {
         <button
           onClick={() => setPurchaseType('ONETIME')}
           className={`flex-1 py-3 text-sm font-medium rounded-md transition-all ${purchaseType === 'ONETIME'
-              ? 'bg-white text-stone-900 shadow-sm'
-              : 'text-stone-500 hover:text-stone-700'
+            ? 'bg-white text-stone-900 shadow-sm'
+            : 'text-stone-500 hover:text-stone-700'
             }`}
         >
           חד פעמי
@@ -71,15 +79,15 @@ export default function ProductSubscriptionForm() {
               <label className="text-xs uppercase tracking-wider font-medium text-stone-900">תדירות</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: 'WEEKLY', label: 'מדי שבוע', price: '₪220 / משלוח' },
-                  { id: 'BIWEEKLY', label: 'כל שבועיים', price: '₪240 / משלוח' },
+                  { id: 'WEEKLY', label: 'מדי שבוע', price: `₪${(product.price * 0.85).toFixed(0)} / משלוח` },
+                  { id: 'BIWEEKLY', label: 'כל שבועיים', price: `₪${(product.price * 0.85).toFixed(0)} / משלוח` },
                 ].map((opt) => (
                   <button
                     key={opt.id}
                     onClick={() => setFrequency(opt.id as Frequency)}
                     className={`border p-4 text-center transition-all ${frequency === opt.id
-                        ? 'border-stone-900 bg-stone-50'
-                        : 'border-stone-200 hover:border-stone-400'
+                      ? 'border-stone-900 bg-stone-50'
+                      : 'border-stone-200 hover:border-stone-400'
                       }`}
                   >
                     <div className="font-medium text-stone-900">{opt.label}</div>
@@ -98,8 +106,8 @@ export default function ProductSubscriptionForm() {
                     key={day}
                     onClick={() => setDeliveryDay(day as DayOfWeek)}
                     className={`flex-1 py-3 border text-sm transition-all ${deliveryDay === day
-                        ? 'border-stone-900 bg-stone-900 text-white'
-                        : 'border-stone-200 text-stone-600 hover:border-stone-400'
+                      ? 'border-stone-900 bg-stone-900 text-white'
+                      : 'border-stone-200 text-stone-600 hover:border-stone-400'
                       }`}
                   >
                     {day === 'THURSDAY' ? 'חמישי' : 'שישי'}
