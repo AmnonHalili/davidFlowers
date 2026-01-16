@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { notFound } from 'next/navigation';
 import ProductSubscriptionForm from '@/components/ProductSubscriptionForm';
+import ProductCard from '@/components/shop/ProductCard';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
@@ -19,9 +20,27 @@ async function getProduct(slug: string) {
     return product;
 }
 
+async function getRelatedProducts(currentProductId: string, categorySlug?: string) {
+    if (!categorySlug) return [];
+
+    return await prisma.product.findMany({
+        where: {
+            categories: {
+                some: { slug: categorySlug }
+            },
+            id: { not: currentProductId }
+        },
+        take: 4,
+        include: { images: true, categories: true }
+    });
+}
+
 export default async function ProductPage({ params }: { params: { slug: string } }) {
     const decodedSlug = decodeURIComponent(params.slug);
     const product = await getProduct(decodedSlug);
+    const relatedProducts = product
+        ? await getRelatedProducts(product.id, product.categories[0]?.slug)
+        : [];
 
     if (!product) {
         notFound();
@@ -135,6 +154,27 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     </div>
                 </div>
             </div>
+
+            {/* Related Products Section */}
+            {relatedProducts.length > 0 && (
+                <div className="max-w-screen-xl mx-auto px-6 mt-32 border-t border-stone-100 pt-20">
+                    <h2 className="font-serif text-3xl text-stone-900 mb-12 text-center">אולי תאהבו גם...</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {relatedProducts.map((related) => (
+                            <ProductCard
+                                key={related.id}
+                                id={related.id}
+                                name={related.name}
+                                price={`₪${Number(related.price).toFixed(0)}`}
+                                image={related.images.find(i => i.isMain)?.url || related.images[0]?.url || '/placeholder.jpg'}
+                                slug={related.slug}
+                                stock={related.stock}
+                                category={related.categories[0]?.name}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

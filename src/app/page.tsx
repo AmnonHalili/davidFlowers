@@ -1,27 +1,52 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowLeft, Flower2 } from 'lucide-react';
 
+// Configuration for Hero Video
+// To use a video background, replace null with the path to your video file (e.g., '/hero-video.mp4')
+const HERO_VIDEO_URL: string | null = '/David-Video.mp4';
+
 export default function Home() {
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 500], [0, 150]);
+
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-screen w-full overflow-hidden">
-        {/* Background Image */}
+        {/* Background - Video or Parallax Image */}
         <div className="absolute inset-0 bg-stone-900">
-          <img
-            src="/hero-bg.jpg"
-            alt="חנות פרחים דוד"
-            className="w-full h-full object-cover transition-transform duration-[20s] hover:scale-105 opacity-90"
-          />
+          {HERO_VIDEO_URL ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover opacity-90"
+            >
+              <source src={HERO_VIDEO_URL} type="video/mp4" />
+            </video>
+          ) : (
+            <motion.div
+              style={{ y: y1 }}
+              className="w-full h-full"
+            >
+              <img
+                src="/hero-bg.jpg"
+                alt="חנות פרחים דוד"
+                className="w-full h-[120%] object-cover opacity-90"
+              />
+            </motion.div>
+          )}
+
           {/* Professional Gradient Overlay for Text Readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30 md:via-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30 md:via-transparent z-10" />
         </div>
 
         {/* Hero Content */}
-        <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-24 md:pt-32">
+        <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-24 md:pt-32 z-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -40,13 +65,13 @@ export default function Home() {
 
             <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center items-center">
               <Link
-                href="/demo"
+                href="/shop/bouquets"
                 className="px-10 py-4 bg-white text-stone-900 uppercase tracking-widest text-xs font-bold hover:bg-stone-100 transition-colors min-w-[200px]"
               >
                 לקולקציה
               </Link>
               <Link
-                href="/demo"
+                href="/shop/subscriptions"
                 className="px-10 py-4 border border-white text-white uppercase tracking-widest text-xs font-bold hover:bg-white/10 transition-colors min-w-[200px]"
               >
                 מנוי הפתעה
@@ -55,6 +80,28 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      {/* Marquee Strip */}
+      <div className="bg-david-green text-david-beige py-3 overflow-hidden whitespace-nowrap relative">
+        <motion.div
+          animate={{ x: [0, -1000] }}
+          transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+          className="inline-block"
+        >
+          {/* Duplicated content for seamless generic marquee loop */}
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוח חינם בהזמנה ראשונה - קוד קופון: WELCOME</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוחים מהיום להיום באשקלון והסביבה</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">עטוף באהבה: 100% טריות מובטחת</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוח חינם בהזמנה ראשונה - קוד קופון: WELCOME</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוחים מהיום להיום באשקלון והסביבה</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">עטוף באהבה: 100% טריות מובטחת</span>
+        </motion.div>
+      </div>
 
       {/* Featured Categories */}
       <section className="py-16 md:py-32 bg-white px-4 md:px-6">
@@ -74,17 +121,17 @@ export default function Home() {
               {
                 name: 'הזר השבועי',
                 image: 'https://images.unsplash.com/photo-1599580667087-9bb3cb8533bc?q=80&w=1000&auto=format&fit=crop',
-                link: '/shop/weekly'
+                link: '/category/bouquets'
               },
               {
                 name: 'כלות ואירועים',
                 image: 'https://images.unsplash.com/photo-1507290439931-a861b5a38200?q=80&w=1000&auto=format&fit=crop',
-                link: '/shop/bridal'
+                link: '/category/wedding'
               },
               {
                 name: 'יבשים ונצחיים',
                 image: 'https://images.unsplash.com/photo-1627514787955-32e67df1bb8c?q=80&w=1000&auto=format&fit=crop',
-                link: '/shop/dried'
+                link: '/category/gifts'
               }
             ].map((cat, i) => (
               <Link href={cat.link} key={cat.name} className="group relative aspect-[3/4] overflow-hidden bg-stone-100 block">

@@ -1,59 +1,80 @@
 export default function Footer() {
     return (
-        <footer className="bg-stone-900 text-white/80 pt-20 pb-10">
+        <footer className="bg-david-green text-david-beige pt-20 pb-10 rtl" dir="rtl">
             <div className="max-w-screen-2xl mx-auto px-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/10 pb-16 text-right">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-b border-david-beige/20 pb-16">
 
-                    {/* Brand Column (Rightmost in RTL source order if grid, checking visual alignment) */}
-                    <div className="space-y-6">
-                        <h3 className="font-serif text-2xl tracking-widest text-white">דוד פרחים</h3>
-                        <p className="text-sm font-light leading-relaxed max-w-xs text-stone-400">
-                            פרחים טריים בסטייל מודרני.
-                            מגיעים ישירות מהמגדלים המובילים בארץ, ארוזים בקפידה ונשלחים באהבה.
-                        </p>
-                    </div>
-
-                    <div className="space-y-6">
-                        <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white">חנות</h4>
-                        <ul className="space-y-4 text-sm font-light">
-                            <li><a href="#" className="hover:text-white transition-colors">כל הזרים</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">מנויים</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">כרטיסי מתנה</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">לקוחות עסקיים</a></li>
-                        </ul>
-                    </div>
-
-                    <div className="space-y-6">
-                        <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white">החברה</h4>
-                        <ul className="space-y-4 text-sm font-light">
-                            <li><a href="#" className="hover:text-white transition-colors">קצת עלינו</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">המגזין</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">קיימות</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">קריירה</a></li>
-                        </ul>
-                    </div>
-
-                    <div className="space-y-6">
-                        <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-white">ניוזלטר</h4>
-                        <div className="flex border-b border-white/20 pb-2 flex-row-reverse">
-                            <button className="text-xs uppercase tracking-widest hover:text-white mr-4">הרשמה</button>
-                            <input
-                                type="email"
-                                placeholder="הכנס אימייל"
-                                className="bg-transparent w-full outline-none text-sm placeholder:text-stone-500 text-right"
-                            />
+                    {/* Right: Brand Info */}
+                    <div className="space-y-6 text-right">
+                        <div className="relative w-[180px] h-[60px] md:w-[220px] md:h-[80px]">
+                            <h3 className="font-serif text-3xl tracking-widest leading-none">דוד פרחים</h3>
                         </div>
+                        <p className="text-sm font-light leading-relaxed max-w-xs text-david-beige/80">
+                            פרחים טריים, עיצובים ייחודיים ומתנות מרגשות באשקלון והסביבה.
+                        </p>
+                        <div className="flex gap-4 items-center text-david-beige/80">
+                            {/* Social Icons using Lucide React */}
+                            <a href="#" className="hover:text-white transition-colors" aria-label="Instagram">
+                                <InstagramIcon className="w-5 h-5" />
+                            </a>
+                            <a href="#" className="hover:text-white transition-colors" aria-label="Facebook">
+                                <FacebookIcon className="w-5 h-5" />
+                            </a>
+                            <a href="#" className="hover:text-white transition-colors" aria-label="WhatsApp">
+                                <PhoneIcon className="w-5 h-5" />
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Middle: Quick Links */}
+                    <div className="flex flex-col md:flex-row gap-12 md:gap-24 justify-center md:justify-start">
+                        <div className="space-y-6">
+                            <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-david-beige/60">ניווט מהיר</h4>
+                            <ul className="space-y-4 text-sm font-light">
+                                <li><a href="/" className="hover:text-white transition-colors block">דף הבית</a></li>
+                                <li><a href="/shop" className="hover:text-white transition-colors block">קטלוג מוצרים</a></li>
+                                <li><a href="/about" className="hover:text-white transition-colors block">אודות</a></li>
+                                <li><a href="/deliveries" className="hover:text-white transition-colors block">משלוחים</a></li>
+                                <li><a href="/contact" className="hover:text-white transition-colors block">יצירת קשר</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Left: Newsletter */}
+                    <div className="space-y-6">
+                        <h4 className="text-xl font-serif text-david-beige">הישארו מעודכנים</h4>
+                        <p className="text-sm text-david-beige/80 font-light">
+                            קבלו עדכונים על מבצעים וזרים חדשים.
+                        </p>
+                        <form className="flex flex-col gap-4 max-w-sm">
+                            <div className="relative">
+                                <input
+                                    type="email"
+                                    placeholder="המייל שלך..."
+                                    className="w-full bg-transparent border-b border-david-beige/30 py-2 text-david-beige placeholder:text-david-beige/40 outline-none focus:border-david-beige transition-colors text-right"
+                                />
+                            </div>
+                            <button className="self-end text-sm uppercase tracking-widest font-bold hover:text-white transition-colors border-b border-transparent hover:border-white pb-1">
+                                הרשמה
+                            </button>
+                        </form>
                     </div>
                 </div>
 
-                <div className="pt-10 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-wider text-stone-500">
-                    <p>© 2026 דוד פרחים. כל הזכויות שמורות.</p>
-                    <div className="flex gap-6">
-                        <a href="#" className="hover:text-white transition-colors">מדיניות פרטיות</a>
-                        <a href="#" className="hover:text-white transition-colors">תנאי שימוש</a>
-                    </div>
+                {/* Bottom Bar */}
+                <div className="pt-10 flex flex-col md:flex-row justify-center items-center gap-6 text-[10px] uppercase tracking-wider text-david-beige/60">
+                    <p>כל הזכויות שמורות © 2025 David Flowers</p>
                 </div>
             </div>
         </footer>
     );
 }
+
+// Simple Icon wrappers to avoid importing everything if not needed, 
+// strictly standard Lucide icons: Instagram, Facebook, Phone (for WhatsApp usually used or MessageCircle)
+// I will import them from lucide-react at top
+import { Instagram, Facebook, Phone } from 'lucide-react';
+
+function InstagramIcon(props: any) { return <Instagram {...props} strokeWidth={1.5} />; }
+function FacebookIcon(props: any) { return <Facebook {...props} strokeWidth={1.5} />; }
+function PhoneIcon(props: any) { return <Phone {...props} strokeWidth={1.5} />; }

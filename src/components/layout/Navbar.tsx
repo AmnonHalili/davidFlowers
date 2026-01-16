@@ -1,88 +1,112 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ShoppingBag, User, Menu, Search, Lock } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
-
+import SearchOverlay from './SearchOverlay';
 
 export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
-    const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const { openCart, itemsCount } = useCart();
     const pathname = usePathname();
 
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    const isHomePage = pathname === '/';
-    const textColor = isHomePage && !isScrolled ? 'text-white' : 'text-stone-900';
-
     if (pathname?.startsWith('/admin')) return null;
 
-    return (
-        <>
-            <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-white/90 backdrop-blur-md py-4 border-b border-stone-100' : 'bg-transparent py-6'
-                    }`}
-            >
-                <div className="max-w-screen-2xl mx-auto px-6 grid grid-cols-3 items-center">
+    const navLinks = [
+        { label: 'זרי פרחים', href: '/category/bouquets' },
+        { label: 'עציצים', href: '/category/plants' },
+        { label: 'מתנות ומתוקים', href: '/category/gifts' },
+        { label: 'שוקולדים', href: '/category/chocolates' },
+        { label: 'חתן וכלה', href: '/category/wedding' },
+        { label: 'כלים ואגרטלים', href: '/category/vases' },
+        { label: 'אודות', href: '/about' },
+    ];
 
-                    {/* Right: Mobile Menu & Search */}
-                    <div className="flex items-center gap-6">
+    return (
+        <header className="relative z-50 rtl" dir="rtl">
+            <nav className="fixed top-0 left-0 right-0 bg-david-beige z-50 transition-all duration-300 border-b border-[#DCDBCF]">
+                <div className="max-w-screen-2xl mx-auto px-6 h-24 flex items-center justify-between md:grid md:grid-cols-12 relative">
+
+                    {/* Mobile: Hamburger Menu (Right Side / Start) */}
+                    <div className="md:hidden flex justify-start z-10">
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
-                            className={`p-1 transition-colors ${textColor}`}
+                            className="text-david-green p-2 cursor-pointer"
                         >
-                            <Menu className="w-5 h-5" strokeWidth={1.5} />
-                        </button>
-                        <button className={`p-1 hidden md:block transition-colors hover:opacity-70 ${textColor}`}>
-                            <Search className="w-5 h-5" strokeWidth={1.5} />
+                            <Menu className="w-6 h-6" />
                         </button>
                     </div>
 
-                    {/* Center: Logo */}
-                    <div className="flex justify-center">
-                        <Link href="/" className={`font-serif text-lg md:text-2xl tracking-widest uppercase text-center transition-colors duration-500 whitespace-nowrap ${textColor}`}>
-                            David Flowers
+                    {/* Logo (Center on Mobile, Right/Start on Desktop) */}
+                    <div className="md:col-span-2 flex justify-start absolute left-1/2 -translate-x-1/2 md:static md:transform-none">
+                        <Link href="/" className="relative block w-[120px] h-[45px] md:w-[200px] md:h-[70px]">
+                            <Image
+                                src="/David-Logo-removebg-preview.png"
+                                alt="David Flowers"
+                                fill
+                                className="object-contain"
+                                sizes="(max-width: 768px) 120px, 200px"
+                                priority
+                            />
                         </Link>
                     </div>
 
-                    {/* Left: Cart & Account */}
-                    <div className="flex items-center justify-end gap-6">
+                    {/* Desktop: Navigation Links */}
+                    <div className="col-span-8 hidden md:flex justify-center items-center h-full">
+                        <div className="flex gap-8 items-center h-full">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.label}
+                                    href={link.href}
+                                    className="text-david-green text-lg font-medium hover:text-opacity-70 transition-colors whitespace-nowrap"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Left Side: Icons (Cart, User, etc.) */}
+                    <div className="md:col-span-2 flex items-center justify-end gap-3 md:gap-5 z-10">
+
+                        {/* Search */}
+                        <button
+                            onClick={() => setIsSearchOpen(true)}
+                            className="hidden md:block text-david-green hover:opacity-70 transition-opacity"
+                        >
+                            <Search className="w-5 h-5" strokeWidth={1.5} />
+                        </button>
+
                         <SignedIn>
-                            <div className="scale-75 origin-right" dir="ltr">
+                            <div className="scale-90 origin-center">
                                 <UserButton userProfileMode="navigation" userProfileUrl="/account" afterSignOutUrl="/" />
                             </div>
                         </SignedIn>
                         <SignedOut>
-                            <Link href="/sign-in" className={`p-1 hidden md:block transition-opacity hover:opacity-70 ${textColor}`}>
+                            <Link href="/sign-in" className="hidden md:block text-david-green hover:opacity-70 transition-opacity">
                                 <User className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
                         </SignedOut>
 
-                        {/* Admin Link */}
                         {isAdmin && (
-                            <Link href="/admin" className={`p-1 hidden md:block transition-opacity hover:opacity-70 ${textColor}`} title="ניהול האתר">
+                            <Link href="/admin" className="hidden md:block text-david-green hover:opacity-70 transition-opacity" title="ניהול האתר">
                                 <Lock className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
                         )}
 
                         <button
                             onClick={openCart}
-                            className={`p-1 relative transition-opacity hover:opacity-70 ${textColor}`}
+                            className="relative text-david-green hover:opacity-70 transition-opacity p-1"
                         >
                             <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
                             {itemsCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-stone-900 text-white text-[10px] flex items-center justify-center rounded-full">
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-david-green text-david-beige text-[10px] flex items-center justify-center rounded-full">
                                     {itemsCount}
                                 </span>
                             )}
@@ -90,6 +114,9 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                     </div>
                 </div>
             </nav>
+
+            {/* Spacer to prevent content from hiding behind fixed navbar */}
+            <div className="h-24" />
 
             {/* Mobile Menu Overlay */}
             <AnimatePresence>
@@ -103,30 +130,25 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                             className="fixed inset-0 bg-black/20 z-50 backdrop-blur-sm"
                         />
                         <motion.div
-                            initial={{ x: '100%' }} // RTL: slide from right
+                            initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'tween', duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                            className="fixed top-0 right-0 bottom-0 w-[300px] bg-white z-[60] p-8 shadow-2xl"
+                            className="fixed top-0 right-0 bottom-0 w-[300px] bg-david-beige z-[60] p-8 shadow-2xl border-l border-[#DCDBCF]"
                         >
                             <div className="flex justify-between items-center mb-12">
-                                <span className="font-serif text-lg tracking-widest text-stone-900">תפריט</span>
-                                <button onClick={() => setIsMobileMenuOpen(false)} className="text-stone-400 hover:text-stone-900">
+                                <span className="font-serif text-2xl text-david-green">תפריט</span>
+                                <button onClick={() => setIsMobileMenuOpen(false)} className="text-david-green/60 hover:text-david-green">
                                     סגירה
                                 </button>
                             </div>
                             <div className="flex flex-col gap-6">
-                                {[
-                                    { label: 'כל הזרים', href: '/shop' },
-                                    { label: 'מנויים', href: '/subscriptions' },
-                                    { label: 'אירועים', href: '/occasions' },
-                                    { label: 'קצת עלינו', href: '/about' },
-                                    { label: 'מגזין', href: '/journal' }
-                                ].map((item) => (
+                                {navLinks.map((item) => (
                                     <Link
                                         key={item.label}
                                         href={item.href}
-                                        className="text-2xl font-light text-stone-900 hover:pr-4 transition-all duration-300"
+                                        className="text-2xl font-light text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm"
+                                        onClick={() => setIsMobileMenuOpen(false)}
                                     >
                                         {item.label}
                                     </Link>
@@ -136,6 +158,9 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                     </>
                 )}
             </AnimatePresence>
-        </>
+
+            {/* Search Overlay */}
+            <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+        </header>
     );
 }

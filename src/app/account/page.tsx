@@ -1,6 +1,10 @@
 import { syncUser } from '@/lib/user-sync';
 import { SignOutButton } from '@clerk/nextjs';
-import { Package, Calendar, Settings, LogOut } from 'lucide-react';
+import { Package, Calendar, Settings, LogOut, ShoppingBag, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { PrismaClient } from '@prisma/client';
+import Link from 'next/link';
+
+const prisma = new PrismaClient();
 
 export default async function AccountPage() {
     const user = await syncUser();
@@ -8,6 +12,22 @@ export default async function AccountPage() {
     if (!user) {
         return <div>Connecting...</div>;
     }
+
+    // Fetch Real Data
+    const orders = await prisma.order.findMany({
+        where: { userId: user.id },
+        include: {
+            items: {
+                include: { product: true }
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+
+    const activeSubscription = await prisma.subscription.findFirst({
+        where: { userId: user.id, isActive: true },
+        include: { product: true }
+    });
 
     return (
         <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20">
@@ -26,9 +46,9 @@ export default async function AccountPage() {
                             {user.role === 'ADMIN' ? 'מנהל מערכת' : 'חבר מועדון'}
                         </div>
                         {user.role === 'ADMIN' && (
-                            <a href="/admin" className="text-xs text-center border-b border-stone-900 pb-0.5 hover:opacity-70">
+                            <Link href="/admin" className="text-xs text-center border-b border-stone-900 pb-0.5 hover:opacity-70">
                                 כניסה לממשק ניהול ←
-                            </a>
+                            </Link>
                         )}
                     </div>
                 </div>
@@ -38,41 +58,56 @@ export default async function AccountPage() {
 
                     {/* Active Subscription Card */}
                     <div className="bg-white p-8 border border-stone-100 shadow-sm md:col-span-2 relative overflow-hidden group">
-                        <div className="relative z-10">
-                            <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center mb-6 text-stone-900">
-                                <Calendar strokeWidth={1.5} />
+                        <div className="relative z-10 w-full">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center text-stone-900">
+                                    <Calendar strokeWidth={1.5} />
+                                </div>
+                                {activeSubscription && (
+                                    <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-bold tracking-wide">
+                                        פעיל
+                                    </span>
+                                )}
                             </div>
-                            <h2 className="font-serif text-2xl text-stone-900 mb-2">המנוי שלי</h2>
 
-                            {/* Empty State */}
-                            <div className="space-y-4">
-                                <p className="text-stone-500 font-light">אין מנוי פעיל כרגע.</p>
-                                <button className="text-stone-900 border-b border-stone-900 pb-0.5 text-sm hover:opacity-70 transition-opacity">
-                                    התחל מנוי חדש ←
-                                </button>
-                            </div>
+                            <h2 className="font-serif text-2xl text-stone-900 mb-4">המנוי שלי</h2>
+
+                            {activeSubscription ? (
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-stone-50 rounded-lg border border-stone-100">
+                                        <h3 className="font-medium text-stone-900 mb-1">{activeSubscription.product.name}</h3>
+                                        <div className="flex gap-4 text-sm text-stone-500">
+                                            <span>תדירות: {activeSubscription.frequency === 'WEEKLY' ? 'שבועי' : 'דו-שבועי'}</span>
+                                            <span>|</span>
+                                            <span>יום משלוח: {getDayName(activeSubscription.deliveryDay)}</span>
+                                        </div>
+                                        <div className="mt-4 pt-4 border-t border-stone-200/50 flex justify-between items-center bg-white p-3 rounded shadow-sm">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-stone-400">משלוח קרוב</span>
+                                            <span className="text-stone-900 font-medium">{new Date(activeSubscription.nextDeliveryDate).toLocaleDateString('he-IL')}</span>
+                                        </div>
+                                    </div>
+                                    <button className="text-red-500 text-sm hover:underline">
+                                        ביטול מנוי / הקפאה
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <p className="text-stone-500 font-light">אין מנוי פעיל כרגע. הצטרפו למנוי הפרחים שלנו ותהנו מפרחים טריים בבית קבוע.</p>
+                                    <Link href="/subscriptions" className="inline-block text-stone-900 border-b border-stone-900 pb-0.5 text-sm hover:opacity-70 transition-opacity">
+                                        התחל מנוי חדש ←
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* Quick Actions */}
+                    {/* Quick Actions / Stats */}
                     <div className="space-y-4">
-                        <div className="bg-white p-6 border border-stone-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-stone-300 transition-colors">
-                            <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center text-stone-900">
-                                <Package strokeWidth={1.5} className="w-5 h-5" />
-                            </div>
+                        <div className="bg-stone-900 text-white p-6 shadow-sm flex flex-col justify-between min-h-[140px]">
+                            <ShoppingBag className="w-6 h-6 opacity-80" strokeWidth={1.5} />
                             <div>
-                                <h3 className="font-serif text-lg">הזמנות קודמות</h3>
-                                <p className="text-xs text-stone-400">צפייה בהיסטוריית רכישות</p>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-6 border border-stone-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-stone-300 transition-colors">
-                            <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center text-stone-900">
-                                <Settings strokeWidth={1.5} className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h3 className="font-serif text-lg">הגדרות חשבון</h3>
-                                <p className="text-xs text-stone-400">כתובות ופרטי תשלום</p>
+                                <span className="text-3xl font-serif">{orders.length}</span>
+                                <p className="text-white/60 text-sm mt-1">סה״כ הזמנות</p>
                             </div>
                         </div>
 
@@ -81,14 +116,98 @@ export default async function AccountPage() {
                                 <LogOut strokeWidth={1.5} className="w-5 h-5" />
                             </div>
                             <SignOutButton>
-                                <div className="w-full">
+                                <div className="w-full text-right">
                                     <h3 className="font-serif text-lg">התנתקות</h3>
                                 </div>
                             </SignOutButton>
                         </div>
                     </div>
                 </div>
+
+                {/* Recent Orders */}
+                <div className="space-y-6">
+                    <h2 className="font-serif text-2xl text-stone-900">היסטוריית הזמנות</h2>
+                    {orders.length > 0 ? (
+                        <div className="bg-white border border-stone-100 rounded-lg overflow-hidden">
+                            <table className="w-full text-right">
+                                <thead className="bg-stone-50 text-xs uppercase tracking-wider text-stone-500 font-medium">
+                                    <tr>
+                                        <th className="px-6 py-4">מספר הזמנה</th>
+                                        <th className="px-6 py-4">תאריך</th>
+                                        <th className="px-6 py-4">סטטוס</th>
+                                        <th className="px-6 py-4">סה״כ</th>
+                                        <th className="px-6 py-4">פריטים</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-stone-100">
+                                    {orders.map((order) => (
+                                        <tr key={order.id} className="text-sm hover:bg-stone-50/50 transition-colors">
+                                            <td className="px-6 py-4 font-mono text-stone-400">#{order.id.slice(-6)}</td>
+                                            <td className="px-6 py-4 text-stone-600">
+                                                {new Date(order.createdAt).toLocaleDateString('he-IL')}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <StatusBadge status={order.status} />
+                                            </td>
+                                            <td className="px-6 py-4 font-medium text-stone-900">
+                                                ₪{Number(order.totalAmount).toFixed(2)}
+                                            </td>
+                                            <td className="px-6 py-4 text-stone-500">
+                                                {order.items.map(i => i.product.name).join(', ')}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-20 bg-white border border-stone-100 rounded-lg">
+                            <Package className="w-12 h-12 mx-auto text-stone-300 mb-4" strokeWidth={1} />
+                            <p className="text-stone-500 font-light">טרם ביצעת הזמנות.</p>
+                        </div>
+                    )}
+                </div>
+
             </div>
         </div>
     );
+}
+
+function StatusBadge({ status }: { status: string }) {
+    const styles = {
+        PENDING: 'bg-yellow-100 text-yellow-800',
+        PAID: 'bg-green-100 text-green-800',
+        SHIPPED: 'bg-blue-100 text-blue-800',
+        DELIVERED: 'bg-purple-100 text-purple-800',
+        CANCELLED: 'bg-red-100 text-red-800',
+    };
+
+    const labels = {
+        PENDING: 'ממתין',
+        PAID: 'שולם',
+        SHIPPED: 'נשלח',
+        DELIVERED: 'נמסר',
+        CANCELLED: 'בוטל',
+    };
+
+    const s = status as keyof typeof styles;
+
+    return (
+        <span className={`px-2 py-1 rounded-full text-xs font-bold ${styles[s] || 'bg-gray-100 text-gray-800'}`}>
+            {labels[s] || status}
+        </span>
+    );
+}
+
+function getDayName(day: string) {
+    const days: Record<string, string> = {
+        SUNDAY: 'ראשון',
+        MONDAY: 'שני',
+        TUESDAY: 'שלישי',
+        WEDNESDAY: 'רביעי',
+        THURSDAY: 'חמישי',
+        FRIDAY: 'שישי',
+        SATURDAY: 'שבת',
+    };
+    return days[day] || day;
 }

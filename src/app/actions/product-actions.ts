@@ -4,6 +4,8 @@ import { PrismaClient } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+import { CATEGORIES, getCategoryName } from '@/lib/categories';
+
 const prisma = new PrismaClient();
 
 export async function createProduct(formData: FormData) {
@@ -11,10 +13,11 @@ export async function createProduct(formData: FormData) {
     const price = parseFloat(formData.get('price') as string);
     const stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
-    const categoryName = formData.get('category') as string;
+    const categorySlug = formData.get('category') as string; // Check new Form uses 'category'
     const imageUrl = formData.get('imageUrl') as string;
 
     const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w\u0590-\u05FF-]+/g, '');
+    const categoryName = getCategoryName(categorySlug);
 
     await prisma.product.create({
         data: {
@@ -25,8 +28,11 @@ export async function createProduct(formData: FormData) {
             stock,
             categories: {
                 connectOrCreate: {
-                    where: { name: categoryName },
-                    create: { name: categoryName, slug: categoryName }
+                    where: { slug: categorySlug },
+                    create: {
+                        name: categoryName,
+                        slug: categorySlug
+                    }
                 }
             },
             images: {
@@ -50,15 +56,26 @@ export async function updateProduct(id: string, formData: FormData) {
     const stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
     const imageUrl = formData.get('imageUrl') as string;
-    // Note: Updating category is more complex with Prisma (disconnect/connect), skipping for this MVP iteration unless requested.
+    const categorySlug = formData.get('category') as string;
+    const categoryName = getCategoryName(categorySlug);
 
     await prisma.product.update({
         where: { id },
         data: {
-            name, // slug usually doesn't change to preserve SEO
+            name,
             description,
             price,
             stock,
+            categories: {
+                set: [], // Disconnect all existing
+                connectOrCreate: {
+                    where: { slug: categorySlug },
+                    create: {
+                        name: categoryName,
+                        slug: categorySlug
+                    }
+                }
+            },
             images: {
                 deleteMany: {}, // brutally simple image update: clear and add new one
                 create: {
@@ -80,6 +97,22 @@ export async function deleteProduct(formData: FormData) {
 
     // In a real app, delete images from cloud storage here first
 
+    // 1. Delete associated images first
+    await prisma.productImage.deleteMany({
+        where: { productId }
+    });
+
+    // 2. Delete associated OrderItems (Warning: Removes item from historical orders)
+    await prisma.orderItem.deleteMany({
+        where: { productId }
+    });
+
+    // 3. Delete associated Subscriptions
+    await prisma.subscription.deleteMany({
+        where: { productId }
+    });
+
+    // 4. Delete the product
     await prisma.product.delete({
         where: { id: productId }
     });

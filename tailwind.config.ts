@@ -11,6 +11,8 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        'david-beige': '#F8F7F2',
+        'david-green': '#1A3B32',
       },
     },
   },

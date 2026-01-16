@@ -6,7 +6,45 @@ import { useCart } from '@/context/CartContext';
 import Image from 'next/image';
 
 export default function CartDrawer() {
-    const { isOpen, closeCart, items, removeItem, cartTotal } = useCart();
+    const { isOpen, closeCart, items, removeItem, addItem, cartTotal } = useCart();
+    const FREE_SHIPPING_THRESHOLD = 350;
+    const progress = Math.min((cartTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+    const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - cartTotal;
+
+    // Mock Upsell Items - In a real app, these would be fetched or passed as props
+    const UPSELL_ITEMS = [
+        {
+            id: 'upsell-1',
+            productId: 'upsell-chocolates',
+            name: 'מארז פרלינים',
+            price: 45,
+            image: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&w=200&q=80',
+            type: 'ONETIME' as const,
+            quantity: 1
+        },
+        {
+            id: 'upsell-2',
+            productId: 'upsell-vase',
+            name: 'אגרטל זכוכית',
+            price: 60,
+            image: 'https://images.unsplash.com/photo-1581783342308-f792ca80ddc8?auto=format&fit=crop&w=200&q=80',
+            type: 'ONETIME' as const,
+            quantity: 1
+        },
+        {
+            id: 'upsell-3',
+            productId: 'upsell-card',
+            name: 'כרטיס ברכה',
+            price: 15,
+            image: 'https://images.unsplash.com/photo-1586075010923-2dd45eeed8bd?auto=format&fit=crop&w=200&q=80',
+            type: 'ONETIME' as const,
+            quantity: 1
+        }
+    ];
+
+    const handleAddUpsell = (item: typeof UPSELL_ITEMS[0]) => {
+        addItem({ ...item, id: `${item.id}-${Date.now()}` }); // Ensure unique ID
+    };
 
     const handleCheckout = async () => {
         try {
@@ -58,6 +96,25 @@ export default function CartDrawer() {
                             >
                                 <X className="w-5 h-5" />
                             </button>
+                        </div>
+
+                        {/* Free Shipping Progress Bar */}
+                        <div className="px-6 py-4 bg-stone-50 border-b border-stone-100">
+                            <div className="mb-2 text-center text-sm font-medium text-stone-700">
+                                {progress === 100 ? (
+                                    <span className="text-david-green">מעולה! משלוח חינם על ההזמנה הזו 🎉</span>
+                                ) : (
+                                    <span>חסר עוד ₪{remainingForFreeShipping.toFixed(0)} למשלוח חינם</span>
+                                )}
+                            </div>
+                            <div className="h-2 w-full bg-stone-200 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                    transition={{ duration: 0.5 }}
+                                    className="h-full bg-david-green"
+                                />
+                            </div>
                         </div>
 
                         {/* Items */}
@@ -141,6 +198,30 @@ export default function CartDrawer() {
                                     <Lock className="w-4 h-4" />
                                     <span>מעבר לתשלום מאובטח</span>
                                 </button>
+                            </div>
+                        )}
+
+                        {/* Upsell Drawer / Section */}
+                        {items.length > 0 && (
+                            <div className="p-6 bg-white border-t border-stone-100">
+                                <h3 className="text-sm font-medium text-stone-900 mb-4">אל תשכח להוסיף...</h3>
+                                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
+                                    {UPSELL_ITEMS.map((item) => (
+                                        <div key={item.id} className="min-w-[120px] bg-stone-50 rounded-lg p-2 flex flex-col items-center text-center border border-stone-100">
+                                            <div className="w-16 h-16 bg-white rounded-full mb-2 overflow-hidden relative">
+                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <span className="text-xs font-medium text-stone-900 line-clamp-1">{item.name}</span>
+                                            <span className="text-xs text-stone-500 mb-2">₪{item.price}</span>
+                                            <button
+                                                onClick={() => handleAddUpsell(item)}
+                                                className="w-full bg-white border border-david-green text-david-green text-[10px] font-bold py-1 rounded hover:bg-david-green hover:text-white transition-colors"
+                                            >
+                                                הוספה
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </motion.div>

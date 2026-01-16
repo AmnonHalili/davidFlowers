@@ -3,6 +3,7 @@
 import { updateProduct } from '@/app/actions/product-actions';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { useState } from 'react';
+import { CATEGORIES } from '@/lib/categories';
 
 export default function EditProductForm({ product }: { product: any }) {
     const [imageUrl, setImageUrl] = useState(product.images[0]?.url || '');
@@ -37,8 +38,17 @@ export default function EditProductForm({ product }: { product: any }) {
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-stone-900">קטגוריה (לקריאה בלבד כרגע)</label>
-                    <input disabled value={product.categories[0]?.name || ''} className="w-full p-3 bg-stone-50 border border-stone-200 rounded-md outline-none text-stone-500 cursor-not-allowed" />
+                    <label className="text-sm font-medium text-stone-900">קטגוריה</label>
+                    <select
+                        name="category"
+                        defaultValue={product.categories[0]?.slug || ''} // Use slug for value
+                        className="w-full p-3 bg-white border border-stone-200 rounded-md outline-none cursor-pointer"
+                        dir="rtl"
+                    >
+                        {CATEGORIES.map((cat) => (
+                            <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 

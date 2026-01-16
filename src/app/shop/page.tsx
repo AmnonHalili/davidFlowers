@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import Link from 'next/link';
 import ProductCard from '@/components/shop/ProductCard';
 
 const prisma = new PrismaClient();
@@ -14,8 +15,15 @@ async function getProducts() {
     return products;
 }
 
+async function getCategories() {
+    return await prisma.category.findMany({
+        orderBy: { name: 'asc' }
+    });
+}
+
 export default async function ShopPage() {
     const products = await getProducts();
+    const categories = await getCategories();
 
     return (
         <div className="min-h-screen bg-white pt-32 pb-20">
@@ -40,24 +48,23 @@ export default async function ShopPage() {
 
                     {/* Scrollable list */}
                     <div className="flex justify-start md:justify-center gap-8 overflow-x-auto scrollbar-hide pb-0 mask-gradient" style={{ WebkitMaskImage: 'linear-gradient(to left, black 90%, transparent 100%)' }}>
-                        {['הכל', 'זרים לשבת', 'אירועים', 'רומנטיקה', 'צמחים'].map((filter, i) => {
-                            const isActive = i === 0;
-                            return (
-                                <button
-                                    key={filter}
-                                    className={`
-                                   relative pb-4 text-sm tracking-wide transition-colors whitespace-nowrap z-10
-                                   ${isActive ? 'text-stone-900 font-medium' : 'text-stone-400 hover:text-stone-900'}
-                                 `}
-                                >
-                                    {filter}
-                                    {/* Active Indicator Line */}
-                                    {isActive && (
-                                        <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-stone-900" />
-                                    )}
-                                </button>
-                            );
-                        })}
+                        {/* "All" Link - Active here */}
+                        <button
+                            className="relative pb-4 text-sm tracking-wide transition-colors whitespace-nowrap z-10 text-stone-900 font-medium"
+                        >
+                            הכל
+                            <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-stone-900" />
+                        </button>
+
+                        {categories.map((cat) => (
+                            <Link
+                                key={cat.id}
+                                href={`/shop/${cat.slug}`}
+                                className="relative pb-4 text-sm tracking-wide transition-colors whitespace-nowrap z-10 text-stone-400 hover:text-stone-900"
+                            >
+                                {cat.name}
+                            </Link>
+                        ))}
                     </div>
                 </div>
 
