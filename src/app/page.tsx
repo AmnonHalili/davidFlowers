@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowLeft, Flower2 } from 'lucide-react';
+import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
 
-// Configuration for Hero Video
-// To use a video background, replace null with the path to your video file (e.g., '/hero-video.mp4')
-const HERO_VIDEO_URL: string | null = '/David-Video.mp4';
+// Configuration for Hero Videos
+const HERO_VIDEOS = ['/David-Video.mp4', '/David-Video2.mp4'];
 
 export default function Home() {
   const { scrollY } = useScroll();
@@ -18,16 +18,8 @@ export default function Home() {
       <section className="relative h-screen w-full overflow-hidden">
         {/* Background - Video or Parallax Image */}
         <div className="absolute inset-0 bg-stone-900">
-          {HERO_VIDEO_URL ? (
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-90"
-            >
-              <source src={HERO_VIDEO_URL} type="video/mp4" />
-            </video>
+          {HERO_VIDEOS.length > 0 ? (
+            <SeamlessVideoPlayer videos={HERO_VIDEOS} />
           ) : (
             <motion.div
               style={{ y: y1 }}

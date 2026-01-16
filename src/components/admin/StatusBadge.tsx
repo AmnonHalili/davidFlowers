@@ -1,26 +1,28 @@
 import { OrderStatus } from "@prisma/client";
 
-export function StatusBadge({ status }: { status: OrderStatus }) {
+interface StatusBadgeProps {
+    status: OrderStatus;
+}
+
+export default function StatusBadge({ status }: StatusBadgeProps) {
     const styles = {
-        PENDING: "bg-amber-50 text-amber-700 ring-amber-600/20",
-        PAID: "bg-blue-50 text-blue-700 ring-blue-600/20",
-        PROCESSING: "bg-purple-50 text-purple-700 ring-purple-600/20",
-        SHIPPED: "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
-        DELIVERED: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-        CANCELLED: "bg-rose-50 text-rose-700 ring-rose-600/20",
+        PENDING: "bg-yellow-100 text-yellow-800 border-yellow-200",
+        PAID: "bg-blue-100 text-blue-800 border-blue-200",
+        SHIPPED: "bg-purple-100 text-purple-800 border-purple-200",
+        DELIVERED: "bg-green-100 text-green-800 border-green-200",
+        CANCELLED: "bg-red-100 text-red-800 border-red-200",
     };
 
     const labels = {
         PENDING: "ממתין",
         PAID: "שולם",
-        PROCESSING: "בטיפול",
         SHIPPED: "נשלח",
         DELIVERED: "נמסר",
         CANCELLED: "בוטל",
     };
 
     return (
-        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${styles[status]}`}>
+        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[status]}`}>
             {labels[status]}
         </span>
     );

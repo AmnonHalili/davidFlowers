@@ -1,49 +1,22 @@
 'use server';
 
-import { PrismaClient, OrderStatus } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
+import { OrderStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 export async function getOrders() {
     try {
         const orders = await prisma.order.findMany({
+            orderBy: { createdAt: 'desc' },
             include: {
-                user: {
-                    select: {
-                        name: true,
-                        email: true,
-                    }
-                },
-                items: {
-                    include: {
-                        product: true
-                    }
-                }
-            },
-            orderBy: {
-                createdAt: 'desc'
+                user: { select: { name: true, email: true } },
+                _count: { select: { items: true } }
             }
         });
-        return { success: true, data: orders };
+        return orders;
     } catch (error) {
-        console.error('Failed to fetch orders:', error);
-        return { success: false, error: 'Failed to fetch orders' };
-    }
-}
-
-export async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
-    try {
-        await prisma.order.update({
-            where: { id: orderId },
-            data: { status: newStatus }
-        });
-
-        revalidatePath('/admin/orders');
-        return { success: true };
-    } catch (error) {
-        console.error('Failed to update order status:', error);
-        return { success: false, error: 'Failed to update status' };
+        console.error("Error fetching orders:", error);
+        return [];
     }
 }
 
@@ -52,22 +25,32 @@ export async function getOrder(id: string) {
         const order = await prisma.order.findUnique({
             where: { id },
             include: {
-                user: {
-                    select: {
-                        name: true,
-                        email: true,
-                    }
-                },
+                user: true,
                 items: {
                     include: {
-                        product: true
+                        product: { select: { name: true, price: true, images: { take: 1 } } }
                     }
                 }
             }
         });
-        return { success: true, data: order };
+        return order;
     } catch (error) {
-        console.error('Failed to fetch order:', error);
-        return { success: false, error: 'Failed to fetch order' };
+        console.error("Error fetching order:", error);
+        return null;
+    }
+}
+
+export async function updateOrderStatus(id: string, newStatus: OrderStatus) {
+    try {
+        await prisma.order.update({
+            where: { id },
+            data: { status: newStatus }
+        });
+        revalidatePath('/admin/orders');
+        revalidatePath(`/admin/orders/${id}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        return { success: false, error: "Failed to update status" };
     }
 }

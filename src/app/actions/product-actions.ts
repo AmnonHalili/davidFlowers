@@ -1,12 +1,10 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { CATEGORIES, getCategoryName } from '@/lib/categories';
-
-const prisma = new PrismaClient();
 
 export async function createProduct(formData: FormData) {
     const name = formData.get('name') as string;
@@ -119,4 +117,39 @@ export async function deleteProduct(formData: FormData) {
 
     revalidatePath('/admin/products');
     revalidatePath('/shop');
+}
+
+export async function searchProducts(query: string) {
+    if (!query || query.length < 2) return [];
+
+    try {
+        const products = await prisma.product.findMany({
+            where: {
+                OR: [
+                    { name: { contains: query, mode: 'insensitive' } },
+                    { description: { contains: query, mode: 'insensitive' } },
+                ]
+            },
+            take: 6,
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                price: true,
+                images: {
+                    take: 1
+                },
+                categories: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        });
+
+        return products;
+    } catch (error) {
+        console.error('Error searching products:', error);
+        return [];
+    }
 }
