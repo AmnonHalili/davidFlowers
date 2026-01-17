@@ -137,23 +137,31 @@ export default async function AccountPage() {
                                         <th className="px-6 py-4">סטטוס</th>
                                         <th className="px-6 py-4">סה״כ</th>
                                         <th className="px-6 py-4">פריטים</th>
+                                        <th className="px-6 py-4"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-stone-100">
                                     {orders.map((order) => (
-                                        <tr key={order.id} className="text-sm hover:bg-stone-50/50 transition-colors">
-                                            <td className="px-6 py-4 font-mono text-stone-400">#{order.id.slice(-6)}</td>
+                                        <tr key={order.id} className="text-sm hover:bg-stone-50/50 transition-colors group">
+                                            <td className="px-6 py-4 font-mono text-stone-400">
+                                                <Link href={`/success?orderId=${order.id}`} className="block w-full h-full text-david-green hover:underline">
+                                                    #{order.id.slice(-6).toUpperCase()}
+                                                </Link>
+                                            </td>
                                             <td className="px-6 py-4 text-stone-600">
                                                 {new Date(order.createdAt).toLocaleDateString('he-IL')}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <StatusBadge status={order.status} />
                                             </td>
-                                            <td className="px-6 py-4 font-medium text-stone-900">
-                                                ₪{Number(order.totalAmount).toFixed(2)}
-                                            </td>
+                                            ₪{Number(order.totalAmount).toFixed(2)}
                                             <td className="px-6 py-4 text-stone-500">
                                                 {order.items.map(i => i.product.name).join(', ')}
+                                            </td>
+                                            <td className="px-6 py-4 text-left">
+                                                <Link href={`/success?orderId=${order.id}`} className="text-david-green text-xs font-bold hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    צפייה בקבלה
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))}

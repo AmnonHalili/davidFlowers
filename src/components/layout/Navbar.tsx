@@ -1,9 +1,12 @@
 'use client';
 
+import { Link as NextLink } from 'next/link'; // Alias to avoid conflict if needed, or just use Link
+// Actually, standard Link is fine.
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, User, Menu, Search, Lock } from 'lucide-react';
+import { ShoppingBag, User, Menu, Search, Lock, Phone, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
@@ -31,7 +34,41 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
     return (
         <header className="relative z-50 rtl" dir="rtl">
             <nav className="fixed top-0 left-0 right-0 bg-david-beige z-50 transition-all duration-300 border-b border-[#DCDBCF]">
-                <div className="max-w-screen-2xl mx-auto px-6 h-24 flex items-center justify-between md:grid md:grid-cols-12 relative">
+                {/* Top Contact Bar */}
+                <div className="bg-stone-900 text-white py-1.5 px-4 text-[10px] md:text-xs font-medium tracking-wide">
+                    <div className="max-w-screen-2xl mx-auto flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <a href="tel:0535879344" className="flex items-center gap-1.5 hover:text-stone-300 transition-colors">
+                                <Phone className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                <span className="dir-ltr">053-587-9344</span>
+                            </a>
+                            <span className="text-stone-700 hidden md:inline">|</span>
+                            <a
+                                href="https://waze.com/ul?ll=31.66926,34.57149&navigate=yes"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:text-stone-300 transition-colors hidden md:flex"
+                            >
+                                <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                <span>רחבעם זאבי 4, אשקלון</span>
+                            </a>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {/* Mobile Address (shown only on mobile on right side if needed, or hidden to save space) */}
+                            <a
+                                href="https://waze.com/ul?ll=31.66926,34.57149&navigate=yes"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 block md:hidden hover:text-stone-300 transition-colors"
+                            >
+                                <MapPin className="w-3 h-3" />
+                                <span>אשקלון</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="max-w-screen-2xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between md:grid md:grid-cols-12 relative">
 
                     {/* Mobile: Hamburger Menu (Right Side / Start) */}
                     <div className="md:hidden flex justify-start z-10">
@@ -45,7 +82,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
 
                     {/* Logo (Center on Mobile, Right/Start on Desktop) */}
                     <div className="md:col-span-2 flex justify-start absolute left-1/2 -translate-x-1/2 md:static md:transform-none">
-                        <Link href="/" className="relative block w-[120px] h-[45px] md:w-[200px] md:h-[70px]">
+                        <Link href="/" className="relative block w-[100px] h-[40px] md:w-[200px] md:h-[70px]">
                             <Image
                                 src="/David-Logo-removebg-preview.png"
                                 alt="David Flowers"
@@ -115,8 +152,8 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                 </div>
             </nav>
 
-            {/* Spacer to prevent content from hiding behind fixed navbar */}
-            <div className="h-24" />
+            {/* Spacer to prevent content from hiding behind fixed navbar (increased height for TopBar) */}
+            <div className="h-28 md:h-32" />
 
             {/* Mobile Menu Overlay */}
             <AnimatePresence>

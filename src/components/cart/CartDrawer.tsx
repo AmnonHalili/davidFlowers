@@ -1,14 +1,14 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Plus, Trash2, Lock } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Lock, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { getUpsellProducts } from '@/app/actions/product-actions';
 
 export default function CartDrawer() {
-    const { isOpen, closeCart, items, removeItem, addItem, cartTotal } = useCart();
+    const { isOpen, closeCart, items, removeItem, addItem, updateQuantity, cartTotal } = useCart();
     const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
     const [address, setAddress] = useState('');
     const [upsellItems, setUpsellItems] = useState<any[]>([]);
@@ -176,14 +176,14 @@ export default function CartDrawer() {
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center border border-stone-200 rounded-sm">
                                                             <button
-                                                                onClick={() => {/* logic to decrease */ }} // Simplified for UI demo, should update quantity
+                                                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                                                 className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
                                                             >
                                                                 <Minus className="w-3 h-3" />
                                                             </button>
                                                             <span className="w-8 text-center text-sm font-medium text-stone-900">{item.quantity}</span>
                                                             <button
-                                                                onClick={() => {/* logic to increase */ }}
+                                                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                                                 className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
                                                             >
                                                                 <Plus className="w-3 h-3" />

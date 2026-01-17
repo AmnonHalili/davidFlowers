@@ -9,10 +9,25 @@ export default function Footer() {
                         <div className="relative w-[180px] h-[60px] md:w-[220px] md:h-[80px]">
                             <h3 className="font-serif text-3xl tracking-widest leading-none">דוד פרחים</h3>
                         </div>
-                        <p className="text-sm font-light leading-relaxed max-w-xs text-david-beige/80">
-                            פרחים טריים, עיצובים ייחודיים ומתנות מרגשות באשקלון והסביבה.
-                        </p>
-                        <div className="flex gap-4 items-center text-david-beige/80">
+                        <div className="space-y-4 text-sm font-light text-david-beige/80">
+                            <p>פרחים טריים, עיצובים ייחודיים ומתנות מרגשות באשקלון והסביבה.</p>
+                            <div className="flex flex-col gap-1">
+                                <a
+                                    href="https://waze.com/ul?ll=31.66926,34.57149&navigate=yes"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-white transition-colors flex items-center gap-2"
+                                >
+                                    <MapPin className="w-4 h-4" />
+                                    <span>רחבעם זאבי 4, אשקלון</span>
+                                </a>
+                                <a href="tel:0535879344" className="hover:text-white transition-colors flex items-center gap-2">
+                                    <Phone className="w-4 h-4" />
+                                    <span>053-587-9344</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div className="flex gap-4 items-center text-david-beige/80 pt-2">
                             {/* Social Icons using Lucide React */}
                             <a href="#" className="hover:text-white transition-colors" aria-label="Instagram">
                                 <InstagramIcon className="w-5 h-5" />
@@ -20,9 +35,7 @@ export default function Footer() {
                             <a href="#" className="hover:text-white transition-colors" aria-label="Facebook">
                                 <FacebookIcon className="w-5 h-5" />
                             </a>
-                            <a href="#" className="hover:text-white transition-colors" aria-label="WhatsApp">
-                                <PhoneIcon className="w-5 h-5" />
-                            </a>
+
                         </div>
                     </div>
 
@@ -73,7 +86,7 @@ export default function Footer() {
 // Simple Icon wrappers to avoid importing everything if not needed, 
 // strictly standard Lucide icons: Instagram, Facebook, Phone (for WhatsApp usually used or MessageCircle)
 // I will import them from lucide-react at top
-import { Instagram, Facebook, Phone } from 'lucide-react';
+import { Instagram, Facebook, Phone, MapPin } from 'lucide-react';
 
 function InstagramIcon(props: any) { return <Instagram {...props} strokeWidth={1.5} />; }
 function FacebookIcon(props: any) { return <Facebook {...props} strokeWidth={1.5} />; }

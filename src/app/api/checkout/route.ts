@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         const order = await prisma.order.create({
             data: {
                 userId: userId, // Assuming all users are synced to DB. If not, might need a check.
-                total: totalAmount,
+                totalAmount: totalAmount,
                 status: 'PENDING',
                 items: {
                     create: items.map((item: any) => ({
