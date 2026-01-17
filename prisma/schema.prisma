@@ -14,6 +14,8 @@ model User {
   email         String         @unique
   name          String?
   image         String?
+  phone         String?
+  address       String?
   orders        Order[]
   subscriptions Subscription[]
   createdAt     DateTime       @default(now())
@@ -73,11 +75,19 @@ model Order {
   // Gift & Shipping Info (As requested)
   recipientName     String
   shippingAddress   String
+  recipientPhone    String?     // Critical for delivery
+  desiredDeliveryDate DateTime?
   cardMessage       String?
   
   stripePaymentId   String?     @unique
+  paymentMethod     PaymentMethod @default(CREDIT_CARD)
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  CASH
 }
 
 model OrderItem {

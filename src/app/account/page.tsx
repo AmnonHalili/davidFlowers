@@ -57,7 +57,7 @@ export default async function AccountPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
                     {/* Active Subscription Card */}
-                    <div className="bg-white p-8 border border-stone-100 shadow-sm md:col-span-2 relative overflow-hidden group">
+                    <div className="bg-white p-8 border border-stone-100 shadow-sm relative overflow-hidden group">
                         <div className="relative z-10 w-full">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center text-stone-900">
@@ -98,6 +98,31 @@ export default async function AccountPage() {
                                     </Link>
                                 </div>
                             )}
+                        </div>
+                    </div>
+
+                    {/* Profile Details Card */}
+                    <div className="bg-white p-8 border border-stone-100 shadow-sm relative overflow-hidden group">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center text-stone-900">
+                                <Settings strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        <h2 className="font-serif text-2xl text-stone-900 mb-4">פרטים אישיים</h2>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs text-stone-400 uppercase tracking-wider block mb-1">אימייל</label>
+                                <p className="text-stone-900 font-medium">{user.email}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs text-stone-400 uppercase tracking-wider block mb-1">טלפון</label>
+                                <p className="text-stone-900 font-medium">{user.phone || '—'}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs text-stone-400 uppercase tracking-wider block mb-1">כתובת למשלוח</label>
+                                <p className="text-stone-900 font-medium">{user.address || '—'}</p>
+                            </div>
                         </div>
                     </div>
 

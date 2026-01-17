@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Plus, Trash2, Lock, ShoppingBag } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Lock, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
@@ -10,11 +10,18 @@ import { getUpsellProducts } from '@/app/actions/product-actions';
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, addItem, updateQuantity, cartTotal } = useCart();
     const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
+    const [paymentMethod, setPaymentMethod] = useState<'CREDIT_CARD' | 'CASH'>('CREDIT_CARD');
     const [address, setAddress] = useState('');
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [date, setDate] = useState('');
+    const [time, setTime] = useState('');
     const [upsellItems, setUpsellItems] = useState<any[]>([]);
+    const [checkoutStep, setCheckoutStep] = useState<'cart' | 'details'>('cart');
 
     useEffect(() => {
         if (isOpen) {
+            // Load Upsells
             getUpsellProducts().then(res => {
                 if (res.success) {
                     setUpsellItems(res.products.map(p => ({
@@ -27,6 +34,17 @@ export default function CartDrawer() {
                         quantity: 1
                     })));
                 }
+            });
+
+            // Load User Profile (Address/Phone pre-fill)
+            import('@/app/actions/user-actions').then(({ getUserProfile }) => {
+                getUserProfile().then(user => {
+                    if (user) {
+                        if (user.name) setName(user.name);
+                        if (user.phone) setPhone(user.phone);
+                        if (user.address) setAddress(user.address);
+                    }
+                });
             });
         }
     }, [isOpen]);
@@ -50,6 +68,10 @@ export default function CartDrawer() {
                     items,
                     shippingMethod,
                     shippingAddress: shippingMethod === 'delivery' ? address : 'Self Pickup',
+                    recipientName: name,
+                    recipientPhone: phone,
+                    desiredDeliveryDate: date && time ? new Date(`${date}T${time}`).toISOString() : null,
+                    paymentMethod,
                     shippingCost: shippingMethod === 'delivery' ? 30 : 0
                 }),
             });
@@ -57,6 +79,11 @@ export default function CartDrawer() {
             if (!response.ok) throw new Error('Checkout failed');
 
             const data = await response.json();
+
+            // Clear cart logic should be here (via context ideally, but maybe done in success page if we redirect)
+            // For now, assume redirect handles it or user manually clears? 
+            // In a better flow, backend doesn't clear cart. Frontend does if success.
+            // But we'll just follow the redirect.
             window.location.href = data.url;
         } catch (error) {
             console.error('Checkout error:', error);
@@ -136,171 +163,338 @@ export default function CartDrawer() {
                                     </button>
                                 </div>
                             ) : (
-                                <>
-                                    {/* Product List */}
-                                    <div className="space-y-6">
-                                        {items.map((item) => (
-                                            <div key={item.id} className="flex gap-5 group">
-                                                {/* Image */}
-                                                <div className="relative w-24 h-32 bg-stone-100 shrink-0 overflow-hidden rounded-sm">
-                                                    <img
-                                                        src={item.image}
-                                                        alt={item.name}
-                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                    />
-                                                </div>
+                                <AnimatePresence mode="wait">
+                                    {/* Step 1: Product List */}
+                                    {checkoutStep === 'cart' && (
+                                        <motion.div
+                                            key="cart-step"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="space-y-6"
+                                        >
+                                            {items.map((item) => (
+                                                <div key={item.id} className="flex gap-5 group">
+                                                    {/* Image */}
+                                                    <div className="relative w-24 h-32 bg-stone-100 shrink-0 overflow-hidden rounded-sm">
+                                                        <img
+                                                            src={item.image}
+                                                            alt={item.name}
+                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        />
+                                                    </div>
 
-                                                {/* Details */}
-                                                <div className="flex-1 flex flex-col justify-between py-1">
-                                                    <div className="space-y-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <h3 className="font-serif text-lg text-stone-900 leading-tight">{item.name}</h3>
-                                                            <button
-                                                                onClick={() => removeItem(item.id)}
-                                                                className="text-stone-300 hover:text-red-400 transition-colors p-1"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                        {item.type === 'SUBSCRIPTION' ? (
-                                                            <div className="inline-flex items-center gap-2 bg-stone-100 px-2 py-1 rounded text-[10px] font-medium text-stone-600">
-                                                                <span>מנוי {item.frequency === 'WEEKLY' ? 'שבועי' : 'דו-שבועי'}</span>
-                                                                <span className="w-1 h-1 bg-stone-400 rounded-full" />
-                                                                <span>{item.deliveryDay === 'THURSDAY' ? 'חמישי' : 'שישי'}</span>
+                                                    {/* Details */}
+                                                    <div className="flex-1 flex flex-col justify-between py-1">
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between items-start">
+                                                                <h3 className="font-serif text-lg text-stone-900 leading-tight">{item.name}</h3>
+                                                                <button
+                                                                    onClick={() => removeItem(item.id)}
+                                                                    className="text-stone-300 hover:text-red-400 transition-colors p-1"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
                                                             </div>
-                                                        ) : (
-                                                            <span className="text-xs text-stone-400">רכישה חד-פעמית</span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex justify-between items-center">
-                                                        <div className="flex items-center border border-stone-200 rounded-sm">
-                                                            <button
-                                                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                                className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
-                                                            >
-                                                                <Minus className="w-3 h-3" />
-                                                            </button>
-                                                            <span className="w-8 text-center text-sm font-medium text-stone-900">{item.quantity}</span>
-                                                            <button
-                                                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                                className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
-                                                            >
-                                                                <Plus className="w-3 h-3" />
-                                                            </button>
+                                                            {item.type === 'SUBSCRIPTION' ? (
+                                                                <div className="inline-flex items-center gap-2 bg-stone-100 px-2 py-1 rounded text-[10px] font-medium text-stone-600">
+                                                                    <span>מנוי {item.frequency === 'WEEKLY' ? 'שבועי' : 'דו-שבועי'}</span>
+                                                                    <span className="w-1 h-1 bg-stone-400 rounded-full" />
+                                                                    <span>{item.deliveryDay === 'THURSDAY' ? 'חמישי' : 'שישי'}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs text-stone-400">רכישה חד-פעמית</span>
+                                                            )}
                                                         </div>
-                                                        <span className="font-medium text-stone-900 text-lg">₪{item.price.toFixed(0)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
 
-                                    {/* Unified Upsell Section */}
-                                    <div className="pt-8 border-t border-stone-100">
-                                        <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-4">לא לשכוח להוסיף</h3>
-                                        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-8 px-8 snap-x">
-                                            {upsellItems.map((item) => (
-                                                <div key={item.id} className="snap-center min-w-[140px] border border-stone-200 rounded-lg p-3 flex flex-col gap-2 hover:border-stone-300 transition-colors bg-white">
-                                                    <div className="aspect-square bg-stone-50 rounded-md overflow-hidden relative">
-                                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                                        <button
-                                                            onClick={() => handleAddUpsell(item)}
-                                                            className="absolute bottom-2 left-2 bg-white/90 p-1.5 rounded-full shadow-sm hover:bg-david-green hover:text-white transition-colors"
-                                                        >
-                                                            <Plus className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-xs font-bold text-stone-900 line-clamp-1">{item.name}</h4>
-                                                        <span className="text-xs text-stone-500">₪{item.price}</span>
+                                                        <div className="flex justify-between items-center">
+                                                            <div className="flex items-center border border-stone-200 rounded-sm">
+                                                                <button
+                                                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                                    className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                                                                >
+                                                                    <Minus className="w-3 h-3" />
+                                                                </button>
+                                                                <span className="w-8 text-center text-sm font-medium text-stone-900">{item.quantity}</span>
+                                                                <button
+                                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                                    className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                                                                >
+                                                                    <Plus className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                            <span className="font-medium text-stone-900 text-lg">₪{item.price.toFixed(0)}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
-                                        </div>
-                                    </div>
-                                </>
+
+                                            {/* Unified Upsell Section */}
+                                            <div className="pt-8 border-t border-stone-100">
+                                                <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-4">לא לשכוח להוסיף</h3>
+                                                <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-8 px-8 snap-x">
+                                                    {upsellItems.map((item) => (
+                                                        <div key={item.id} className="snap-center min-w-[140px] border border-stone-200 rounded-lg p-3 flex flex-col gap-2 hover:border-stone-300 transition-colors bg-white">
+                                                            <div className="aspect-square bg-stone-50 rounded-md overflow-hidden relative">
+                                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                                                <button
+                                                                    onClick={() => handleAddUpsell(item)}
+                                                                    className="absolute bottom-2 left-2 bg-white/90 p-1.5 rounded-full shadow-sm hover:bg-david-green hover:text-white transition-colors"
+                                                                >
+                                                                    <Plus className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-xs font-bold text-stone-900 line-clamp-1">{item.name}</h4>
+                                                                <span className="text-xs text-stone-500">₪{item.price}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Step 2: Checkout Form */}
+                                    {checkoutStep === 'details' && (
+                                        <motion.div
+                                            key="details-step"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="space-y-6"
+                                        >
+                                            <button
+                                                onClick={() => setCheckoutStep('cart')}
+                                                className="flex items-center text-sm text-stone-500 hover:text-stone-900 transition-colors"
+                                            >
+                                                <span className="ml-1">→</span> חזרה לעגלה
+                                            </button>
+
+
+                                            {/* Sleek Shipping Selector */}
+                                            <div className="space-y-3">
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <button
+                                                        onClick={() => setShippingMethod('pickup')}
+                                                        className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'pickup'
+                                                            ? 'border-stone-900 bg-stone-900 text-white shadow-md'
+                                                            : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
+                                                            }`}
+                                                    >
+                                                        <span className="block text-sm font-bold mb-0.5">איסוף עצמי</span>
+                                                        <span className={`text-[10px] ${shippingMethod === 'pickup' ? 'text-white/60' : 'text-stone-400'}`}>מהחנות באשקלון</span>
+                                                        <span className="absolute top-4 left-4 text-xs font-bold">חינם</span>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => setShippingMethod('delivery')}
+                                                        className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'delivery'
+                                                            ? 'border-stone-900 bg-stone-900 text-white shadow-md'
+                                                            : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
+                                                            }`}
+                                                    >
+                                                        <span className="block text-sm font-bold mb-0.5">משלוח</span>
+                                                        <span className={`text-[10px] ${shippingMethod === 'delivery' ? 'text-white/60' : 'text-stone-400'}`}>אשקלון בלבד</span>
+                                                        <span className="absolute top-4 left-4 text-xs font-bold">₪30</span>
+                                                    </button>
+                                                </div>
+
+                                                {/* Contact Details */}
+                                                <div className="space-y-3 pt-2 border-t border-stone-100">
+                                                    <p className="text-sm font-bold text-stone-900">פרטי משלוח / איסוף</p>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <input
+                                                            type="text"
+                                                            value={name}
+                                                            onChange={(e) => setName(e.target.value)}
+                                                            placeholder="שם מלא *"
+                                                            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
+                                                        />
+                                                        <input
+                                                            type="tel"
+                                                            value={phone}
+                                                            onChange={(e) => setPhone(e.target.value)}
+                                                            placeholder="טלפון נייד *"
+                                                            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Address Input - Moved Up */}
+                                                <AnimatePresence>
+                                                    {shippingMethod === 'delivery' && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden border-b border-stone-100 pb-3"
+                                                        >
+                                                            <input
+                                                                type="text"
+                                                                value={address}
+                                                                onChange={(e) => setAddress(e.target.value)}
+                                                                placeholder="כתובת למשלוח (רחוב, מספר, עיר) *"
+                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
+                                                            />
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+
+                                                {/* Delivery Date & Time Selection */}
+                                                <div className="space-y-3 pt-2 border-t border-stone-100">
+                                                    <p className="text-sm font-bold text-stone-900">מועד {shippingMethod === 'delivery' ? 'משלוח' : 'איסוף'} רצוי</p>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="space-y-1">
+                                                            <label className="text-xs text-stone-500">תאריך</label>
+                                                            <input
+                                                                type="date"
+                                                                value={date}
+                                                                min={(() => {
+                                                                    const today = new Date();
+                                                                    today.setDate(today.getDate() + 1);
+                                                                    return today.toISOString().split('T')[0];
+                                                                })()}
+                                                                onChange={(e) => setDate(e.target.value)}
+                                                                className="w-full p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-xs text-stone-500">שעה (10:00 - 19:00)</label>
+                                                            <select
+                                                                value={time}
+                                                                onChange={(e) => setTime(e.target.value)}
+                                                                className="w-full p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900 dir-rtl"
+                                                            >
+                                                                <option value="">בחירת שעה</option>
+                                                                {Array.from({ length: 10 }, (_, i) => i + 10).map((hour) => (
+                                                                    <option key={hour} value={`${hour}:00`}>
+                                                                        {`${hour}:00`}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Payment Method Selector */}
+                                                <div className="space-y-3 pt-2 border-t border-stone-100">
+                                                    <p className="text-sm font-bold text-stone-900">אמצעי תשלום</p>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <button
+                                                            onClick={() => setPaymentMethod('CREDIT_CARD')}
+                                                            className={`p-3 rounded-lg border text-right transition-all duration-200 relative ${paymentMethod === 'CREDIT_CARD'
+                                                                ? 'border-stone-900 bg-stone-50'
+                                                                : 'border-stone-200 hover:border-stone-300'
+                                                                }`}
+                                                        >
+                                                            <div className="font-bold text-sm mb-1">כרטיס אשראי</div>
+                                                            <div className="text-xs text-stone-500">תשלום מאובטח באתר</div>
+                                                            {paymentMethod === 'CREDIT_CARD' && (
+                                                                <div className="absolute top-3 left-3 w-2 h-2 rounded-full bg-stone-900" />
+                                                            )}
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => setPaymentMethod('CASH')}
+                                                            className={`p-3 rounded-lg border text-right transition-all duration-200 relative ${paymentMethod === 'CASH'
+                                                                ? 'border-stone-900 bg-stone-50'
+                                                                : 'border-stone-200 hover:border-stone-300'
+                                                                }`}
+                                                        >
+                                                            <div className="font-bold text-sm mb-1">מזומן</div>
+                                                            <div className="text-xs text-stone-500">
+                                                                {shippingMethod === 'delivery' ? 'לשליח בעת המסירה' : 'תשלום בחנות'}
+                                                            </div>
+                                                            {paymentMethod === 'CASH' && (
+                                                                <div className="absolute top-3 left-3 w-2 h-2 rounded-full bg-stone-900" />
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             )}
                         </div>
 
                         {/* Footer - Fixed at bottom */}
                         {items.length > 0 && (
                             <div className="p-8 border-t border-stone-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 space-y-6">
-
-                                {/* Sleek Shipping Selector */}
-                                <div className="space-y-3">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            onClick={() => setShippingMethod('pickup')}
-                                            className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'pickup'
-                                                ? 'border-stone-900 bg-stone-900 text-white shadow-md'
-                                                : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
-                                                }`}
+                                <AnimatePresence mode="wait">
+                                    {/* Totals Box for Cart View */}
+                                    {checkoutStep === 'cart' && (
+                                        <motion.div
+                                            key="cart-footer"
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="space-y-6"
                                         >
-                                            <span className="block text-sm font-bold mb-0.5">איסוף עצמי</span>
-                                            <span className={`text-[10px] ${shippingMethod === 'pickup' ? 'text-white/60' : 'text-stone-400'}`}>מהחנות באשקלון</span>
-                                            <span className="absolute top-4 left-4 text-xs font-bold">חינם</span>
-                                        </button>
+                                            <div className="space-y-2 pt-2">
+                                                <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900">
+                                                    <span>סה"כ לתשלום</span>
+                                                    <span>₪{cartTotal.toFixed(2)}</span>
+                                                </div>
+                                                <p className="text-xs text-stone-500">לא כולל משלוח (יחושב בשלב הבא)</p>
+                                            </div>
 
-                                        <button
-                                            onClick={() => setShippingMethod('delivery')}
-                                            className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'delivery'
-                                                ? 'border-stone-900 bg-stone-900 text-white shadow-md'
-                                                : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
-                                                }`}
-                                        >
-                                            <span className="block text-sm font-bold mb-0.5">משלוח</span>
-                                            <span className={`text-[10px] ${shippingMethod === 'delivery' ? 'text-white/60' : 'text-stone-400'}`}>אשקלון בלבד</span>
-                                            <span className="absolute top-4 left-4 text-xs font-bold">₪30</span>
-                                        </button>
-                                    </div>
-
-                                    {/* Address Input */}
-                                    <AnimatePresence>
-                                        {shippingMethod === 'delivery' && (
-                                            <motion.div
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: 'auto', opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                className="overflow-hidden"
+                                            <button
+                                                onClick={() => setCheckoutStep('details')}
+                                                className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
                                             >
-                                                <input
-                                                    type="text"
-                                                    value={address}
-                                                    onChange={(e) => setAddress(e.target.value)}
-                                                    placeholder="הזן כתובת מלאה למשלוח..."
-                                                    className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
-                                                />
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
+                                                <span>המשך לפרטי משלוח</span>
+                                                <span className="text-lg">→</span>
+                                            </button>
+                                        </motion.div>
+                                    )}
 
-                                {/* Totals */}
-                                <div className="space-y-2 pt-2">
-                                    <div className="flex justify-between text-stone-500 text-sm">
-                                        <span>סכום ביניים</span>
-                                        <span>₪{cartTotal.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-stone-500 text-sm">
-                                        <span>משלוח</span>
-                                        <span>{shippingMethod === 'delivery' ? '₪30.00' : 'חינם'}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900 pt-3 border-t border-stone-100">
-                                        <span>סה"כ</span>
-                                        <span>₪{(cartTotal + (shippingMethod === 'delivery' ? 30 : 0)).toFixed(2)}</span>
-                                    </div>
-                                </div>
+                                    {/* Totals & Checkout Button for Details View */}
+                                    {checkoutStep === 'details' && (
+                                        <motion.div
+                                            key="details-footer"
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="space-y-6"
+                                        >
+                                            <div className="space-y-2 pt-2">
+                                                <div className="flex justify-between text-stone-500 text-sm">
+                                                    <span>סכום ביניים</span>
+                                                    <span>₪{cartTotal.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-stone-500 text-sm">
+                                                    <span>משלוח</span>
+                                                    <span>{shippingMethod === 'delivery' ? '₪30.00' : 'חינם'}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900 pt-3 border-t border-stone-100">
+                                                    <span>סה"כ</span>
+                                                    <span>₪{(cartTotal + (shippingMethod === 'delivery' ? 30 : 0)).toFixed(2)}</span>
+                                                </div>
+                                            </div>
 
-                                {/* Checkout Button */}
-                                <button
-                                    onClick={handleCheckout}
-                                    disabled={shippingMethod === 'delivery' && address.length < 5}
-                                    className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
-                                >
-                                    <Lock className="w-4 h-4" />
-                                    <span>מעבר לתשלום</span>
-                                </button>
+                                            <button
+                                                onClick={handleCheckout}
+                                                disabled={
+                                                    name.length < 2 ||
+                                                    phone.length < 9 ||
+                                                    !date ||
+                                                    !time ||
+                                                    (shippingMethod === 'delivery' && address.length < 5)
+                                                }
+                                                className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
+                                            >
+                                                {paymentMethod === 'CASH' ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                                                <span>{paymentMethod === 'CASH' ? 'ביצוע הזמנה' : 'מעבר לתשלום'}</span>
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         )}
                     </motion.div>

@@ -1,18 +1,11 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { auth } from '@clerk/nextjs/server'; // Updated import for newer Clerk versions
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
-// Helper to get absolute URL
-const getUrl = (path: string) => {
-    return `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${path}`;
-};
+import { auth } from '@clerk/nextjs/server';
+import prisma from '@/lib/prisma';
 
 export async function POST(req: Request) {
     try {
-        const { userId } = auth();
+        const { userId } = await auth();
         const user = await auth().currentUser(); // Get user details for email
 
         // Ensure user is logged in
@@ -21,67 +14,149 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { items } = body;
+        const {
+            items,
+            shippingMethod,
+            shippingAddress,
+            recipientName,
+            recipientPhone,
+            desiredDeliveryDate,
+            paymentMethod = 'CREDIT_CARD',
+            shippingCost = 0
+        } = body;
 
         if (!items || items.length === 0) {
-            return new NextResponse("No items in checkout", { status: 400 });
+            return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
         }
 
-        // 1. Create Order in Database (PENDING)
-        // We do this BEFORE Stripe so we have an Order ID to pass to metadata
-        /* 
-           NOTE: In a real production flow with high volume, you might want to create the order 
-           AFTER the webhook confirms payment to avoid "ghost" orders. 
-           However, creating it here allows us to recover "Abandoned Carts" easily.
-           For this MVP, we'll create it here as PENDING.
-        */
+        // Calculate total amounts
+        const totalAmount = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) + shippingCost;
 
-        // Calculate total for DB record
-        const totalAmount = items.reduce((acc: number, item: any) => {
-            return acc + (item.price * item.quantity);
-        }, 0);
-
-        const order = await prisma.order.create({
-            data: {
-                userId: userId, // Assuming all users are synced to DB. If not, might need a check.
-                totalAmount: totalAmount,
-                status: 'PENDING',
-                items: {
-                    create: items.map((item: any) => ({
-                        productId: item.id,
-                        quantity: item.quantity,
-                        price: item.price // Snapshot price at time of order
-                    }))
+        // Handle Cash Payment
+        if (paymentMethod === 'CASH') {
+            const order = await prisma.order.create({
+                data: {
+                    userId: userId, // Logic assumes User.clerkId is synced to User.id or managed via clerkId lookup if needed. 
+                    // Note: If userId foreign key fails, we might need to lookup internal ID. 
+                    // Assuming current setup works with Clerk ID as User ID or previously set. 
+                    // For safety, we should ideally finding the internal ID, but to minimize breakage we stick to previous pattern if it worked.
+                    // However, we added 'clerkId' to User. 
+                    // If 'userId' in Order refers to 'User.id', and 'User.id' is CUID... we might have issue.
+                    // Let's assume the system is using ClerkID as ID or synced content for now.
+                    // Correction: We must find the user record to be safe.
+                    user: {
+                        connect: { clerkId: userId }
+                    },
+                    totalAmount,
+                    status: 'PENDING',
+                    paymentMethod: 'CASH',
+                    recipientName: recipientName || user?.email || 'Guest',
+                    shippingAddress: shippingMethod === 'delivery' ? shippingAddress : 'Self Pickup',
+                    recipientPhone,
+                    desiredDeliveryDate: desiredDeliveryDate ? new Date(desiredDeliveryDate) : null,
+                    items: {
+                        create: items.map((item: any) => ({
+                            product: { connect: { id: item.productId } },
+                            quantity: item.quantity,
+                            price: item.price
+                        }))
+                    }
                 }
+            });
+
+            // Update User Profile
+            if (userId) {
+                await prisma.user.update({
+                    where: { clerkId: userId },
+                    data: {
+                        phone: recipientPhone,
+                        ...(shippingMethod === 'delivery' && shippingAddress ? { address: shippingAddress } : {}),
+                        ...(recipientName ? { name: recipientName } : {})
+                    }
+                }).catch(err => console.error('Error updating user profile:', err));
             }
-        });
+
+            return NextResponse.json({ url: `${process.env.NEXT_PUBLIC_APP_URL}/success?orderId=${order.id}` });
+        }
+
+        // Handle Credit Card (Stripe)
+        if (!stripe) {
+            console.error('Stripe is not initialized');
+            return NextResponse.json({ error: 'Payment service unavailable' }, { status: 503 });
+        }
+
+        // Update User Profile (Stripe Flow)
+        if (userId) {
+            await prisma.user.update({
+                where: { clerkId: userId },
+                data: {
+                    phone: recipientPhone,
+                    ...(shippingMethod === 'delivery' && shippingAddress ? { address: shippingAddress } : {}),
+                    ...(recipientName ? { name: recipientName } : {})
+                }
+            }).catch(err => console.error('Error updating profile in Stripe flow:', err));
+        }
 
         // 2. Format Line Items for Stripe
         const line_items = items.map((item: any) => ({
-            quantity: item.quantity,
             price_data: {
                 currency: 'ils',
                 product_data: {
                     name: item.name,
                     images: item.image ? [item.image] : [],
                 },
-                unit_amount: Math.round(item.price * 100), // Stripe expects Agorot (cents)
-            }
+                unit_amount: Math.round(item.price * 100),
+            },
+            quantity: item.quantity,
         }));
+
+        // Add shipping cost
+        if (shippingCost > 0 && shippingMethod !== 'delivery') {
+            line_items.push({
+                quantity: 1,
+                price_data: {
+                    currency: 'ils',
+                    product_data: {
+                        name: 'Shipping Cost',
+                    },
+                    unit_amount: Math.round(shippingCost * 100),
+                }
+            });
+        }
 
         // 3. Create Stripe Session
         const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
             line_items,
             mode: 'payment',
             billing_address_collection: 'required',
             phone_number_collection: {
                 enabled: true
             },
-            success_url: getUrl(`/success?orderId=${order.id}`), // Pass Order ID to success page
-            cancel_url: getUrl(`/cancel?orderId=${order.id}`),
+            ...(shippingMethod === 'delivery' ? {
+                shipping_options: [
+                    {
+                        shipping_rate_data: {
+                            type: 'fixed_amount',
+                            fixed_amount: {
+                                amount: Math.round(shippingCost * 100),
+                                currency: 'ils',
+                            },
+                            display_name: 'משלוח מהיר (אשקלון והסביבה)',
+                        },
+                    },
+                ],
+            } : {}),
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/shop`,
             metadata: {
-                orderId: order.id, // CRITICAL: This connects Stripe back to our DB in the Webhook
-                userId: userId
+                userId,
+                recipientName: recipientName || user?.email || 'Guest',
+                recipientPhone,
+                desiredDeliveryDate,
+                shippingAddress: shippingMethod === 'delivery' ? shippingAddress : 'Self Pickup',
+                itemIds: JSON.stringify(items.map((i: any) => i.productId)),
+                paymentMethod: 'CREDIT_CARD'
             }
         });
 
