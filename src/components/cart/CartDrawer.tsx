@@ -4,48 +4,38 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, Trash2, Lock } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getUpsellProducts } from '@/app/actions/product-actions';
 
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, addItem, cartTotal } = useCart();
     const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
     const [address, setAddress] = useState('');
+    const [upsellItems, setUpsellItems] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            getUpsellProducts().then(res => {
+                if (res.success) {
+                    setUpsellItems(res.products.map(p => ({
+                        id: p.id,
+                        productId: p.id,
+                        name: p.name,
+                        price: Number(p.price),
+                        image: p.images.find(i => i.isMain)?.url || p.images[0]?.url || '',
+                        type: 'ONETIME',
+                        quantity: 1
+                    })));
+                }
+            });
+        }
+    }, [isOpen]);
+
     const FREE_SHIPPING_THRESHOLD = 350;
     const progress = Math.min((cartTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
     const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - cartTotal;
 
-    // Mock Upsell Items - In a real app, these would be fetched or passed as props
-    const UPSELL_ITEMS = [
-        {
-            id: 'upsell-1',
-            productId: 'upsell-chocolates',
-            name: 'מארז פרלינים',
-            price: 45,
-            image: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&w=200&q=80',
-            type: 'ONETIME' as const,
-            quantity: 1
-        },
-        {
-            id: 'upsell-2',
-            productId: 'upsell-vase',
-            name: 'אגרטל זכוכית',
-            price: 60,
-            image: 'https://images.unsplash.com/photo-1581783342308-f792ca80ddc8?auto=format&fit=crop&w=200&q=80',
-            type: 'ONETIME' as const,
-            quantity: 1
-        },
-        {
-            id: 'upsell-3',
-            productId: 'upsell-card',
-            name: 'כרטיס ברכה',
-            price: 15,
-            image: 'https://images.unsplash.com/photo-1586075010923-2dd45eeed8bd?auto=format&fit=crop&w=200&q=80',
-            type: 'ONETIME' as const,
-            quantity: 1
-        }
-    ];
-
-    const handleAddUpsell = (item: typeof UPSELL_ITEMS[0]) => {
+    const handleAddUpsell = (item: any) => {
         addItem({ ...item, id: `${item.id}-${Date.now()}` }); // Ensure unique ID
     };
 
@@ -210,7 +200,7 @@ export default function CartDrawer() {
                                     <div className="pt-8 border-t border-stone-100">
                                         <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-4">לא לשכוח להוסיף</h3>
                                         <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-8 px-8 snap-x">
-                                            {UPSELL_ITEMS.map((item) => (
+                                            {upsellItems.map((item) => (
                                                 <div key={item.id} className="snap-center min-w-[140px] border border-stone-200 rounded-lg p-3 flex flex-col gap-2 hover:border-stone-300 transition-colors bg-white">
                                                     <div className="aspect-square bg-stone-50 rounded-md overflow-hidden relative">
                                                         <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
@@ -243,8 +233,8 @@ export default function CartDrawer() {
                                         <button
                                             onClick={() => setShippingMethod('pickup')}
                                             className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'pickup'
-                                                    ? 'border-stone-900 bg-stone-900 text-white shadow-md'
-                                                    : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
+                                                ? 'border-stone-900 bg-stone-900 text-white shadow-md'
+                                                : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
                                                 }`}
                                         >
                                             <span className="block text-sm font-bold mb-0.5">איסוף עצמי</span>
@@ -255,8 +245,8 @@ export default function CartDrawer() {
                                         <button
                                             onClick={() => setShippingMethod('delivery')}
                                             className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'delivery'
-                                                    ? 'border-stone-900 bg-stone-900 text-white shadow-md'
-                                                    : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
+                                                ? 'border-stone-900 bg-stone-900 text-white shadow-md'
+                                                : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
                                                 }`}
                                         >
                                             <span className="block text-sm font-bold mb-0.5">משלוח</span>

@@ -5,6 +5,7 @@ export const CATEGORIES = [
     { slug: 'chocolates', name: 'שוקולדים' },
     { slug: 'wedding', name: 'חתן וכלה' },
     { slug: 'vases', name: 'כלים ואגרטלים' },
+    { slug: 'add-ons', name: 'תוספות (Upsells)' },
 ];
 
 export const getCategoryName = (slug: string) => {

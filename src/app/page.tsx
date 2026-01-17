@@ -49,24 +49,24 @@ export default function Home() {
               קולקציית חורף 2026
             </h2>
             <h1 className="font-serif text-[3.5rem] leading-[1.1] md:text-7xl lg:text-8xl tracking-tight md:leading-tight">
-              פרחים, <br className="md:hidden" /> ברמה אחרת.
+              לשמח את <br className="md:hidden" /> מי שאתם אוהבים.
             </h1>
             <p className="font-light text-white/80 text-base md:text-xl max-w-xs md:max-w-lg mx-auto leading-relaxed">
-              חוויה של פריחה אצלך בבית. זרי בוטיק שזורים ביד, במשלוח שבועי.
+              אל תחכו לאירוע מיוחד. משלוחי פרחים טריים באשקלון והסביבה שהופכים כל רגע משגרה לחגיגה.
             </p>
 
             <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center items-center">
               <Link
-                href="/shop/bouquets"
+                href="/shop"
                 className="px-10 py-4 bg-white text-stone-900 uppercase tracking-widest text-xs font-bold hover:bg-stone-100 transition-colors min-w-[200px]"
               >
-                לקולקציה
+                להזמנת משלוח
               </Link>
               <Link
-                href="/shop/subscriptions"
+                href="/shop"
                 className="px-10 py-4 border border-white text-white uppercase tracking-widest text-xs font-bold hover:bg-white/10 transition-colors min-w-[200px]"
               >
-                מנוי הפתעה
+                לזרים הנמכרים ביותר
               </Link>
             </div>
           </motion.div>

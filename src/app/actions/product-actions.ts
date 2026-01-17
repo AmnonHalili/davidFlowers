@@ -11,11 +11,13 @@ export async function createProduct(formData: FormData) {
     const price = parseFloat(formData.get('price') as string);
     const stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
-    const categorySlug = formData.get('category') as string; // Check new Form uses 'category'
     const imageUrl = formData.get('imageUrl') as string;
 
+    // Handle multiple categories
+    const categorySlugs = formData.getAll('categories') as string[];
+    const validCategorySlugs = categorySlugs.filter(slug => slug !== '');
+
     const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w\u0590-\u05FF-]+/g, '');
-    const categoryName = getCategoryName(categorySlug);
 
     await prisma.product.create({
         data: {
@@ -25,13 +27,13 @@ export async function createProduct(formData: FormData) {
             price,
             stock,
             categories: {
-                connectOrCreate: {
-                    where: { slug: categorySlug },
+                connectOrCreate: validCategorySlugs.map(catSlug => ({
+                    where: { slug: catSlug },
                     create: {
-                        name: categoryName,
-                        slug: categorySlug
+                        name: getCategoryName(catSlug),
+                        slug: catSlug
                     }
-                }
+                }))
             },
             images: {
                 create: {
@@ -54,8 +56,10 @@ export async function updateProduct(id: string, formData: FormData) {
     const stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
     const imageUrl = formData.get('imageUrl') as string;
-    const categorySlug = formData.get('category') as string;
-    const categoryName = getCategoryName(categorySlug);
+
+    // Handle multiple categories
+    const categorySlugs = formData.getAll('categories') as string[];
+    const validCategorySlugs = categorySlugs.filter(slug => slug !== '');
 
     await prisma.product.update({
         where: { id },
@@ -66,13 +70,13 @@ export async function updateProduct(id: string, formData: FormData) {
             stock,
             categories: {
                 set: [], // Disconnect all existing
-                connectOrCreate: {
-                    where: { slug: categorySlug },
+                connectOrCreate: validCategorySlugs.map(catSlug => ({
+                    where: { slug: catSlug },
                     create: {
-                        name: categoryName,
-                        slug: categorySlug
+                        name: getCategoryName(catSlug),
+                        slug: catSlug
                     }
-                }
+                }))
             },
             images: {
                 deleteMany: {}, // brutally simple image update: clear and add new one
@@ -151,5 +155,29 @@ export async function searchProducts(query: string) {
     } catch (error) {
         console.error('Error searching products:', error);
         return [];
+    }
+}
+
+export async function getUpsellProducts() {
+    try {
+        const products = await prisma.product.findMany({
+            where: {
+                categories: {
+                    some: {
+                        slug: { in: ['add-ons', 'gifts', 'extras'] }
+                    }
+                },
+                stock: { gt: 0 }
+            },
+            take: 6,
+            include: {
+                images: true
+            }
+        });
+
+        return { success: true, products };
+    } catch (error) {
+        console.error('Error fetching upsell products:', error);
+        return { success: false, products: [] };
     }
 }
