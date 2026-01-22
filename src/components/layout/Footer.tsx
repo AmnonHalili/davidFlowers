@@ -2,7 +2,7 @@ export default function Footer() {
     return (
         <footer className="bg-david-green text-david-beige pt-20 pb-10 rtl" dir="rtl">
             <div className="max-w-screen-2xl mx-auto px-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-b border-david-beige/20 pb-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 border-b border-david-beige/20 pb-16">
 
                     {/* Right: Brand Info */}
                     <div className="space-y-6 text-right">
@@ -72,6 +72,32 @@ export default function Footer() {
                             </button>
                         </form>
                     </div>
+
+                    {/* Middle: Store Hours */}
+                    <div className="space-y-6">
+                        <h4 className="text-xs uppercase tracking-[0.2em] font-bold text-david-beige/60 flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            שעות פתיחה
+                        </h4>
+                        <ul className="space-y-3 text-sm font-light">
+                            <li className="flex justify-between">
+                                <span>ראשון</span>
+                                <span className="text-david-beige/80">10:00 - 19:30</span>
+                            </li>
+                            <li className="flex justify-between">
+                                <span>שני - חמישי</span>
+                                <span className="text-david-beige/80">09:00 - 19:30</span>
+                            </li>
+                            <li className="flex justify-between">
+                                <span>שישי</span>
+                                <span className="text-david-beige/80">08:00 - 14:30</span>
+                            </li>
+                            <li className="flex justify-between text-david-beige/60">
+                                <span>שבת</span>
+                                <span>סגור</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 {/* Bottom Bar */}
@@ -86,7 +112,7 @@ export default function Footer() {
 // Simple Icon wrappers to avoid importing everything if not needed, 
 // strictly standard Lucide icons: Instagram, Facebook, Phone (for WhatsApp usually used or MessageCircle)
 // I will import them from lucide-react at top
-import { Instagram, Facebook, Phone, MapPin } from 'lucide-react';
+import { Instagram, Facebook, Phone, MapPin, Clock } from 'lucide-react';
 
 function InstagramIcon(props: any) { return <Instagram {...props} strokeWidth={1.5} />; }
 function FacebookIcon(props: any) { return <Facebook {...props} strokeWidth={1.5} />; }

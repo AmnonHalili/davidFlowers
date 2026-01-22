@@ -1,12 +1,9 @@
 'use client';
 
-import { Link as NextLink } from 'next/link'; // Alias to avoid conflict if needed, or just use Link
-// Actually, standard Link is fine.
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, User, Menu, Search, Lock, Phone, MapPin } from 'lucide-react';
+import { ShoppingBag, User, Menu, Search, Lock, Phone, MapPin, Heart } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
@@ -136,6 +133,10 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                                 <Lock className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
                         )}
+
+                        <Link href="/wishlist" className="hidden md:block text-david-green hover:opacity-70 transition-opacity" title="המועדפים שלי">
+                            <Heart className="w-5 h-5" strokeWidth={1.5} />
+                        </Link>
 
                         <button
                             onClick={openCart}

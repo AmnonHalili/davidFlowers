@@ -6,7 +6,11 @@ import { ArrowLeft, Flower2 } from 'lucide-react';
 import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
 
 // Configuration for Hero Videos
-const HERO_VIDEOS = ['/David-Video.mp4', '/David-Video2.mp4'];
+const HERO_VIDEOS = [
+  '/David-Video.mp4',
+  '/David-Video2.mp4',
+  '/kling_20260116_Text_to_Video_Close_up_s_5012_0.mp4'
+];
 
 export default function Home() {
   const { scrollY } = useScroll();

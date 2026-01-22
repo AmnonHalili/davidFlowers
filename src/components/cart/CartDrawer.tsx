@@ -1,23 +1,132 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Plus, Trash2, Lock, ShoppingBag, CheckCircle2 } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Lock, ShoppingBag, CheckCircle2, Loader2, Tag } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { toast } from 'sonner';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getUpsellProducts } from '@/app/actions/product-actions';
+
+// Store Hours Utility Functions
+function getStoreHours(dateString: string): { start: number; startMin: number; end: number; endMin: number } | null {
+    if (!dateString) return null;
+
+    const date = new Date(dateString);
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+
+    switch (dayOfWeek) {
+        case 0: // Sunday
+            return { start: 10, startMin: 15, end: 19, endMin: 15 };
+        case 1: // Monday
+        case 2: // Tuesday
+        case 3: // Wednesday
+        case 4: // Thursday
+            return { start: 9, startMin: 15, end: 19, endMin: 15 };
+        case 5: // Friday
+            return { start: 8, startMin: 15, end: 14, endMin: 15 };
+        case 6: // Saturday - Closed
+            return null;
+        default:
+            return null;
+    }
+}
+
+function generateTimeSlots(dateString: string): string[] {
+    const hours = getStoreHours(dateString);
+    if (!hours) return [];
+
+    const slots: string[] = [];
+    const selectedDate = new Date(dateString);
+    const now = new Date();
+
+    // Check if selected date is today
+    const isToday = selectedDate.toDateString() === now.toDateString();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+
+    let currentSlotHour = hours.start;
+    let currentSlotMin = hours.startMin;
+
+    const endHour = hours.end;
+    const endMin = hours.endMin;
+
+    while (currentSlotHour < endHour || (currentSlotHour === endHour && currentSlotMin <= endMin)) {
+        // If today, skip past times
+        if (!isToday || currentSlotHour > currentHour || (currentSlotHour === currentHour && currentSlotMin > currentMin)) {
+            const timeSlot = `${currentSlotHour.toString().padStart(2, '0')}:${currentSlotMin.toString().padStart(2, '0')}`;
+            slots.push(timeSlot);
+        }
+
+        // Increment by 15 minutes
+        currentSlotMin += 15;
+        if (currentSlotMin >= 60) {
+            currentSlotMin = 0;
+            currentSlotHour += 1;
+        }
+    }
+
+    return slots;
+}
+
 
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, addItem, updateQuantity, cartTotal } = useCart();
     const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
-    const [paymentMethod, setPaymentMethod] = useState<'CREDIT_CARD' | 'CASH'>('CREDIT_CARD');
     const [address, setAddress] = useState('');
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
+    const [deliveryNotes, setDeliveryNotes] = useState(''); // 🆕 הערות למשלוח
     const [upsellItems, setUpsellItems] = useState<any[]>([]);
     const [checkoutStep, setCheckoutStep] = useState<'cart' | 'details'>('cart');
+
+    // Coupon State
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; amount: number; type: string; id: string } | null>(null);
+    const [couponLoading, setCouponLoading] = useState(false);
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode) return;
+        setCouponLoading(true);
+        const { validateCoupon } = await import('@/app/actions/coupon-actions');
+
+        // Calculate subtotal for coupon validation
+        const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+        const res = await validateCoupon(couponCode, subtotal);
+        if (res.success) {
+            setAppliedCoupon({
+                code: res.code!,
+                amount: res.discountAmount!,
+                type: res.discountType!,
+                id: res.couponId!
+            });
+            toast.success('קופון הופעל בהצלחה');
+        } else {
+            toast.error(res.error || 'קופון לא תקין');
+            setAppliedCoupon(null);
+        }
+        setCouponLoading(false);
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponCode('');
+        toast.info('הקופון הוסר');
+    };
+
+    // Calculate available time slots based on selected date
+    const availableTimeSlots = useMemo(() => generateTimeSlots(date), [date]);
+
+    // Reset time when date changes if selected time is no longer valid
+    useEffect(() => {
+        if (date && time && !availableTimeSlots.includes(time)) {
+            setTime('');
+        }
+    }, [date, availableTimeSlots, time]);
+
 
     useEffect(() => {
         if (isOpen) {
@@ -50,8 +159,12 @@ export default function CartDrawer() {
     }, [isOpen]);
 
     const FREE_SHIPPING_THRESHOLD = 350;
-    const progress = Math.min((cartTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
-    const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - cartTotal;
+    // Calculate totals locally to include discount
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const finalTotal = subtotal - (appliedCoupon?.amount || 0);
+
+    const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+    const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - subtotal;
 
     const handleAddUpsell = (item: any) => {
         addItem({ ...item, id: `${item.id}-${Date.now()}` }); // Ensure unique ID
@@ -71,7 +184,8 @@ export default function CartDrawer() {
                     recipientName: name,
                     recipientPhone: phone,
                     desiredDeliveryDate: date && time ? new Date(`${date}T${time}`).toISOString() : null,
-                    paymentMethod,
+                    deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null, // 🆕
+                    couponId: appliedCoupon?.id,
                     shippingCost: shippingMethod === 'delivery' ? 30 : 0
                 }),
             });
@@ -343,6 +457,36 @@ export default function CartDrawer() {
                                                     )}
                                                 </AnimatePresence>
 
+                                                {/* Delivery Notes - Shows only for delivery */}
+                                                <AnimatePresence>
+                                                    {shippingMethod === 'delivery' && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            className="overflow-hidden"
+                                                        >
+                                                            <div className="space-y-1 pt-3">
+                                                                <label className="text-xs text-stone-500">
+                                                                    הערות למשלוח (אופציונלי)
+                                                                </label>
+                                                                <textarea
+                                                                    value={deliveryNotes}
+                                                                    onChange={(e) => setDeliveryNotes(e.target.value)}
+                                                                    placeholder="למשל: קוד כניסה לבניין, להשאיר ליד הדלת, לא לצלצל בפעמון..."
+                                                                    maxLength={200}
+                                                                    rows={3}
+                                                                    className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 resize-none"
+                                                                />
+                                                                <p className="text-xs text-stone-400 text-left">
+                                                                    {deliveryNotes.length}/200 תווים
+                                                                </p>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+
                                                 {/* Delivery Date & Time Selection */}
                                                 <div className="space-y-3 pt-2 border-t border-stone-100">
                                                     <p className="text-sm font-bold text-stone-900">מועד {shippingMethod === 'delivery' ? 'משלוח' : 'איסוף'} רצוי</p>
@@ -362,56 +506,41 @@ export default function CartDrawer() {
                                                             />
                                                         </div>
                                                         <div className="space-y-1">
-                                                            <label className="text-xs text-stone-500">שעה (10:00 - 19:00)</label>
+                                                            <label className="text-xs text-stone-500">
+                                                                שעה {date && getStoreHours(date) ?
+                                                                    `(${getStoreHours(date)!.start.toString().padStart(2, '0')}:${getStoreHours(date)!.startMin.toString().padStart(2, '0')} - ${getStoreHours(date)!.end.toString().padStart(2, '0')}:${getStoreHours(date)!.endMin.toString().padStart(2, '0')})`
+                                                                    : ''}
+                                                            </label>
                                                             <select
                                                                 value={time}
                                                                 onChange={(e) => setTime(e.target.value)}
-                                                                className="w-full p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900 dir-rtl"
+                                                                disabled={!date || availableTimeSlots.length === 0}
+                                                                className="w-full p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900 dir-rtl disabled:opacity-50 disabled:cursor-not-allowed"
                                                             >
                                                                 <option value="">בחירת שעה</option>
-                                                                {Array.from({ length: 10 }, (_, i) => i + 10).map((hour) => (
-                                                                    <option key={hour} value={`${hour}:00`}>
-                                                                        {`${hour}:00`}
+                                                                {availableTimeSlots.map((slot) => (
+                                                                    <option key={slot} value={slot}>
+                                                                        {slot}
                                                                     </option>
                                                                 ))}
                                                             </select>
+                                                            {date && getStoreHours(date) === null && (
+                                                                <p className="text-xs text-red-500 mt-1">
+                                                                    החנות סגורה בשבת. אנא בחר יום אחר.
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                {/* Payment Method Selector */}
-                                                <div className="space-y-3 pt-2 border-t border-stone-100">
-                                                    <p className="text-sm font-bold text-stone-900">אמצעי תשלום</p>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <button
-                                                            onClick={() => setPaymentMethod('CREDIT_CARD')}
-                                                            className={`p-3 rounded-lg border text-right transition-all duration-200 relative ${paymentMethod === 'CREDIT_CARD'
-                                                                ? 'border-stone-900 bg-stone-50'
-                                                                : 'border-stone-200 hover:border-stone-300'
-                                                                }`}
-                                                        >
-                                                            <div className="font-bold text-sm mb-1">כרטיס אשראי</div>
-                                                            <div className="text-xs text-stone-500">תשלום מאובטח באתר</div>
-                                                            {paymentMethod === 'CREDIT_CARD' && (
-                                                                <div className="absolute top-3 left-3 w-2 h-2 rounded-full bg-stone-900" />
-                                                            )}
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => setPaymentMethod('CASH')}
-                                                            className={`p-3 rounded-lg border text-right transition-all duration-200 relative ${paymentMethod === 'CASH'
-                                                                ? 'border-stone-900 bg-stone-50'
-                                                                : 'border-stone-200 hover:border-stone-300'
-                                                                }`}
-                                                        >
-                                                            <div className="font-bold text-sm mb-1">מזומן</div>
-                                                            <div className="text-xs text-stone-500">
-                                                                {shippingMethod === 'delivery' ? 'לשליח בעת המסירה' : 'תשלום בחנות'}
-                                                            </div>
-                                                            {paymentMethod === 'CASH' && (
-                                                                <div className="absolute top-3 left-3 w-2 h-2 rounded-full bg-stone-900" />
-                                                            )}
-                                                        </button>
+                                                {/* Payment Info Notice */}
+                                                <div className="pt-2 border-t border-stone-100">
+                                                    <div className="bg-stone-50 p-4 rounded-lg border border-stone-200">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <Lock className="w-4 h-4 text-stone-600" />
+                                                            <p className="text-sm font-bold text-stone-900">תשלום מאובטח</p>
+                                                        </div>
+                                                        <p className="text-xs text-stone-500">התשלום יתבצע בכרטיס אשראי בסביבה מוצפנת ומאובטחת</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -435,12 +564,65 @@ export default function CartDrawer() {
                                             transition={{ duration: 0.2 }}
                                             className="space-y-6"
                                         >
-                                            <div className="space-y-2 pt-2">
-                                                <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900">
-                                                    <span>סה"כ לתשלום</span>
-                                                    <span>₪{cartTotal.toFixed(2)}</span>
+                                            <div className="space-y-4 pt-2">
+                                                {/* Coupon Input */}
+                                                {!appliedCoupon ? (
+                                                    <div className="flex gap-2">
+                                                        <div className="relative flex-1">
+                                                            <Tag className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                                                            <input
+                                                                type="text"
+                                                                value={couponCode}
+                                                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                                onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                                                                placeholder="יש לך קוד קופון?"
+                                                                className="w-full bg-stone-50 border border-stone-200 rounded-lg py-2 pr-10 pl-3 text-sm focus:outline-none focus:border-david-green uppercase"
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            onClick={handleApplyCoupon}
+                                                            disabled={!couponCode || couponLoading}
+                                                            className="bg-stone-900 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                                                        >
+                                                            {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'החל'}
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-between bg-green-50 border border-green-100 p-3 rounded-lg animate-in fade-in zoom-in-95">
+                                                        <div className="flex items-center gap-2 text-green-700">
+                                                            <Tag className="w-4 h-4" />
+                                                            <span className="font-bold text-sm tracking-wide">{appliedCoupon.code}</span>
+                                                            <span className="text-xs bg-white px-1.5 py-0.5 rounded shadow-sm">
+                                                                -{appliedCoupon.type === 'PERCENTAGE' ? '' : '₪'}{appliedCoupon.amount}{appliedCoupon.type === 'PERCENTAGE' ? '%' : ''}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            onClick={handleRemoveCoupon}
+                                                            className="text-green-700 hover:bg-green-100 p-1.5 rounded-full transition-colors"
+                                                            title="הסר קופון"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between items-center text-sm text-stone-600">
+                                                        <span>סכום ביניים</span>
+                                                        <span>₪{subtotal.toFixed(2)}</span>
+                                                    </div>
+                                                    {appliedCoupon && (
+                                                        <div className="flex justify-between items-center text-sm text-green-600 font-medium">
+                                                            <span>הנחה</span>
+                                                            <span>-₪{appliedCoupon.amount.toFixed(2)}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900 pt-2 border-t border-stone-100">
+                                                        <span>סה"כ לתשלום</span>
+                                                        <span>₪{finalTotal.toFixed(2)}</span>
+                                                    </div>
+                                                    <p className="text-xs text-stone-500">לא כולל משלוח (יחושב בשלב הבא)</p>
                                                 </div>
-                                                <p className="text-xs text-stone-500">לא כולל משלוח (יחושב בשלב הבא)</p>
                                             </div>
 
                                             <button
@@ -489,8 +671,8 @@ export default function CartDrawer() {
                                                 }
                                                 className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
                                             >
-                                                {paymentMethod === 'CASH' ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                                                <span>{paymentMethod === 'CASH' ? 'ביצוע הזמנה' : 'מעבר לתשלום'}</span>
+                                                <Lock className="w-4 h-4" />
+                                                <span>מעבר לתשלום מאובטח</span>
                                             </button>
                                         </motion.div>
                                     )}

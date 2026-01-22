@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ShoppingBag, Eye } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import WishlistButton from './WishlistButton';
 
 interface ProductCardProps {
     id: string;
@@ -13,9 +14,10 @@ interface ProductCardProps {
     category?: string;
     stock: number;
     hoverImage?: string; // Optional second image for hover
+    isFavorited?: boolean;
 }
 
-export default function ProductCard({ id, name, price, image, slug, category, stock, hoverImage }: ProductCardProps) {
+export default function ProductCard({ id, name, price, image, slug, category, stock, hoverImage, isFavorited }: ProductCardProps) {
     const isOutOfStock = stock <= 0;
     const { addItem } = useCart();
 
@@ -45,6 +47,15 @@ export default function ProductCard({ id, name, price, image, slug, category, st
                         אזל מהמלאי
                     </div>
                 )}
+
+                {/* Wishlist Button */}
+                <div className="absolute top-3 left-3 z-30">
+                    <WishlistButton
+                        productId={id}
+                        initialIsFavorited={isFavorited}
+                        className="bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white"
+                    />
+                </div>
 
                 {/* Dark Overlay on Hover (Subtle) */}
                 <div className="absolute inset-0 bg-david-green/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
