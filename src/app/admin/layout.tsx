@@ -22,10 +22,10 @@ export default async function AdminLayout({
     });
 
     if (dbUser?.role !== 'ADMIN') {
-        // If not admin, verify if it's the owner email (failsafe bootstrapping)
-        const DO_NOT_USE_IN_PROD_WHITELIST = ['david@davidflowers.com', user.emailAddresses[0].emailAddress]; // Temporarily allow current user for development
+        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+        const userEmail = user.emailAddresses[0]?.emailAddress?.toLowerCase();
 
-        if (!DO_NOT_USE_IN_PROD_WHITELIST.includes(user.emailAddresses[0].emailAddress)) {
+        if (!userEmail || !adminEmails.includes(userEmail)) {
             redirect('/');
         }
     }

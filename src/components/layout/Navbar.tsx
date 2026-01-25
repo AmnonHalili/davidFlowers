@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import SearchOverlay from './SearchOverlay';
+import { Dock, DockLink } from '@/components/ui/Dock';
 
 export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -93,17 +94,18 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
 
                     {/* Desktop: Navigation Links */}
                     <div className="col-span-8 hidden md:flex justify-center items-center h-full">
-                        <div className="flex gap-8 items-center h-full">
+                        <Dock magnification={1.3} distance={120}>
                             {navLinks.map((link) => (
-                                <Link
-                                    key={link.label}
-                                    href={link.href}
-                                    className="text-david-green text-lg font-medium hover:text-opacity-70 transition-colors whitespace-nowrap"
-                                >
-                                    {link.label}
-                                </Link>
+                                <DockLink key={link.label}>
+                                    <Link
+                                        href={link.href}
+                                        className="text-david-green text-lg font-medium hover:text-opacity-70 transition-colors whitespace-nowrap px-2"
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </DockLink>
                             ))}
-                        </div>
+                        </Dock>
                     </div>
 
                     {/* Left Side: Icons (Cart, User, etc.) */}

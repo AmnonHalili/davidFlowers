@@ -12,6 +12,7 @@
     "@clerk/localizations": "^3.32.1",
     "@clerk/nextjs": "^6.36.5",
     "@prisma/client": "^6.19.2",
+    "@react-email/components": "^1.0.6",
     "@stripe/stripe-js": "^8.6.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.24.0",
@@ -21,7 +22,9 @@
     "prisma": "^6.19.1",
     "react": "^18",
     "react-dom": "^18",
+    "react-email": "^5.2.5",
     "recharts": "^3.6.0",
+    "resend": "^6.8.0",
     "sonner": "^1.4.0",
     "stripe": "^20.1.0"
   },
