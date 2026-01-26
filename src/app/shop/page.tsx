@@ -65,29 +65,34 @@ export default async function ShopPage() {
 
                 {/* Product Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-                    {products.map((p: any) => {
-                        const product = p;
+                    {products.map((product: any) => {
                         // Safe check for image
                         const mainImage = product.images.length > 0
-                            ? product.images.find(img => img.isMain)?.url || product.images[0].url
+                            ? product.images.find((img: any) => img.isMain)?.url || product.images[0].url
                             : 'https://images.unsplash.com/photo-1596627006880-6029968434d3?auto=format&fit=crop&q=80';
 
                         // Safe check for category
                         const categoryName = product.categories.length > 0 ? product.categories[0].name : '';
+
+                        // CRITICAL: Convert Prisma Decimal to number to avoid serialization issues
+                        const price = Number(product.price);
+                        const salePrice = product.salePrice ? Number(product.salePrice) : null;
 
                         return (
                             <ProductCard
                                 key={product.id}
                                 id={product.id}
                                 name={product.name}
-                                price={product.price}
+                                price={price}
                                 image={mainImage}
                                 slug={product.slug}
                                 category={categoryName}
                                 stock={product.stock}
-                                salePrice={product.salePrice}
+                                salePrice={salePrice}
                                 saleStartDate={product.saleStartDate}
                                 saleEndDate={product.saleEndDate}
+                                availableFrom={product.availableFrom}
+                                allowPreorder={product.allowPreorder}
                             />
                         );
                     })}

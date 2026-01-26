@@ -164,7 +164,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                     id: product.id,
                                     name: product.name,
                                     price: Number(displayPrice), // Use calculated price
-                                    image: mainImage
+                                    image: mainImage,
+                                    availableFrom: product.availableFrom,
+                                    allowPreorder: product.allowPreorder
                                 }} />
                             ) : (
                                 <div className="bg-stone-100 p-6 rounded-lg text-center space-y-2">
@@ -194,16 +196,21 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 <div className="max-w-screen-xl mx-auto px-6 mt-32 border-t border-stone-100 pt-20">
                     <h2 className="font-serif text-3xl text-stone-900 mb-12 text-center">אולי תאהבו גם...</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {relatedProducts.map((related) => (
+                        {relatedProducts.map((related: any) => (
                             <ProductCard
                                 key={related.id}
                                 id={related.id}
                                 name={related.name}
-                                price={`₪${Number(related.price).toFixed(0)}`}
-                                image={related.images.find(i => i.isMain)?.url || related.images[0]?.url || '/placeholder.jpg'}
+                                price={Number(related.price)}
+                                image={related.images.find((i: any) => i.isMain)?.url || related.images[0]?.url || '/placeholder.jpg'}
                                 slug={related.slug}
                                 stock={related.stock}
                                 category={related.categories[0]?.name}
+                                salePrice={related.salePrice ? Number(related.salePrice) : null}
+                                saleStartDate={related.saleStartDate}
+                                saleEndDate={related.saleEndDate}
+                                availableFrom={related.availableFrom}
+                                allowPreorder={related.allowPreorder}
                             />
                         ))}
                     </div>

@@ -108,17 +108,22 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {products.map((product) => (
+                        {products.map((product: any) => (
                             <ProductCard
                                 key={product.id}
                                 id={product.id}
                                 name={product.name}
-                                price={`₪${Number(product.price).toFixed(0)}`}
-                                image={product.images.find(i => i.isMain)?.url || product.images[0]?.url || '/placeholder.jpg'}
+                                price={Number(product.price)}
+                                image={product.images.find((i: any) => i.isMain)?.url || product.images[0]?.url || '/placeholder.jpg'}
                                 slug={product.slug}
                                 stock={product.stock}
                                 category={title}
                                 isFavorited={favoritesSet.has(product.id)}
+                                salePrice={product.salePrice ? Number(product.salePrice) : null}
+                                saleStartDate={product.saleStartDate}
+                                saleEndDate={product.saleEndDate}
+                                availableFrom={product.availableFrom}
+                                allowPreorder={product.allowPreorder}
                             />
                         ))}
                     </div>

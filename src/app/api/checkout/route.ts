@@ -48,9 +48,19 @@ export async function POST(req: Request) {
 
         // 2. Validate and Calculate Totals
         let calculatedSubtotal = 0;
+        let latestAvailableFrom: Date | null = null;
+
         const validItems = items.map((item: any) => {
-            const product = dbProducts.find(p => p.id === item.productId);
+            const product = dbProducts.find(p => p.id === item.productId) as any;
             if (!product) throw new Error(`Product not found: ${item.productId}`);
+
+            // Track latest availability date
+            if (product.availableFrom) {
+                const availDate = new Date(product.availableFrom);
+                if (!latestAvailableFrom || availDate > latestAvailableFrom) {
+                    latestAvailableFrom = availDate;
+                }
+            }
 
             // Calculate effective price (Sale vs Regular)
             const { price: effectivePrice } = calculateProductPrice({
@@ -67,6 +77,18 @@ export async function POST(req: Request) {
                 price: effectivePrice // Override client price with server price
             };
         });
+
+        // 2.5 VALIDATE DELIVERY DATE against availability
+        if (latestAvailableFrom && desiredDeliveryDate) {
+            const deliveryDate = new Date(desiredDeliveryDate);
+            // Ignore time components for simple date check, but launch date might be a specific time.
+            // Using straight comparison is safest.
+            if (deliveryDate < latestAvailableFrom) {
+                return NextResponse.json({
+                    error: `Delivery date must be at or after ${latestAvailableFrom.toLocaleDateString('he-IL')}`
+                }, { status: 400 });
+            }
+        }
 
         // Calculate total
         const finalShippingCost = shippingMethod === 'delivery' ? shippingCost : 0;

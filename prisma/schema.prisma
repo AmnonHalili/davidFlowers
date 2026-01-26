@@ -38,6 +38,8 @@ model Product {
   salePrice    Decimal?
   saleStartDate DateTime?
   saleEndDate  DateTime?
+  availableFrom DateTime?  // Scheduled launch date
+  allowPreorder Boolean    @default(false) // If true, can buy before launch (delivery restricted)
   images       ProductImage[] // Upgraded to model for better SEO/metadata
   categories   Category[] @relation("ProductToCategory")
   orders       OrderItem[]

@@ -16,6 +16,8 @@ interface ProductSubscriptionFormProps {
     name: string;
     price: number;
     image: string;
+    availableFrom?: Date | string | null;
+    allowPreorder?: boolean;
   }
 }
 
@@ -26,15 +28,26 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   const [deliveryDay, setDeliveryDay] = useState<DayOfWeek>('FRIDAY');
   const [giftNote, setGiftNote] = useState('');
 
+  // Scheduling Logic
+  const now = new Date();
+  const launchDate = product.availableFrom ? new Date(product.availableFrom) : null;
+  const isFuture = launchDate && launchDate > now;
+  const canPreorder = isFuture && product.allowPreorder;
+  const isLocked = isFuture && !product.allowPreorder;
+
   const handleAddToCart = () => {
+    if (isLocked) return;
+
     const newItem: CartItem = {
       id: `${product.id}-${Date.now()}`,
       productId: product.id,
       name: product.name,
       price: purchaseType === 'SUBSCRIPTION' ? product.price * 0.85 : product.price, // 15% discount logic
+      originalPrice: purchaseType === 'SUBSCRIPTION' ? product.price : undefined, // Track original for subs
       image: product.image,
       quantity: 1,
       type: purchaseType,
+      availableFrom: product.availableFrom ? new Date(product.availableFrom).toISOString() : undefined,
       frequency: purchaseType === 'SUBSCRIPTION' ? frequency : undefined,
       deliveryDay: purchaseType === 'SUBSCRIPTION' ? deliveryDay : undefined,
     };
@@ -42,8 +55,56 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
     addItem(newItem);
   };
 
+  if (isLocked && launchDate) {
+    return (
+      <div className="bg-stone-50 border border-stone-200 rounded-sm p-8 text-center space-y-6 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('/pattern-grid.svg')] pointer-events-none" />
+
+        <div className="relative z-10 space-y-2">
+          <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 bg-white px-2 py-1 border border-stone-100">
+            COMING SOON
+          </span>
+          <h3 className="font-serif text-2xl text-stone-900">המוצר יהיה זמין לרכישה בקרוב</h3>
+        </div>
+
+        <div className="relative z-10 bg-white p-6 border border-stone-100 shadow-sm mx-auto max-w-xs space-y-1">
+          <p className="text-stone-400 text-xs uppercase tracking-widest">מועד ההשקה</p>
+          <div className="flex items-baseline justify-center gap-2" dir="ltr">
+            <span className="font-mono text-xl font-medium text-stone-900">
+              {launchDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </span>
+            <span className="text-stone-300">|</span>
+            <span className="font-mono text-xl font-medium text-stone-900">
+              {launchDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        </div>
+
+        <div className="pt-2">
+          <button disabled className="w-full bg-stone-200 text-stone-400 py-4 font-medium tracking-wide cursor-not-allowed flex items-center justify-center gap-2 transition-colors">
+            <span>טרם זמין לרכישה</span>
+          </button>
+          <p className="text-[10px] text-stone-400 mt-3">
+            הירשמו לניוזלטר כדי לקבל עדכון כשהמכירה נפתחת
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
+      {/* Pre-order Notice */}
+      {canPreorder && launchDate && (
+        <div className="bg-david-green/10 border border-david-green/20 p-4 rounded-lg flex items-start gap-3">
+          <div className="bg-david-green text-white text-[10px] font-bold px-2 py-1 rounded">PRE-ORDER</div>
+          <p className="text-sm text-david-green/80 leading-relaxed">
+            הזמינו עכשיו ושריינו את המוצר. המשלוח יתבצע החל מ-{launchDate.toLocaleDateString('he-IL')}.
+          </p>
+        </div>
+      )}
+
       {/* Type Toggle */}
       <div className="flex p-1 bg-stone-100 rounded-lg">
         <button
@@ -133,9 +194,17 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
 
       <button
         onClick={handleAddToCart}
-        className="w-full bg-stone-900 text-white py-4 font-medium tracking-wide hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 group"
+        className={`w-full text-white py-4 font-medium tracking-wide transition-colors flex items-center justify-center gap-2 group ${canPreorder
+          ? 'bg-david-green hover:bg-david-green/90'
+          : 'bg-stone-900 hover:bg-stone-800'
+          }`}
       >
-        <span>{purchaseType === 'SUBSCRIPTION' ? 'הוספה למנוי' : 'הוספה לסל'}</span>
+        <span>
+          {canPreorder
+            ? 'בצע הזמנה מוקדמת'
+            : purchaseType === 'SUBSCRIPTION' ? 'הוספה למנוי' : 'הוספה לסל'
+          }
+        </span>
         <span className="group-hover:-translate-x-1 transition-transform">←</span>
       </button>
 

@@ -84,7 +84,7 @@ export default async function CategoryPage({ params }: { params: { category: str
 
                 {/* Product Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-                    {category.products.map((product) => {
+                    {category.products.map((product: any) => {
                         const mainImage = product.images.length > 0
                             ? product.images.find(img => img.isMain)?.url || product.images[0].url
                             : 'https://images.unsplash.com/photo-1596627006880-6029968434d3?auto=format&fit=crop&q=80';
@@ -94,11 +94,16 @@ export default async function CategoryPage({ params }: { params: { category: str
                                 key={product.id}
                                 id={product.id}
                                 name={product.name}
-                                price={`₪${Number(product.price).toFixed(2)}`}
+                                price={Number(product.price)}
                                 image={mainImage}
                                 slug={product.slug}
                                 category={category.name}
                                 stock={product.stock}
+                                salePrice={product.salePrice ? Number(product.salePrice) : null}
+                                saleStartDate={product.saleStartDate}
+                                saleEndDate={product.saleEndDate}
+                                availableFrom={product.availableFrom}
+                                allowPreorder={product.allowPreorder}
                             />
                         );
                     })}

@@ -120,12 +120,39 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                     src={product.images[0].url}
                                                     alt={product.name}
                                                     fill
-                                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    className={`object-cover transition-transform duration-500 group-hover:scale-105 ${product.availableFrom && new Date(product.availableFrom) > new Date() && !product.allowPreorder ? 'grayscale opacity-50' : ''}`}
                                                 />
                                             )}
+                                            {/* Status Badge */}
+                                            {(() => {
+                                                const isFuture = product.availableFrom && new Date(product.availableFrom) > new Date();
+                                                const isLocked = isFuture && !product.allowPreorder;
+                                                const isPreorder = isFuture && product.allowPreorder;
+
+                                                if (isLocked) return (
+                                                    <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] flex items-center justify-center p-2 text-center">
+                                                        <span className="bg-stone-900 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm">בקרוב</span>
+                                                    </div>
+                                                );
+                                                if (isPreorder) return (
+                                                    <div className="absolute top-2 right-2">
+                                                        <span className="bg-david-green text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">PRE-ORDER</span>
+                                                    </div>
+                                                );
+                                                return null;
+                                            })()}
                                         </div>
                                         <h3 className="font-serif text-stone-900 group-hover:text-david-green transition-colors">{product.name}</h3>
-                                        <p className="text-sm text-stone-500">₪{Number(product.price).toFixed(0)}</p>
+                                        <p className="text-sm text-stone-500">
+                                            {Number(product.salePrice) > 0 ? (
+                                                <span className="flex items-center gap-2">
+                                                    <span className="text-rose-600 font-medium">₪{Number(product.salePrice).toFixed(0)}</span>
+                                                    <span className="line-through text-[10px] opacity-50">₪{Number(product.price).toFixed(0)}</span>
+                                                </span>
+                                            ) : (
+                                                `₪${Number(product.price).toFixed(0)}`
+                                            )}
+                                        </p>
                                     </Link>
                                 ))}
                             </div>

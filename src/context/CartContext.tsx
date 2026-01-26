@@ -11,6 +11,8 @@ export type CartItem = {
     image: string;
     quantity: number;
     type: 'ONETIME' | 'SUBSCRIPTION';
+    originalPrice?: number; // For sale display
+    availableFrom?: string; // Launch date for pre-orders (ISO string)
     // Subscription specifics
     frequency?: 'WEEKLY' | 'BIWEEKLY';
     deliveryDay?: string;
@@ -68,7 +70,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems((currentItems) => {
             // Check if item already exists (logic can be complex with variants, simplified here)
             const existing = currentItems.find(
-                (i) => i.productId === newItem.productId && i.type === newItem.type && i.frequency === newItem.frequency
+                (i) => i.productId === newItem.productId &&
+                    i.type === newItem.type &&
+                    i.frequency === newItem.frequency &&
+                    i.availableFrom === newItem.availableFrom
             );
 
             if (existing) {

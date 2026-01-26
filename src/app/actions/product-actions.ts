@@ -22,6 +22,13 @@ export async function createProduct(formData: FormData) {
     const saleStartDate = saleStartDateStr ? new Date(saleStartDateStr) : null;
     const saleEndDate = saleEndDateStr ? new Date(saleEndDateStr) : null;
 
+    // Scheduling Fields
+    const availableFromStr = formData.get('availableFrom') as string;
+    const allowPreorderStr = formData.get('allowPreorder') as string;
+
+    const availableFrom = availableFromStr ? new Date(availableFromStr) : null;
+    const allowPreorder = allowPreorderStr === 'on';
+
     // Handle multiple categories
     const categorySlugs = formData.getAll('categories') as string[];
     const validCategorySlugs = categorySlugs.filter(slug => slug !== '');
@@ -35,6 +42,11 @@ export async function createProduct(formData: FormData) {
             description,
             price,
             stock,
+            salePrice,
+            saleStartDate,
+            saleEndDate,
+            availableFrom,
+            allowPreorder,
             categories: {
                 connectOrCreate: validCategorySlugs.map(catSlug => ({
                     where: { slug: catSlug },
@@ -75,6 +87,13 @@ export async function updateProduct(id: string, formData: FormData) {
     const saleStartDate = saleStartDateStr ? new Date(saleStartDateStr) : null;
     const saleEndDate = saleEndDateStr ? new Date(saleEndDateStr) : null;
 
+    // Scheduling Fields
+    const availableFromStr = formData.get('availableFrom') as string;
+    const allowPreorderStr = formData.get('allowPreorder') as string;
+
+    const availableFrom = availableFromStr ? new Date(availableFromStr) : null;
+    const allowPreorder = allowPreorderStr === 'on';
+
     // Handle multiple categories
     const categorySlugs = formData.getAll('categories') as string[];
     const validCategorySlugs = categorySlugs.filter(slug => slug !== '');
@@ -89,6 +108,8 @@ export async function updateProduct(id: string, formData: FormData) {
             salePrice,
             saleStartDate,
             saleEndDate,
+            availableFrom,
+            allowPreorder,
             categories: {
                 set: [], // Disconnect all existing
                 connectOrCreate: validCategorySlugs.map(catSlug => ({
@@ -161,6 +182,12 @@ export async function searchProducts(query: string) {
                 name: true,
                 slug: true,
                 price: true,
+                salePrice: true,
+                saleStartDate: true,
+                saleEndDate: true,
+                availableFrom: true,
+                allowPreorder: true,
+                stock: true,
                 images: {
                     take: 1
                 },

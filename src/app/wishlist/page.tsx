@@ -48,12 +48,17 @@ export default async function WishlistPage() {
                                 key={product.id}
                                 id={product.id}
                                 name={product.name}
-                                price={`₪${Number(product.price).toFixed(0)}`}
+                                price={Number(product.price)}
                                 image={product.images.find((i: any) => i.isMain)?.url || product.images[0]?.url || '/placeholder.jpg'}
                                 slug={product.slug}
                                 stock={product.stock}
                                 category="WISHLIST" // Or actual category if we fetched it, but 'WISHLIST' is a nice label context
                                 isFavorited={true} // Since it's in wishlist, it's favorited
+                                salePrice={product.salePrice ? Number(product.salePrice) : null}
+                                saleStartDate={product.saleStartDate}
+                                saleEndDate={product.saleEndDate}
+                                availableFrom={product.availableFrom}
+                                allowPreorder={product.allowPreorder}
                             />
                         ))}
                     </div>
