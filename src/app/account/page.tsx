@@ -3,6 +3,7 @@ import { SignOutButton } from '@clerk/nextjs';
 import { Package, Calendar, Settings, LogOut, ShoppingBag, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { PrismaClient } from '@prisma/client';
 import Link from 'next/link';
+import OrderHistoryItem from '@/components/account/OrderHistoryItem';
 
 const prisma = new PrismaClient();
 
@@ -153,45 +154,10 @@ export default async function AccountPage() {
                 <div className="space-y-6">
                     <h2 className="font-serif text-2xl text-stone-900">היסטוריית הזמנות</h2>
                     {orders.length > 0 ? (
-                        <div className="bg-white border border-stone-100 rounded-lg overflow-hidden">
-                            <table className="w-full text-right">
-                                <thead className="bg-stone-50 text-xs uppercase tracking-wider text-stone-500 font-medium">
-                                    <tr>
-                                        <th className="px-6 py-4">מספר הזמנה</th>
-                                        <th className="px-6 py-4">תאריך</th>
-                                        <th className="px-6 py-4">סטטוס</th>
-                                        <th className="px-6 py-4">סה״כ</th>
-                                        <th className="px-6 py-4">פריטים</th>
-                                        <th className="px-6 py-4"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-stone-100">
-                                    {orders.map((order) => (
-                                        <tr key={order.id} className="text-sm hover:bg-stone-50/50 transition-colors group">
-                                            <td className="px-6 py-4 font-mono text-stone-400">
-                                                <Link href={`/success?orderId=${order.id}`} className="block w-full h-full text-david-green hover:underline">
-                                                    #{order.id.slice(-6).toUpperCase()}
-                                                </Link>
-                                            </td>
-                                            <td className="px-6 py-4 text-stone-600">
-                                                {new Date(order.createdAt).toLocaleDateString('he-IL')}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <StatusBadge status={order.status} />
-                                            </td>
-                                            ₪{Number(order.totalAmount).toFixed(2)}
-                                            <td className="px-6 py-4 text-stone-500">
-                                                {order.items.map(i => i.product.name).join(', ')}
-                                            </td>
-                                            <td className="px-6 py-4 text-left">
-                                                <Link href={`/success?orderId=${order.id}`} className="text-david-green text-xs font-bold hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    צפייה בקבלה
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="bg-white border border-stone-100 rounded-lg overflow-hidden divide-y divide-stone-100">
+                            {orders.map((order) => (
+                                <OrderHistoryItem key={order.id} order={order} />
+                            ))}
                         </div>
                     ) : (
                         <div className="text-center py-20 bg-white border border-stone-100 rounded-lg">
@@ -206,31 +172,7 @@ export default async function AccountPage() {
     );
 }
 
-function StatusBadge({ status }: { status: string }) {
-    const styles = {
-        PENDING: 'bg-yellow-100 text-yellow-800',
-        PAID: 'bg-green-100 text-green-800',
-        SHIPPED: 'bg-blue-100 text-blue-800',
-        DELIVERED: 'bg-purple-100 text-purple-800',
-        CANCELLED: 'bg-red-100 text-red-800',
-    };
 
-    const labels = {
-        PENDING: 'ממתין',
-        PAID: 'שולם',
-        SHIPPED: 'נשלח',
-        DELIVERED: 'נמסר',
-        CANCELLED: 'בוטל',
-    };
-
-    const s = status as keyof typeof styles;
-
-    return (
-        <span className={`px-2 py-1 rounded-full text-xs font-bold ${styles[s] || 'bg-gray-100 text-gray-800'}`}>
-            {labels[s] || status}
-        </span>
-    );
-}
 
 function getDayName(day: string) {
     const days: Record<string, string> = {

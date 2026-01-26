@@ -29,7 +29,7 @@ export default function Footer() {
                         </div>
                         <div className="flex gap-4 items-center text-david-beige/80 pt-2">
                             {/* Social Icons using Lucide React */}
-                            <a href="#" className="hover:text-white transition-colors" aria-label="Instagram">
+                            <a href="https://www.instagram.com/davidflower__?igsh=NXNudHU1emMwcWVl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram">
                                 <InstagramIcon className="w-5 h-5" />
                             </a>
                             <a href="#" className="hover:text-white transition-colors" aria-label="Facebook">
