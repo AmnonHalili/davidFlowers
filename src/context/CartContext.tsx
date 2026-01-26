@@ -39,9 +39,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const savedCart = localStorage.getItem('davidFlowersCart');
         if (savedCart) {
             try {
-                setItems(JSON.parse(savedCart));
+                const parsed = JSON.parse(savedCart);
+                // Sanitize items: ensure price is number and valid
+                const validItems = Array.isArray(parsed) ? parsed.filter(item =>
+                    item &&
+                    typeof item.price === 'number' &&
+                    !isNaN(item.price) &&
+                    item.id &&
+                    item.productId
+                ) : [];
+                setItems(validItems);
             } catch (e) {
                 console.error('Failed to parse cart', e);
+                localStorage.removeItem('davidFlowersCart'); // Clear corrupt data
             }
         }
     }, []);

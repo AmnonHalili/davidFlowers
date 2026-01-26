@@ -35,6 +35,9 @@ model Product {
   description  String
   price        Decimal
   stock        Int        @default(0)
+  salePrice    Decimal?
+  saleStartDate DateTime?
+  saleEndDate  DateTime?
   images       ProductImage[] // Upgraded to model for better SEO/metadata
   categories   Category[] @relation("ProductToCategory")
   orders       OrderItem[]
@@ -68,8 +71,8 @@ model Category {
 
 model Order {
   id                String      @id @default(cuid())
-  user              User        @relation(fields: [userId], references: [id])
-  userId            String
+  user              User?       @relation(fields: [userId], references: [id])
+  userId            String?
   items             OrderItem[]
   totalAmount       Decimal
   status            OrderStatus @default(PENDING)
@@ -78,7 +81,12 @@ model Order {
   recipientName     String
   shippingAddress   String
   recipientPhone    String?     // Critical for delivery
-  ordererPhone      String?     // Phone of the person placing the order
+  
+  // Orderer Info (New fields for Guest Checkout)
+  ordererName       String      @default("") // Default empty for migration, but enforced in app
+  ordererPhone      String?     
+  ordererEmail      String      @default("") // Default empty for migration
+  
   desiredDeliveryDate DateTime?
   cardMessage       String?
   deliveryNotes     String?     // Special instructions for courier

@@ -33,6 +33,43 @@ export default function EditProductForm({ product }: { product: any }) {
                     </div>
                 </div>
 
+                {/* Sale Details */}
+                <div className="space-y-4 pt-4 border-t border-stone-100">
+                    <h3 className="text-sm font-bold text-stone-900">מבצעים והנחות</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-stone-900">מחיר מבצע (₪)</label>
+                            <input
+                                name="salePrice"
+                                type="number"
+                                placeholder="למשל: 50"
+                                defaultValue={product.salePrice?.toString() || ''}
+                                step="0.01"
+                                className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none"
+                            />
+                            <p className="text-xs text-stone-500">השאר ריק כדי לבטל את המבצע</p>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-stone-900">תאריך התחלה</label>
+                            <input
+                                name="saleStartDate"
+                                type="datetime-local"
+                                defaultValue={product.saleStartDate ? toLocalISOString(new Date(product.saleStartDate)) : ''}
+                                className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none ltr"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-stone-900">תאריך סיום</label>
+                            <input
+                                name="saleEndDate"
+                                type="datetime-local"
+                                defaultValue={product.saleEndDate ? toLocalISOString(new Date(product.saleEndDate)) : ''}
+                                className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none ltr"
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-stone-900">תיאור מלא</label>
                     <textarea name="description" required defaultValue={product.description} rows={4} className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none resize-none" />
@@ -65,4 +102,10 @@ export default function EditProductForm({ product }: { product: any }) {
             </div>
         </form>
     );
+}
+
+// Helper to format date for datetime-local input (YYYY-MM-DDThh:mm) in local time
+function toLocalISOString(date: Date) {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

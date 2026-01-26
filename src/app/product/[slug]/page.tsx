@@ -4,6 +4,7 @@ import ProductSubscriptionForm from '@/components/ProductSubscriptionForm';
 import ProductCard from '@/components/shop/ProductCard';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { calculateProductPrice } from '@/lib/price-utils';
 
 const prisma = new PrismaClient();
 
@@ -37,7 +38,10 @@ async function getRelatedProducts(currentProductId: string, categorySlug?: strin
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
     const decodedSlug = decodeURIComponent(params.slug);
-    const product = await getProduct(decodedSlug);
+    const rawProduct = await getProduct(decodedSlug);
+    // Cast to any to access sale fields that might not be in the generated type yet
+    const product = rawProduct as any;
+
     const relatedProducts = product
         ? await getRelatedProducts(product.id, product.categories[0]?.slug)
         : [];
@@ -48,6 +52,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
     const mainImage = product.images.find(img => img.isMain)?.url || product.images[0]?.url || '';
     const galleryImages = product.images.filter(img => !img.isMain);
+
+
+    const { price: displayPrice, isOnSale, regularPrice } = calculateProductPrice({
+        price: product.price,
+        salePrice: product.salePrice,
+        saleStartDate: product.saleStartDate,
+        saleEndDate: product.saleEndDate
+    });
 
     return (
         <div className="min-h-screen bg-white pb-32">
@@ -84,6 +96,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                 />
+                                {isOnSale && (
+                                    <div className="absolute top-4 right-4 bg-rose-600 text-white text-xs font-serif tracking-wide px-3 py-1 shadow-sm">
+                                        SALE
+                                    </div>
+                                )}
                             </div>
                             {/* Gallery Images */}
                             {galleryImages.map(img => (
@@ -122,7 +139,19 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                 {product.categories.map(c => c.name).join(', ')}
                             </span>
                             <h1 className="font-serif text-3xl md:text-5xl text-stone-900">{product.name}</h1>
-                            <p className="text-xl md:text-2xl font-light text-stone-900">₪{Number(product.price).toFixed(2)}</p>
+
+                            {/* Price Display */}
+                            <div className="flex items-center gap-3">
+                                {isOnSale ? (
+                                    <>
+                                        <p className="text-xl md:text-2xl font-medium text-rose-600">₪{displayPrice.toFixed(2)}</p>
+                                        <p className="text-lg text-stone-400 line-through">₪{regularPrice.toFixed(2)}</p>
+                                    </>
+                                ) : (
+                                    <p className="text-xl md:text-2xl font-light text-stone-900">₪{displayPrice.toFixed(2)}</p>
+                                )}
+                            </div>
+
                             <div className="prose prose-stone text-stone-600 font-light leading-relaxed text-sm md:text-base">
                                 <p>{product.description}</p>
                             </div>
@@ -134,7 +163,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                 <ProductSubscriptionForm product={{
                                     id: product.id,
                                     name: product.name,
-                                    price: Number(product.price),
+                                    price: Number(displayPrice), // Use calculated price
                                     image: mainImage
                                 }} />
                             ) : (

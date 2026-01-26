@@ -13,6 +13,15 @@ export async function createProduct(formData: FormData) {
     const description = formData.get('description') as string;
     const imageUrl = formData.get('imageUrl') as string;
 
+    // Sale Fields
+    const salePriceStr = formData.get('salePrice') as string;
+    const saleStartDateStr = formData.get('saleStartDate') as string;
+    const saleEndDateStr = formData.get('saleEndDate') as string;
+
+    const salePrice = salePriceStr ? parseFloat(salePriceStr) : null;
+    const saleStartDate = saleStartDateStr ? new Date(saleStartDateStr) : null;
+    const saleEndDate = saleEndDateStr ? new Date(saleEndDateStr) : null;
+
     // Handle multiple categories
     const categorySlugs = formData.getAll('categories') as string[];
     const validCategorySlugs = categorySlugs.filter(slug => slug !== '');
@@ -57,6 +66,15 @@ export async function updateProduct(id: string, formData: FormData) {
     const description = formData.get('description') as string;
     const imageUrl = formData.get('imageUrl') as string;
 
+    // Sale Fields
+    const salePriceStr = formData.get('salePrice') as string;
+    const saleStartDateStr = formData.get('saleStartDate') as string;
+    const saleEndDateStr = formData.get('saleEndDate') as string;
+
+    const salePrice = salePriceStr ? parseFloat(salePriceStr) : null;
+    const saleStartDate = saleStartDateStr ? new Date(saleStartDateStr) : null;
+    const saleEndDate = saleEndDateStr ? new Date(saleEndDateStr) : null;
+
     // Handle multiple categories
     const categorySlugs = formData.getAll('categories') as string[];
     const validCategorySlugs = categorySlugs.filter(slug => slug !== '');
@@ -68,6 +86,9 @@ export async function updateProduct(id: string, formData: FormData) {
             description,
             price,
             stock,
+            salePrice,
+            saleStartDate,
+            saleEndDate,
             categories: {
                 set: [], // Disconnect all existing
                 connectOrCreate: validCategorySlugs.map(catSlug => ({

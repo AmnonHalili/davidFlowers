@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
+import { calculateProductPrice } from '@/lib/price-utils';
 
 export async function POST(req: Request) {
     try {
         const { userId } = await auth();
         const user = await currentUser();
 
-        // Ensure user is logged in
-        if (!userId) {
-            return new NextResponse("Unauthorized", { status: 401 });
-        }
+        // Note: Removed mandatory auth check for Guest Checkout support
 
         const body = await req.json();
         const {
@@ -19,7 +17,9 @@ export async function POST(req: Request) {
             shippingAddress,
             recipientName,
             recipientPhone,
+            ordererName, // New
             ordererPhone,
+            ordererEmail, // New
             desiredDeliveryDate,
             deliveryNotes,
             couponId,
@@ -31,35 +31,66 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
         }
 
-        if (!recipientName || !recipientPhone || !ordererPhone) {
-            return NextResponse.json({ error: 'Recipient and Orderer details required' }, { status: 400 });
+        // Validate all required contact info
+        if (!recipientName || !recipientPhone || !ordererPhone || !ordererName || !ordererEmail) {
+            return NextResponse.json({ error: 'Missing required contact details' }, { status: 400 });
         }
 
         if (shippingMethod === 'delivery' && !shippingAddress) {
             return NextResponse.json({ error: 'Delivery address required' }, { status: 400 });
         }
 
-        // Calculate total
-        const subtotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
-        const finalShippingCost = shippingMethod === 'delivery' ? shippingCost : 0;
-        const totalAmount = subtotal + finalShippingCost;
+        // 1. Fetch products to get real prices
+        const productIds = items.map((item: any) => item.productId);
+        const dbProducts = await prisma.product.findMany({
+            where: { id: { in: productIds } }
+        });
 
-        // 1. CREATE ORDER IN DATABASE (PENDING STATUS)
+        // 2. Validate and Calculate Totals
+        let calculatedSubtotal = 0;
+        const validItems = items.map((item: any) => {
+            const product = dbProducts.find(p => p.id === item.productId);
+            if (!product) throw new Error(`Product not found: ${item.productId}`);
+
+            // Calculate effective price (Sale vs Regular)
+            const { price: effectivePrice } = calculateProductPrice({
+                price: Number(product.price),
+                salePrice: product.salePrice ? Number(product.salePrice) : null,
+                saleStartDate: product.saleStartDate,
+                saleEndDate: product.saleEndDate
+            });
+
+            calculatedSubtotal += effectivePrice * item.quantity;
+
+            return {
+                ...item,
+                price: effectivePrice // Override client price with server price
+            };
+        });
+
+        // Calculate total
+        const finalShippingCost = shippingMethod === 'delivery' ? shippingCost : 0;
+        const totalAmount = calculatedSubtotal + finalShippingCost; // Using calculated subtotal
+
+        // 3. CREATE ORDER IN DATABASE (PENDING STATUS)
         const order = await prisma.order.create({
             data: {
-                user: { connect: { clerkId: userId } },
+                // Connect user only if logged in
+                ...(userId && { user: { connect: { clerkId: userId } } }),
                 totalAmount,
                 status: 'PENDING',
                 paymentMethod: 'CREDIT_CARD',
                 recipientName,
                 shippingAddress: shippingMethod === 'delivery' ? shippingAddress : 'Self Pickup',
                 recipientPhone,
+                ordererName,
                 ordererPhone,
+                ordererEmail,
                 desiredDeliveryDate: desiredDeliveryDate ? new Date(desiredDeliveryDate) : null,
                 deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null,
                 ...(couponId && { coupon: { connect: { id: couponId } } }),
                 items: {
-                    create: items.map((item: any) => ({
+                    create: validItems.map((item: any) => ({
                         product: { connect: { id: item.productId } },
                         quantity: item.quantity,
                         price: item.price
@@ -70,14 +101,17 @@ export async function POST(req: Request) {
 
         console.log(`✅ Order created: ${order.id}`);
 
-        // 2. UPDATE USER PROFILE
+        // 2. UPDATE USER PROFILE (If logged in)
         if (userId) {
             await prisma.user.update({
                 where: { clerkId: userId },
                 data: {
                     phone: ordererPhone,
+                    // Don't override name with recipient name anymore, maybe ordererName?
+                    // Let's keep existing logic or maybe update name if empty?
+                    // User might be ordering for someone else, so changing their profile name to recipient name is bad specificially in this new flow.
+                    // But maybe update address if delivery?
                     ...(shippingMethod === 'delivery' && shippingAddress ? { address: shippingAddress } : {}),
-                    ...(recipientName ? { name: recipientName } : {})
                 }
             }).catch(err => console.error('Error updating user profile:', err));
         }
@@ -86,9 +120,9 @@ export async function POST(req: Request) {
         const paymentUrl = await createPayPlusPayment({
             orderId: order.id,
             amount: Number(totalAmount),
-            customerName: recipientName,
+            customerName: ordererName, // Use Orderer Name for billing
             customerPhone: ordererPhone,
-            customerEmail: user?.emailAddresses[0]?.emailAddress
+            customerEmail: ordererEmail // Use input email
         });
 
         return NextResponse.json({

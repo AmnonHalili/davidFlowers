@@ -13,7 +13,8 @@ export async function getUserProfile() {
             select: {
                 name: true,
                 phone: true,
-                address: true
+                address: true,
+                email: true
             }
         });
         return user;

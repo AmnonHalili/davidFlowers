@@ -65,7 +65,8 @@ export default async function ShopPage() {
 
                 {/* Product Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-                    {products.map((product) => {
+                    {products.map((p: any) => {
+                        const product = p;
                         // Safe check for image
                         const mainImage = product.images.length > 0
                             ? product.images.find(img => img.isMain)?.url || product.images[0].url
@@ -79,11 +80,14 @@ export default async function ShopPage() {
                                 key={product.id}
                                 id={product.id}
                                 name={product.name}
-                                price={`₪${Number(product.price).toFixed(2)}`}
+                                price={product.price}
                                 image={mainImage}
                                 slug={product.slug}
                                 category={categoryName}
                                 stock={product.stock}
+                                salePrice={product.salePrice}
+                                saleStartDate={product.saleStartDate}
+                                saleEndDate={product.saleEndDate}
                             />
                         );
                     })}

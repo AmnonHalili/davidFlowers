@@ -67,6 +67,40 @@ export default function NewProductPage() {
                         </div>
                     </div>
 
+                    {/* Sale Details */}
+                    <div className="space-y-4 pt-4 border-t border-stone-100">
+                        <h3 className="text-sm font-bold text-stone-900">מבצעים והנחות</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-stone-900">מחיר מבצע (₪)</label>
+                                <input
+                                    name="salePrice"
+                                    type="number"
+                                    placeholder="למשל: 50"
+                                    step="0.01"
+                                    className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none"
+                                />
+                                <p className="text-xs text-stone-500">השאר ריק אם אין מבצע</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-stone-900">תאריך התחלה</label>
+                                <input
+                                    name="saleStartDate"
+                                    type="datetime-local"
+                                    className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none ltr"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-stone-900">תאריך סיום</label>
+                                <input
+                                    name="saleEndDate"
+                                    type="datetime-local"
+                                    className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none ltr"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-stone-900">תיאור מלא</label>
                         <textarea

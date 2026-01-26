@@ -3,6 +3,7 @@ export const CATEGORIES = [
     { slug: 'plants', name: 'עציצים' },
     { slug: 'gifts', name: 'מתנות ומתוקים' },
     { slug: 'chocolates', name: 'שוקולדים' },
+    { slug: 'balloons', name: 'בלונים' },
     { slug: 'wedding', name: 'חתן וכלה' },
     { slug: 'vases', name: 'כלים ואגרטלים' },
     { slug: 'add-ons', name: 'תוספות (Upsells)' },

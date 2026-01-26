@@ -65,10 +65,16 @@ function generateTimeSlots(dateString: string): string[] {
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, addItem, updateQuantity, cartTotal } = useCart();
     const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [address, setAddress] = useState('');
-    const [name, setName] = useState('');
-    const [phone, setPhone] = useState('');
+    const [recipientName, setRecipientName] = useState('');
+    const [recipientPhone, setRecipientPhone] = useState('');
+
+    // Orderer Details
+    const [ordererName, setOrdererName] = useState('');
     const [ordererPhone, setOrdererPhone] = useState('');
+    const [ordererEmail, setOrdererEmail] = useState('');
+
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState(''); // 🆕 הערות למשלוח
@@ -142,8 +148,14 @@ export default function CartDrawer() {
             import('@/app/actions/user-actions').then(({ getUserProfile }) => {
                 getUserProfile().then(user => {
                     if (user) {
-                        if (user.name) setName(user.name);
-                        if (user.phone) setOrdererPhone(user.phone);
+                        setIsLoggedIn(true);
+                        if (user.name) {
+                            setOrdererName(user.name);
+                        }
+                        if (user.phone) {
+                            setOrdererPhone(user.phone);
+                        }
+                        if (user.email) setOrdererEmail(user.email);
                         if (user.address) setAddress(user.address);
                     }
                 });
@@ -153,7 +165,7 @@ export default function CartDrawer() {
 
     const FREE_SHIPPING_THRESHOLD = 350;
     // Calculate totals locally to include discount
-    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = items.reduce((sum, item) => sum + (Number(item.price) || 0) * item.quantity, 0);
     const finalTotal = subtotal - (appliedCoupon?.amount || 0);
 
     const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
@@ -174,9 +186,11 @@ export default function CartDrawer() {
                     items,
                     shippingMethod,
                     shippingAddress: shippingMethod === 'delivery' ? address : 'Self Pickup',
-                    recipientName: name,
-                    recipientPhone: phone,
+                    recipientName,
+                    recipientPhone,
+                    ordererName,
                     ordererPhone,
+                    ordererEmail,
                     desiredDeliveryDate: date && time ? new Date(`${date}T${time}`).toISOString() : null,
                     deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null, // 🆕
                     couponId: appliedCoupon?.id,
@@ -332,7 +346,7 @@ export default function CartDrawer() {
                                                                     <Plus className="w-3 h-3" />
                                                                 </button>
                                                             </div>
-                                                            <span className="font-medium text-stone-900 text-lg">₪{item.price.toFixed(0)}</span>
+                                                            <span className="font-medium text-stone-900 text-lg">₪{(Number(item.price) || 0).toFixed(0)}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -410,30 +424,75 @@ export default function CartDrawer() {
                                                     </button>
                                                 </div>
 
-                                                {/* Contact Details */}
-                                                <div className="space-y-3 pt-2 border-t border-stone-100">
-                                                    <p className="text-sm font-bold text-stone-900">פרטי משלוח / איסוף</p>
+                                                {/* Contact Details Split */}
+                                                <div className="space-y-6 pt-2 border-t border-stone-100">
+
+                                                    {/* 1. Orderer Details */}
                                                     <div className="space-y-3">
-                                                        <input
-                                                            type="text"
-                                                            value={name}
-                                                            onChange={(e) => setName(e.target.value)}
-                                                            placeholder="שם מקבל המשלוח *"
-                                                            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
-                                                        />
-                                                        <div className="grid grid-cols-2 gap-3">
+                                                        <p className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-stone-900" />
+                                                            פרטי המזמין
+                                                        </p>
+                                                        <div className="space-y-3">
                                                             <input
-                                                                type="tel"
-                                                                value={phone}
-                                                                onChange={(e) => setPhone(e.target.value)}
-                                                                placeholder="* טלפון מקבל"
-                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
+                                                                type="text"
+                                                                value={ordererName}
+                                                                onChange={(e) => setOrdererName(e.target.value)}
+                                                                placeholder="שם מלא *"
+                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
+                                                            />
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                <input
+                                                                    type="tel"
+                                                                    value={ordererPhone}
+                                                                    onChange={(e) => setOrdererPhone(e.target.value)}
+                                                                    placeholder="טלפון נייד *"
+                                                                    className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
+                                                                />
+                                                                <input
+                                                                    type="email"
+                                                                    value={ordererEmail}
+                                                                    onChange={(e) => setOrdererEmail(e.target.value)}
+                                                                    placeholder="אימייל *"
+                                                                    className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
+                                                                />
+                                                            </div>
+
+                                                            {/* Create Account Checkbox - Only for Guests */}
+                                                            {!isLoggedIn && (
+                                                                <div className="flex items-center gap-2 pt-1">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        id="create-account"
+                                                                        className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                                                    />
+                                                                    <label htmlFor="create-account" className="text-xs text-stone-600 cursor-pointer select-none">
+                                                                        פתח חשבון לשמירת הפרטים לפעם הבאה (אופציונלי)
+                                                                    </label>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 2. Recipient Details */}
+                                                    <div className="space-y-3">
+                                                        <p className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-stone-900" />
+                                                            פרטי מקבל המשלוח
+                                                        </p>
+                                                        <div className="space-y-3">
+                                                            <input
+                                                                type="text"
+                                                                value={recipientName}
+                                                                onChange={(e) => setRecipientName(e.target.value)}
+                                                                placeholder="שם המקבל *"
+                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
                                                             />
                                                             <input
                                                                 type="tel"
-                                                                value={ordererPhone}
-                                                                onChange={(e) => setOrdererPhone(e.target.value)}
-                                                                placeholder="* טלפון מזמין"
+                                                                value={recipientPhone}
+                                                                onChange={(e) => setRecipientPhone(e.target.value)}
+                                                                placeholder="טלפון המקבל *"
                                                                 className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
                                                             />
                                                         </div>
@@ -664,9 +723,11 @@ export default function CartDrawer() {
                                             <button
                                                 onClick={handleCheckout}
                                                 disabled={
-                                                    name.length < 2 ||
-                                                    phone.length < 9 ||
+                                                    recipientName.length < 2 ||
+                                                    recipientPhone.length < 9 ||
+                                                    ordererName.length < 2 ||
                                                     ordererPhone.length < 9 ||
+                                                    ordererEmail.length < 5 ||
                                                     !date ||
                                                     !time ||
                                                     (shippingMethod === 'delivery' && address.length < 5)
