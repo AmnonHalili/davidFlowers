@@ -23,8 +23,22 @@ export async function POST(req: Request) {
             desiredDeliveryDate,
             deliveryNotes,
             couponId,
-            shippingCost = 0
+            selectedCity,
+            shippingCost: clientShippingCost = 0
         } = body;
+
+        const SHIPPING_COSTS: Record<string, number> = {
+            'אשקלון': 25,
+            'באר גנים': 45,
+            'ניצנים': 45,
+            'ניצן': 45,
+            'הודיה': 45,
+            'ברכיה': 45,
+            'ניר ישראל': 45,
+            'בית שקמה': 45,
+            'בת הדר': 45,
+            'כפר סילבר': 45
+        };
 
         // Validation
         if (!items || items.length === 0) {
@@ -81,17 +95,25 @@ export async function POST(req: Request) {
         // 2.5 VALIDATE DELIVERY DATE against availability
         if (latestAvailableFrom && desiredDeliveryDate) {
             const deliveryDate = new Date(desiredDeliveryDate);
-            // Ignore time components for simple date check, but launch date might be a specific time.
-            // Using straight comparison is safest.
-            if (deliveryDate < latestAvailableFrom) {
+            const launchDate = latestAvailableFrom as Date;
+            if (deliveryDate < launchDate) {
                 return NextResponse.json({
-                    error: `Delivery date must be at or after ${latestAvailableFrom.toLocaleDateString('he-IL')}`
+                    error: `Delivery date must be at or after ${launchDate.toLocaleDateString('he-IL')}`
                 }, { status: 400 });
             }
         }
 
         // Calculate total
-        const finalShippingCost = shippingMethod === 'delivery' ? shippingCost : 0;
+        const FREE_SHIPPING_THRESHOLD = 350;
+        let finalShippingCost = 0;
+        if (shippingMethod === 'delivery') {
+            if (calculatedSubtotal >= FREE_SHIPPING_THRESHOLD) {
+                finalShippingCost = 0;
+            } else {
+                finalShippingCost = selectedCity ? (SHIPPING_COSTS[selectedCity] || 45) : 45;
+            }
+        }
+
         const totalAmount = calculatedSubtotal + finalShippingCost; // Using calculated subtotal
 
         // 3. CREATE ORDER IN DATABASE (PENDING STATUS)
@@ -103,7 +125,7 @@ export async function POST(req: Request) {
                 status: 'PENDING',
                 paymentMethod: 'CREDIT_CARD',
                 recipientName,
-                shippingAddress: shippingMethod === 'delivery' ? shippingAddress : 'Self Pickup',
+                shippingAddress: shippingMethod === 'delivery' ? `${shippingAddress}, ${selectedCity}` : 'Self Pickup',
                 recipientPhone,
                 ordererName,
                 ordererPhone,
@@ -133,7 +155,7 @@ export async function POST(req: Request) {
                     // Let's keep existing logic or maybe update name if empty?
                     // User might be ordering for someone else, so changing their profile name to recipient name is bad specificially in this new flow.
                     // But maybe update address if delivery?
-                    ...(shippingMethod === 'delivery' && shippingAddress ? { address: shippingAddress } : {}),
+                    ...(shippingMethod === 'delivery' && shippingAddress ? { address: `${shippingAddress}, ${selectedCity}` } : {}),
                 }
             }).catch(err => console.error('Error updating user profile:', err));
         }

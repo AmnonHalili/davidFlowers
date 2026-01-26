@@ -50,8 +50,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
         notFound();
     }
 
-    const mainImage = product.images.find(img => img.isMain)?.url || product.images[0]?.url || '';
-    const galleryImages = product.images.filter(img => !img.isMain);
+    const mainImage = product.images.find((img: any) => img.isMain)?.url || product.images[0]?.url || '';
+    const galleryImages = product.images.filter((img: any) => !img.isMain);
 
 
     const { price: displayPrice, isOnSale, regularPrice } = calculateProductPrice({
@@ -63,7 +63,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
     return (
         <div className="min-h-screen bg-white pb-32">
-            <div className="max-w-screen-xl mx-auto md:px-6 md:pt-32 pt-20">
+            <div className="max-w-screen-xl mx-auto md:px-6 md:pt-8 pt-6">
 
                 {/* Back Button (Mobile & Desktop) */}
                 <div className="flex justify-between items-center px-6 md:px-0 mb-6 md:mb-8">
@@ -103,7 +103,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                 )}
                             </div>
                             {/* Gallery Images */}
-                            {galleryImages.map(img => (
+                            {galleryImages.map((img: any) => (
                                 <div key={img.id} className="snap-center min-w-full aspect-[3/4] bg-stone-100 overflow-hidden relative">
                                     <img src={img.url} alt={img.alt || product.name} className="w-full h-full object-cover" />
                                 </div>
@@ -114,7 +114,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                         {(galleryImages.length > 0) && (
                             <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 md:hidden">
                                 <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
-                                {galleryImages.map(img => (
+                                {galleryImages.map((img: any) => (
                                     <div key={img.id} className="w-1.5 h-1.5 rounded-full bg-white/50 shadow-sm" />
                                 ))}
                             </div>
@@ -123,7 +123,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                         {/* Desktop Thumbnails (Hidden on Mobile) */}
                         {galleryImages.length > 0 && (
                             <div className="hidden md:grid grid-cols-4 gap-4 mt-4">
-                                {galleryImages.map(img => (
+                                {galleryImages.map((img: any) => (
                                     <div key={img.id} className="aspect-square bg-stone-50 overflow-hidden cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
                                         <img src={img.url} alt={img.alt || product.name} className="w-full h-full object-cover" />
                                     </div>
@@ -136,7 +136,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     <div className="px-6 py-8 md:p-0 space-y-8 md:space-y-10 md:sticky md:top-32 md:h-fit">
                         <div className="space-y-3 md:space-y-4">
                             <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-stone-500">
-                                {product.categories.map(c => c.name).join(', ')}
+                                {product.categories.map((c: any) => c.name).join(', ')}
                             </span>
                             <h1 className="font-serif text-3xl md:text-5xl text-stone-900">{product.name}</h1>
 

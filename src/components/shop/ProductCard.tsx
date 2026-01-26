@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingBag, Eye, Timer } from 'lucide-react';
+import { ShoppingBag, Timer, Check } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import WishlistButton from './WishlistButton';
 import { calculateProductPrice } from '@/lib/price-utils';
@@ -38,11 +38,23 @@ export default function ProductCard({
         saleEndDate
     });
 
+    // Scheduling Logic
+    const now = new Date();
+    const launchDate = availableFrom ? new Date(availableFrom) : null;
+    const isFuture = launchDate && launchDate > now;
+    const canPreorder = isFuture && allowPreorder;
+    const isLocked = isFuture && !allowPreorder;
+
+    const [isAdded, setIsAdded] = useState(false);
+
     // Countdown Timer Logic
     const [timeLeft, setTimeLeft] = useState('');
 
     useEffect(() => {
-        if (!isOnSale || !saleEndDate) return;
+        if (!isOnSale || !saleEndDate) {
+            setTimeLeft('');
+            return;
+        }
 
         const calculateTimeLeft = () => {
             const end = new Date(saleEndDate);
@@ -67,14 +79,34 @@ export default function ProductCard({
         };
 
         calculateTimeLeft();
-        const timer = setInterval(calculateTimeLeft, 1000); // Update every second
+        const timer = setInterval(calculateTimeLeft, 1000);
         return () => clearInterval(timer);
     }, [isOnSale, saleEndDate]);
 
+    const handleQuickAdd = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isOutOfStock || isLocked) return;
+        addItem({
+            id: id,
+            productId: id,
+            name: name,
+            price: displayPrice,
+            originalPrice: isOnSale ? regularPrice : undefined,
+            image: image,
+            quantity: 1,
+            type: 'ONETIME',
+            availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
+        });
+
+        // Trigger visual feedback
+        setIsAdded(true);
+        setTimeout(() => setIsAdded(false), 2000);
+    };
+
     return (
         <Link href={`/product/${slug}`} className="group block space-y-4 rtl relative" dir="rtl">
-            <div className="relative aspect-[3/4] overflow-hidden bg-stone-100 rounded-sm">
-
+            <div className="relative aspect-square overflow-hidden bg-stone-100 rounded-sm">
                 {/* Main Image */}
                 <img
                     src={image}
@@ -91,127 +123,95 @@ export default function ProductCard({
                     />
                 )}
 
-                {/* Scheduling Logic */}
-                {(() => {
-                    const now = new Date();
-                    const launchDate = availableFrom ? new Date(availableFrom) : null;
-                    const isFuture = launchDate && launchDate > now;
-                    const canPreorder = isFuture && allowPreorder;
-                    const isLocked = isFuture && !allowPreorder;
+                {/* Badges Container */}
+                <div className="absolute top-0 left-0 right-0 p-3 flex flex-col items-start gap-2 z-30 pointer-events-none">
+                    {isOnSale && !isOutOfStock && !isFuture && (
+                        <div className="bg-rose-600 text-white text-[11px] font-serif tracking-wide px-3 py-1 shadow-sm">
+                            SALE
+                        </div>
+                    )}
+                    {canPreorder && (
+                        <div className="bg-david-green text-white text-[11px] font-serif tracking-wide px-3 py-1 shadow-sm">
+                            PRE-ORDER
+                        </div>
+                    )}
+                    {isLocked && (
+                        <div className="bg-stone-900/90 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest backdrop-blur-sm border border-white/20">
+                            בקרוב
+                        </div>
+                    )}
+                    {isOutOfStock && !isFuture && (
+                        <div className="bg-stone-900 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest backdrop-blur-sm">
+                            אזל מהמלאי
+                        </div>
+                    )}
+                </div>
 
-                    return (
-                        <>
-                            {/* Badges Container - New Premium Look */}
-                            <div className="absolute top-0 left-0 right-0 p-3 flex flex-col items-start gap-2 z-30 pointer-events-none rtl:items-start ltr:items-end">
-                                {/* Discount Badge */}
-                                {isOnSale && !isOutOfStock && !isFuture && (
-                                    <div className="bg-rose-600 text-white text-[11px] font-serif tracking-wide px-3 py-1 shadow-sm animate-in fade-in zoom-in duration-300">
-                                        SALE
-                                    </div>
-                                )}
+                {/* Sale Timer Overlay */}
+                {isOnSale && timeLeft && !isOutOfStock && !isFuture && (
+                    <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-center z-20 pointer-events-none bg-gradient-to-t from-black/20 to-transparent">
+                        <div className="bg-white/95 backdrop-blur-md text-stone-900 px-4 py-2 rounded-sm border border-white/50 shadow-xl flex items-center gap-3">
+                            <Timer className="w-3.5 h-3.5 text-rose-600" strokeWidth={2} />
+                            <span className="text-xs font-medium tracking-widest font-mono tabular-nums">{timeLeft}</span>
+                        </div>
+                    </div>
+                )}
 
-                                {/* Pre-order Badge */}
-                                {canPreorder && (
-                                    <div className="bg-david-green text-white text-[11px] font-serif tracking-wide px-3 py-1 shadow-sm">
-                                        PRE-ORDER
-                                    </div>
-                                )}
+                {/* Locked Launch Timer Overlay */}
+                {isLocked && launchDate && (
+                    <div className="absolute inset-0 z-40 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300">
+                        <div className="bg-white/90 p-4 shadow-lg border border-stone-100 max-w-full">
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-stone-500 mb-2">זמין לרכישה ב:</p>
+                            <p className="text-sm font-mono font-medium text-stone-900 tracking-wider dir-ltr">
+                                {launchDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })}
+                                <span className="mx-2 text-stone-300">|</span>
+                                {launchDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+                        <span className="mt-4 text-xs font-bold text-stone-900 bg-stone-100 px-3 py-1 uppercase tracking-widest">
+                            בקרוב
+                        </span>
+                    </div>
+                )}
 
-                                {/* Coming Soon Badge */}
-                                {isLocked && (
-                                    <div className="bg-stone-900/90 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest backdrop-blur-sm border border-white/20">
-                                        בקרוב
-                                    </div>
-                                )}
+                {/* Wishlist Button */}
+                <div className="absolute top-3 left-3 z-30 pointer-events-auto">
+                    <WishlistButton
+                        productId={id}
+                        initialIsFavorited={isFavorited}
+                        className="bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white text-stone-600 hover:text-rose-600"
+                    />
+                </div>
 
-                                {/* Out of Stock Label */}
-                                {isOutOfStock && !isFuture && (
-                                    <div className="bg-stone-900 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest backdrop-blur-sm">
-                                        אזל מהמלאי
-                                    </div>
-                                )}
-                            </div>
+                {/* Dark Overlay on Hover */}
+                <div className="absolute inset-0 bg-stone-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-                            {/* Sale Timer Overlay (Existing) */}
-                            {isOnSale && timeLeft && !isOutOfStock && !isFuture && (
-                                <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-center z-20 pointer-events-none bg-gradient-to-t from-black/20 to-transparent">
-                                    <div className="bg-white/95 backdrop-blur-md text-stone-900 px-4 py-2 rounded-sm border border-white/50 shadow-xl flex items-center gap-3">
-                                        <Timer className="w-3.5 h-3.5 text-rose-600" strokeWidth={2} />
-                                        <span className="text-xs font-medium tracking-widest font-mono tabular-nums">{timeLeft}</span>
-                                    </div>
-                                </div>
+                {/* "Quick Actions" Bottom Up Slide (Desktop Only) */}
+                {!isLocked && (
+                    <div className="hidden md:block absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-20">
+                        <button
+                            onClick={handleQuickAdd}
+                            className={`w-full py-4 uppercase text-xs tracking-[0.2em] font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isAdded
+                                ? 'bg-david-green text-white'
+                                : canPreorder
+                                    ? 'bg-david-green text-white hover:bg-david-green/90'
+                                    : 'bg-stone-900 text-white hover:bg-stone-800'
+                                }`}
+                        >
+                            {isAdded ? (
+                                <>
+                                    <Check className="w-4 h-4" strokeWidth={3} />
+                                    <span>נוסף לסל</span>
+                                </>
+                            ) : (
+                                <>
+                                    <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+                                    {isOutOfStock ? 'אזל מהמלאי' : canPreorder ? 'הזמנה מוקדמת' : 'הוסף לסל'}
+                                </>
                             )}
-
-                            {/* Locked Launch Timer Overlay - NOW PREVENTS CLICKS */}
-                            {isLocked && launchDate && (
-                                <div className="absolute inset-0 z-40 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300">
-                                    <div className="bg-white/90 p-4 shadow-lg border border-stone-100 max-w-full">
-                                        <p className="text-[10px] uppercase tracking-[0.2em] text-stone-500 mb-2">זמין לרכישה ב:</p>
-                                        <p className="text-sm font-mono font-medium text-stone-900 tracking-wider dir-ltr">
-                                            {launchDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })}
-                                            <span className="mx-2 text-stone-300">|</span>
-                                            {launchDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                    </div>
-                                    <span className="mt-4 text-xs font-bold text-stone-900 bg-stone-100 px-3 py-1 uppercase tracking-widest">
-                                        בקרוב
-                                    </span>
-                                </div>
-                            )}
-
-                            {/* Pre-order Badge */}
-                            {canPreorder && (
-                                <div className="absolute top-0 right-0 p-3 z-30 pointer-events-none">
-                                    <div className="bg-david-green text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest shadow-md">
-                                        PRE-ORDER
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Wishlist Button - Repositioned to Left */}
-                            <div className="absolute top-3 left-3 z-30 pointer-events-auto">
-                                <WishlistButton
-                                    productId={id}
-                                    initialIsFavorited={isFavorited}
-                                    className="bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white text-stone-600 hover:text-rose-600"
-                                />
-                            </div>
-
-                            {/* Dark Overlay on Hover (Subtle) */}
-                            <div className="absolute inset-0 bg-stone-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-                            {/* "Quick Actions" Bottom Up Slide */}
-                            {!isLocked && (
-                                <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-20">
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            if (isOutOfStock) return;
-                                            addItem({
-                                                id: id,
-                                                productId: id,
-                                                name: name,
-                                                price: displayPrice,
-                                                originalPrice: isOnSale ? regularPrice : undefined,
-                                                image: image,
-                                                quantity: 1,
-                                                type: 'ONETIME',
-                                                availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
-                                            });
-                                        }}
-                                        className={`w-full py-4 uppercase text-xs tracking-[0.2em] font-medium transition-colors flex items-center justify-center gap-2 ${canPreorder
-                                            ? 'bg-david-green text-white hover:bg-david-green/90'
-                                            : 'bg-stone-900 text-white hover:bg-stone-800'
-                                            }`}
-                                    >
-                                        <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-                                        {isOutOfStock ? 'אזל מהמלאי' : canPreorder ? 'הזמנה מוקדמת' : 'הוסף לסל'}
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    );
-                })()}
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="text-center space-y-2 pt-2">
@@ -221,7 +221,7 @@ export default function ProductCard({
                 <h3 className="font-serif text-xl text-stone-900 group-hover:text-stone-600 transition-colors duration-300">
                     {name}
                 </h3>
-                <div className="flex justify-center items-center gap-3">
+                <div className="flex justify-center items-center gap-3 relative">
                     {isOnSale ? (
                         <>
                             <span className="font-medium text-rose-600 text-lg font-serif">
@@ -235,6 +235,21 @@ export default function ProductCard({
                         <p className="font-medium text-stone-600 text-lg font-serif">
                             ₪{typeof Number(price) === 'number' && !isNaN(Number(price)) ? Number(price).toFixed(0) : '0'}
                         </p>
+                    )}
+
+                    {/* Mobile Quick Add Icon */}
+                    {!isLocked && !isOutOfStock && (
+                        <button
+                            onClick={handleQuickAdd}
+                            className={`md:hidden flex items-center justify-center w-8 h-8 rounded-full shadow-md active:scale-95 transition-all duration-300 ${isAdded ? 'bg-david-green text-white' : 'bg-stone-900 text-white'
+                                }`}
+                        >
+                            {isAdded ? (
+                                <Check className="w-4 h-4" strokeWidth={3} />
+                            ) : (
+                                <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+                            )}
+                        </button>
                     )}
                 </div>
             </div>

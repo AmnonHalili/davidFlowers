@@ -30,7 +30,7 @@ export default async function AccountPage() {
     });
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20">
+        <div className="min-h-screen bg-[#FAFAFA] pt-8 pb-20">
             <div className="max-w-screen-lg mx-auto px-6 space-y-12">
 
                 {/* Header */}

@@ -87,8 +87,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     }
 
     return (
-        <main className="min-h-screen pt-32 pb-20 px-6 bg-[#FAFAFA]" dir="rtl">
-            <div className="max-w-screen-2xl mx-auto space-y-8">
+        <main className="min-h-screen pt-8 pb-20 px-6 bg-[#FAFAFA]" dir="rtl">
+            <div className="max-w-screen-2xl mx-auto space-y-12">
 
                 {/* Header */}
                 <div className="text-center space-y-4 mb-4">

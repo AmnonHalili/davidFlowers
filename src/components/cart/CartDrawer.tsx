@@ -62,6 +62,19 @@ function generateTimeSlots(dateString: string): string[] {
 }
 
 
+const SHIPPING_COSTS: Record<string, number> = {
+    'אשקלון': 25,
+    'באר גנים': 45,
+    'ניצנים': 45,
+    'ניצן': 45,
+    'הודיה': 45,
+    'ברכיה': 45,
+    'ניר ישראל': 45,
+    'בית שקמה': 45,
+    'בת הדר': 45,
+    'כפר סילבר': 45
+};
+
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, addItem, updateQuantity, cartTotal } = useCart();
     const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
@@ -77,6 +90,7 @@ export default function CartDrawer() {
 
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
+    const [selectedCity, setSelectedCity] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState(''); // 🆕 הערות למשלוח
     const [upsellItems, setUpsellItems] = useState<any[]>([]);
     const [checkoutStep, setCheckoutStep] = useState<'cart' | 'details'>('cart');
@@ -187,6 +201,12 @@ export default function CartDrawer() {
     const FREE_SHIPPING_THRESHOLD = 350;
     // Calculate totals locally to include discount
     const subtotal = items.reduce((sum, item) => sum + (Number(item.price) || 0) * item.quantity, 0);
+
+    // Calculate dynamic shipping cost
+    const currentShippingCost = shippingMethod === 'delivery'
+        ? (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : (SHIPPING_COSTS[selectedCity] || 30)) // Fallback to 30 if no city selected yet
+        : 0;
+
     const finalTotal = subtotal - (appliedCoupon?.amount || 0);
 
     const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
@@ -217,7 +237,8 @@ export default function CartDrawer() {
                     desiredDeliveryDate: date && time ? new Date(`${date}T${time}`).toISOString() : null,
                     deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null, // 🆕
                     couponId: appliedCoupon?.id,
-                    shippingCost: shippingMethod === 'delivery' ? 30 : 0
+                    selectedCity: shippingMethod === 'delivery' ? selectedCity : null,
+                    shippingCost: currentShippingCost
                 }),
             });
 
@@ -426,8 +447,10 @@ export default function CartDrawer() {
                                                             }`}
                                                     >
                                                         <span className="block text-sm font-bold mb-0.5">משלוח</span>
-                                                        <span className={`text-[10px] ${shippingMethod === 'delivery' ? 'text-white/60' : 'text-stone-400'}`}>אשקלון בלבד</span>
-                                                        <span className="absolute top-4 left-4 text-xs font-bold">₪30</span>
+                                                        <span className={`text-[10px] ${shippingMethod === 'delivery' ? 'text-white/60' : 'text-stone-400'}`}>אשקלון והסביבה</span>
+                                                        <span className="absolute top-4 left-4 text-xs font-bold">
+                                                            {subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : selectedCity ? `₪${SHIPPING_COSTS[selectedCity]}` : 'מ-₪25'}
+                                                        </span>
                                                     </button>
                                                 </div>
 
@@ -515,13 +538,33 @@ export default function CartDrawer() {
                                                             exit={{ height: 0, opacity: 0 }}
                                                             className="overflow-hidden border-b border-stone-100 pb-3"
                                                         >
-                                                            <input
-                                                                type="text"
-                                                                value={address}
-                                                                onChange={(e) => setAddress(e.target.value)}
-                                                                placeholder="כתובת למשלוח (רחוב, מספר, עיר) *"
-                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
-                                                            />
+                                                            <div className="space-y-3">
+                                                                <div className="space-y-1">
+                                                                    <label className="text-xs text-stone-500">עיר / יישוב *</label>
+                                                                    <select
+                                                                        value={selectedCity}
+                                                                        onChange={(e) => setSelectedCity(e.target.value)}
+                                                                        className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900 dir-rtl"
+                                                                    >
+                                                                        <option value="">בחירת עיר...</option>
+                                                                        {Object.keys(SHIPPING_COSTS).sort().map(city => (
+                                                                            <option key={city} value={city}>
+                                                                                {city} ({subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : `₪${SHIPPING_COSTS[city]}`})
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-xs text-stone-500">כתובת (רחוב ומספר בית) *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={address}
+                                                                        onChange={(e) => setAddress(e.target.value)}
+                                                                        placeholder="לדוגמה: הרצל 10"
+                                                                        className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
+                                                                    />
+                                                                </div>
+                                                            </div>
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
@@ -639,26 +682,31 @@ export default function CartDrawer() {
                                         >
                                             {/* Upsell Section - Horizontal Scroll */}
                                             {upsellItems.length > 0 && (
-                                                <div className="space-y-2 border-b border-stone-100/50 pb-4">
-                                                    <h3 className="text-[11px] font-bold text-stone-900 uppercase tracking-widest opacity-80">לא לשכוח להוסיף</h3>
-                                                    <div className="flex gap-3 overflow-x-auto scrollbar-hide py-2 -mx-2 px-2 snap-x mask-linear-fade">
+                                                <div className="space-y-3 border-b border-stone-100/50 pb-5">
+                                                    <div className="flex items-center justify-between px-1">
+                                                        <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest opacity-80">שדרוגים מומלצים</h3>
+                                                        <span className="text-[9px] text-stone-400">גלול למטה</span>
+                                                    </div>
+                                                    <div className="flex gap-2.5 overflow-x-auto scrollbar-hide py-1 -mx-2 px-2 snap-x mask-linear-fade">
                                                         {upsellItems.map((item) => (
-                                                            <div key={item.id} className="snap-start shrink-0 w-20 flex flex-col gap-1.5 group cursor-pointer" onClick={() => handleAddUpsell(item)}>
-                                                                <div className={`relative aspect-square rounded-lg overflow-hidden bg-stone-50 border transition-all duration-300 ${addedUpsellId === item.id ? 'border-green-500 ring-1 ring-green-500' : 'border-stone-200 group-hover:border-stone-400'}`}>
+                                                            <div key={item.id} className="snap-start shrink-0 w-16 flex flex-col gap-1 group cursor-pointer" onClick={() => handleAddUpsell(item)}>
+                                                                <div className={`relative aspect-square rounded-md overflow-hidden bg-stone-50 border transition-all duration-300 ${addedUpsellId === item.id ? 'border-david-green ring-1 ring-david-green' : 'border-stone-200 group-hover:border-stone-400'}`}>
                                                                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
 
                                                                     {/* Add Button / Success State */}
-                                                                    <div className={`absolute bottom-1 left-1 rounded-full p-1 shadow-sm transition-all duration-300 ${addedUpsellId === item.id ? 'bg-green-500 text-white opacity-100 scale-100' : 'bg-white/90 text-stone-900 opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'}`}>
-                                                                        {addedUpsellId === item.id ? (
-                                                                            <Check className="w-3 h-3" strokeWidth={3} />
-                                                                        ) : (
-                                                                            <Plus className="w-3 h-3" strokeWidth={2} />
-                                                                        )}
+                                                                    <div className={`absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300 ${addedUpsellId === item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                                                        <div className={`rounded-full p-1 shadow-sm transition-all duration-300 ${addedUpsellId === item.id ? 'bg-david-green text-white scale-110' : 'bg-white text-stone-900 scale-90'}`}>
+                                                                            {addedUpsellId === item.id ? (
+                                                                                <Check className="w-3 h-3" strokeWidth={3} />
+                                                                            ) : (
+                                                                                <Plus className="w-3 h-3" strokeWidth={2} />
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="text-center space-y-0.5">
-                                                                    <p className="text-[10px] leading-tight font-medium text-stone-900 line-clamp-2 min-h-[1.5em]">{item.name}</p>
-                                                                    <p className="text-[10px] text-stone-500 font-mono">₪{item.price}</p>
+                                                                <div className="text-center space-y-0.5 px-0.5">
+                                                                    <p className="text-[9px] leading-tight font-medium text-stone-900 line-clamp-1">{item.name}</p>
+                                                                    <p className="text-[9px] text-stone-500 font-mono">₪{item.price}</p>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -752,11 +800,11 @@ export default function CartDrawer() {
                                                 </div>
                                                 <div className="flex justify-between text-stone-500 text-sm">
                                                     <span>משלוח</span>
-                                                    <span>{shippingMethod === 'delivery' ? '₪30.00' : 'חינם'}</span>
+                                                    <span>{currentShippingCost > 0 ? `₪${currentShippingCost.toFixed(2)}` : 'חינם'}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900 pt-3 border-t border-stone-100">
                                                     <span>סה"כ</span>
-                                                    <span>₪{(cartTotal + (shippingMethod === 'delivery' ? 30 : 0)).toFixed(2)}</span>
+                                                    <span>₪{(finalTotal + currentShippingCost).toFixed(2)}</span>
                                                 </div>
                                             </div>
 
@@ -768,9 +816,8 @@ export default function CartDrawer() {
                                                     ordererName.length < 2 ||
                                                     ordererPhone.length < 9 ||
                                                     ordererEmail.length < 5 ||
-                                                    !date ||
                                                     !time ||
-                                                    (shippingMethod === 'delivery' && address.length < 5)
+                                                    (shippingMethod === 'delivery' && (!address || !selectedCity))
                                                 }
                                                 className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
                                             >

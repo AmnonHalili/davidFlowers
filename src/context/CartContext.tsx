@@ -83,7 +83,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             }
             return [...currentItems, newItem];
         });
-        openCart(); // Auto open cart on add
     };
 
     const removeItem = (id: string) => {
