@@ -7,63 +7,55 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
 import { getUpsellProducts } from '@/app/actions/product-actions';
+import { getHolidayStatus } from '@/lib/holidays';
 
 // Store Hours Utility Functions
-function getStoreHours(dateString: string): { start: number; startMin: number; end: number; endMin: number } | null {
-    if (!dateString) return null;
+function generateTimeSlots(dateString: string): string[] {
+    if (!dateString) return [];
 
     const date = new Date(dateString);
     const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
 
-    switch (dayOfWeek) {
-        case 0: // Sunday
-            return { start: 10, startMin: 15, end: 19, endMin: 15 };
-        case 1: // Monday
-        case 2: // Tuesday
-        case 3: // Wednesday
-        case 4: // Thursday
-            return { start: 9, startMin: 15, end: 19, endMin: 15 };
-        case 5: // Friday
-            return { start: 8, startMin: 15, end: 14, endMin: 15 };
-        case 6: // Saturday - Closed
-            return null;
-        default:
-            return null;
+    // Check holiday status
+    const holidayStatus = getHolidayStatus(date);
+
+    // 1. Holiday (Chag) or Saturday -> Closed
+    if (holidayStatus === 'CLOSED' || dayOfWeek === 6) {
+        return [];
     }
-}
 
-function generateTimeSlots(dateString: string): string[] {
-    const hours = getStoreHours(dateString);
-    if (!hours) return [];
+    // Define slots based on day
+    let slots: string[] = [];
 
-    const slots: string[] = [];
-    const selectedDate = new Date(dateString);
+    // 2. Friday OR Erev Chag -> Partial Day
+    if (holidayStatus === 'FRIDAY_LIKE' || dayOfWeek === 5) {
+        slots = [
+            '08:00 - 11:00',
+            '11:00 - 14:00'
+        ];
+    } else {
+        // 3. Regular Days (Sunday - Thursday)
+        slots = [
+            '10:00 - 13:00',
+            '13:00 - 16:00',
+            '16:00 - 19:00'
+        ];
+    }
+
+    // Filter out past slots if today
     const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
 
-    // Check if selected date is today
-    const isToday = selectedDate.toDateString() === now.toDateString();
-    const currentHour = now.getHours();
-    const currentMin = now.getMinutes();
+    if (isToday) {
+        const currentHour = now.getHours();
 
-    let currentSlotHour = hours.start;
-    let currentSlotMin = hours.startMin;
+        slots = slots.filter(slot => {
+            // Parse start time of the slot (e.g. "10:00" from "10:00 - 13:00")
+            const startTimePart = slot.split(' - ')[0];
+            const startHour = parseInt(startTimePart.split(':')[0], 10);
 
-    const endHour = hours.end;
-    const endMin = hours.endMin;
-
-    while (currentSlotHour < endHour || (currentSlotHour === endHour && currentSlotMin <= endMin)) {
-        // If today, skip past times
-        if (!isToday || currentSlotHour > currentHour || (currentSlotHour === currentHour && currentSlotMin > currentMin)) {
-            const timeSlot = `${currentSlotHour.toString().padStart(2, '0')}:${currentSlotMin.toString().padStart(2, '0')}`;
-            slots.push(timeSlot);
-        }
-
-        // Increment by 15 minutes
-        currentSlotMin += 15;
-        if (currentSlotMin >= 60) {
-            currentSlotMin = 0;
-            currentSlotHour += 1;
-        }
+            return startHour > currentHour;
+        });
     }
 
     return slots;
@@ -76,6 +68,7 @@ export default function CartDrawer() {
     const [address, setAddress] = useState('');
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
+    const [ordererPhone, setOrdererPhone] = useState('');
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState(''); // 🆕 הערות למשלוח
@@ -150,7 +143,7 @@ export default function CartDrawer() {
                 getUserProfile().then(user => {
                     if (user) {
                         if (user.name) setName(user.name);
-                        if (user.phone) setPhone(user.phone);
+                        if (user.phone) setOrdererPhone(user.phone);
                         if (user.address) setAddress(user.address);
                     }
                 });
@@ -183,6 +176,7 @@ export default function CartDrawer() {
                     shippingAddress: shippingMethod === 'delivery' ? address : 'Self Pickup',
                     recipientName: name,
                     recipientPhone: phone,
+                    ordererPhone,
                     desiredDeliveryDate: date && time ? new Date(`${date}T${time}`).toISOString() : null,
                     deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null, // 🆕
                     couponId: appliedCoupon?.id,
@@ -419,21 +413,30 @@ export default function CartDrawer() {
                                                 {/* Contact Details */}
                                                 <div className="space-y-3 pt-2 border-t border-stone-100">
                                                     <p className="text-sm font-bold text-stone-900">פרטי משלוח / איסוף</p>
-                                                    <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-3">
                                                         <input
                                                             type="text"
                                                             value={name}
                                                             onChange={(e) => setName(e.target.value)}
-                                                            placeholder="שם מלא *"
+                                                            placeholder="שם מקבל המשלוח *"
                                                             className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
                                                         />
-                                                        <input
-                                                            type="tel"
-                                                            value={phone}
-                                                            onChange={(e) => setPhone(e.target.value)}
-                                                            placeholder="טלפון נייד *"
-                                                            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
-                                                        />
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <input
+                                                                type="tel"
+                                                                value={phone}
+                                                                onChange={(e) => setPhone(e.target.value)}
+                                                                placeholder="* טלפון מקבל"
+                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
+                                                            />
+                                                            <input
+                                                                type="tel"
+                                                                value={ordererPhone}
+                                                                onChange={(e) => setOrdererPhone(e.target.value)}
+                                                                placeholder="* טלפון מזמין"
+                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -507,9 +510,7 @@ export default function CartDrawer() {
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-xs text-stone-500">
-                                                                שעה {date && getStoreHours(date) ?
-                                                                    `(${getStoreHours(date)!.start.toString().padStart(2, '0')}:${getStoreHours(date)!.startMin.toString().padStart(2, '0')} - ${getStoreHours(date)!.end.toString().padStart(2, '0')}:${getStoreHours(date)!.endMin.toString().padStart(2, '0')})`
-                                                                    : ''}
+                                                                שעה
                                                             </label>
                                                             <select
                                                                 value={time}
@@ -524,9 +525,9 @@ export default function CartDrawer() {
                                                                     </option>
                                                                 ))}
                                                             </select>
-                                                            {date && getStoreHours(date) === null && (
+                                                            {date && availableTimeSlots.length === 0 && (
                                                                 <p className="text-xs text-red-500 mt-1">
-                                                                    החנות סגורה בשבת. אנא בחר יום אחר.
+                                                                    אין משלוחים זמינים למועד זה.
                                                                 </p>
                                                             )}
                                                         </div>
@@ -665,6 +666,7 @@ export default function CartDrawer() {
                                                 disabled={
                                                     name.length < 2 ||
                                                     phone.length < 9 ||
+                                                    ordererPhone.length < 9 ||
                                                     !date ||
                                                     !time ||
                                                     (shippingMethod === 'delivery' && address.length < 5)

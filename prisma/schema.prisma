@@ -78,6 +78,7 @@ model Order {
   recipientName     String
   shippingAddress   String
   recipientPhone    String?     // Critical for delivery
+  ordererPhone      String?     // Phone of the person placing the order
   desiredDeliveryDate DateTime?
   cardMessage       String?
   deliveryNotes     String?     // Special instructions for courier

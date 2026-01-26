@@ -19,6 +19,7 @@ export async function POST(req: Request) {
             shippingAddress,
             recipientName,
             recipientPhone,
+            ordererPhone,
             desiredDeliveryDate,
             deliveryNotes,
             couponId,
@@ -30,8 +31,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
         }
 
-        if (!recipientName || !recipientPhone) {
-            return NextResponse.json({ error: 'Recipient details required' }, { status: 400 });
+        if (!recipientName || !recipientPhone || !ordererPhone) {
+            return NextResponse.json({ error: 'Recipient and Orderer details required' }, { status: 400 });
         }
 
         if (shippingMethod === 'delivery' && !shippingAddress) {
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
                 recipientName,
                 shippingAddress: shippingMethod === 'delivery' ? shippingAddress : 'Self Pickup',
                 recipientPhone,
+                ordererPhone,
                 desiredDeliveryDate: desiredDeliveryDate ? new Date(desiredDeliveryDate) : null,
                 deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null,
                 ...(couponId && { coupon: { connect: { id: couponId } } }),
@@ -73,7 +75,7 @@ export async function POST(req: Request) {
             await prisma.user.update({
                 where: { clerkId: userId },
                 data: {
-                    phone: recipientPhone,
+                    phone: ordererPhone,
                     ...(shippingMethod === 'delivery' && shippingAddress ? { address: shippingAddress } : {}),
                     ...(recipientName ? { name: recipientName } : {})
                 }
@@ -85,7 +87,7 @@ export async function POST(req: Request) {
             orderId: order.id,
             amount: Number(totalAmount),
             customerName: recipientName,
-            customerPhone: recipientPhone,
+            customerPhone: ordererPhone,
             customerEmail: user?.emailAddresses[0]?.emailAddress
         });
 

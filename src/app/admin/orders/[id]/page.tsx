@@ -99,7 +99,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                 {/* Sidebar: Customer Info */}
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-6">
-                        <h2 className="font-semibold text-stone-900 border-b border-stone-100 pb-3">פרטי הלקוח</h2>
+                        <h2 className="font-semibold text-stone-900 border-b border-stone-100 pb-3">פרטי משלוח</h2>
 
                         <div className="space-y-4">
                             <div className="flex items-start gap-3">
@@ -108,9 +108,44 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                                     <div className="text-xs text-stone-400 mb-0.5">כתובת למשלוח</div>
                                     <div className="font-medium text-stone-900">{order.recipientName}</div>
                                     <div className="text-stone-600 text-sm leading-relaxed">{order.shippingAddress}</div>
+                                    {order.deliveryNotes && (
+                                        <div className="mt-2 text-amber-700 bg-amber-50 p-2 rounded text-xs border border-amber-100">
+                                            <span className="font-bold block mb-1">הערות לשליח:</span>
+                                            {order.deliveryNotes}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
+                            <div className="flex items-center gap-3">
+                                <Phone className="w-5 h-5 text-stone-400" />
+                                <div>
+                                    <div className="text-xs text-stone-400 mb-0.5">טלפון מקבל</div>
+                                    <div className="text-stone-900 text-sm dir-ltr text-right">
+                                        <a href={`tel:${order.recipientPhone}`} className="hover:text-david-green hover:underline">
+                                            {order.recipientPhone}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {order.desiredDeliveryDate && (
+                                <div className="flex items-center gap-3 border-t border-stone-100 pt-3 mt-3">
+                                    <Package className="w-5 h-5 text-stone-400" />
+                                    <div>
+                                        <div className="text-xs text-stone-400 mb-0.5">מועד משלוח מבוקש</div>
+                                        <div className="text-stone-900 text-sm font-medium">
+                                            {format(new Date(order.desiredDeliveryDate), "EEEE, d בMMMM, HH:mm", { locale: he })}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-6">
+                        <h2 className="font-semibold text-stone-900 border-b border-stone-100 pb-3">פרטי המזמין</h2>
+                        <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <Mail className="w-5 h-5 text-stone-400" />
                                 <div>
@@ -120,11 +155,27 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                             </div>
 
                             <div className="flex items-center gap-3">
+                                <Phone className="w-5 h-5 text-stone-400" />
+                                <div>
+                                    <div className="text-xs text-stone-400 mb-0.5">טלפון מזמין</div>
+                                    <div className="text-stone-900 text-sm dir-ltr text-right">
+                                        {order.ordererPhone ? (
+                                            <a href={`tel:${order.ordererPhone}`} className="hover:text-david-green hover:underline">
+                                                {order.ordererPhone}
+                                            </a>
+                                        ) : (
+                                            <span className="text-stone-400 italic">לא צוין</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
                                 <CreditCard className="w-5 h-5 text-stone-400" />
                                 <div>
                                     <div className="text-xs text-stone-400 mb-0.5">אמצעי תשלום</div>
                                     <div className="text-stone-900 text-sm">
-                                        כרטיס אשראי (Stripe Test)
+                                        כרטיס אשראי
                                     </div>
                                 </div>
                             </div>

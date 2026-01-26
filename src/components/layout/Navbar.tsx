@@ -24,6 +24,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
         { label: 'עציצים', href: '/category/plants' },
         { label: 'מתנות ומתוקים', href: '/category/gifts' },
         { label: 'שוקולדים', href: '/category/chocolates' },
+        { label: 'בלונים', href: '/category/balloons' },
         { label: 'חתן וכלה', href: '/category/wedding' },
         { label: 'כלים ואגרטלים', href: '/category/vases' },
         { label: 'אודות', href: '/about' },
