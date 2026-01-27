@@ -1,14 +1,23 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-    // Debug: Vanilla middleware to confirm Edge Runtime is working.
-    // If this works, the issue is strictly with @clerk/nextjs initialization (likely keys).
-    const path = request.nextUrl.pathname;
-    console.log(`[Middleware] Processing request for: ${path}`);
+// Define protected routes
+const isProtectedRoute = createRouteMatcher([
+    '/account(.*)',
+    '/admin(.*)'
+]);
 
+export default clerkMiddleware(async (auth, req) => {
+    // Only protect operational dashboard routes.
+    // Public store routes should NEVER crash due to auth middleware.
+    if (isProtectedRoute(req)) {
+        const { userId, redirectToSignIn } = await auth();
+        if (!userId) {
+            return redirectToSignIn();
+        }
+    }
     return NextResponse.next();
-}
+});
 
 export const config = {
     matcher: [
