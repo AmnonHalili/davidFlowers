@@ -51,6 +51,7 @@ export default function Footer() {
                                 <li><a href="/contact" className="hover:text-white transition-colors block">יצירת קשר</a></li>
                                 <li><a href="/accessibility" className="hover:text-white transition-colors block">הצהרת נגישות</a></li>
                                 <li><a href="/regulations-website" className="hover:text-white transition-colors block">תקנון האתר ומשלוחים</a></li>
+                                <li><a href="/privacy-policy" className="hover:text-white transition-colors block">מדיניות פרטיות</a></li>
                             </ul>
                         </div>
                     </div>
