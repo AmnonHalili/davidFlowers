@@ -1,11 +1,14 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default clerkMiddleware(async (auth, req) => {
-    // Temporary Debug: Pass through everything to see if the middleware wrapper itself crashes.
-    // If this works, the crash was in the auth() logic or missing keys during auth() call.
+export function middleware(request: NextRequest) {
+    // Debug: Vanilla middleware to confirm Edge Runtime is working.
+    // If this works, the issue is strictly with @clerk/nextjs initialization (likely keys).
+    const path = request.nextUrl.pathname;
+    console.log(`[Middleware] Processing request for: ${path}`);
+
     return NextResponse.next();
-});
+}
 
 export const config = {
     matcher: [
