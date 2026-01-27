@@ -17,6 +17,17 @@ const frankRuhl = Frank_Ruhl_Libre({
 export const metadata: Metadata = {
   title: 'David Flowers | משלוחי פרחים יוקרתיים',
   description: 'זרי פרחים שזורים ביד, במשלוח עד הבית.',
+  openGraph: {
+    images: ['/logo_original.jpg'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/logo_original.jpg'],
+  },
+  icons: {
+    icon: '/logo_original.jpg',
+    apple: '/logo_original.jpg',
+  },
 };
 
 import { CartProvider } from '@/context/CartContext';

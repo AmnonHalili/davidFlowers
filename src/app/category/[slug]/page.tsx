@@ -54,36 +54,45 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     }
 
     // 2. Fetch Products with Filters
-    const products = await prisma.product.findMany({
-        where: {
-            categories: {
-                some: {
-                    slug: slug
+    // 2. Fetch Products with Filters
+    let products: any[] = [];
+    try {
+        products = await prisma.product.findMany({
+            where: {
+                categories: {
+                    some: {
+                        slug: slug
+                    }
+                },
+                price: {
+                    gte: minPrice,
+                    lte: maxPrice
                 }
             },
-            price: {
-                gte: minPrice,
-                lte: maxPrice
+            orderBy,
+            include: {
+                images: true
             }
-        },
-        orderBy,
-        include: {
-            images: true
-        }
-    });
+        });
+    } catch (error) {
+        console.error("Category: Failed to fetch products", error);
+    }
 
     // 3. Fetch User Favorites (if logged in)
-    const { userId } = await auth();
     let favoritesSet = new Set<string>();
-
-    if (userId) {
-        const user = await prisma.user.findUnique({
-            where: { clerkId: userId },
-            select: { favorites: { select: { id: true } } }
-        });
-        if (user?.favorites) {
-            favoritesSet = new Set(user.favorites.map(f => f.id));
+    try {
+        const { userId } = await auth();
+        if (userId) {
+            const user = await prisma.user.findUnique({
+                where: { clerkId: userId },
+                select: { favorites: { select: { id: true } } }
+            });
+            if (user?.favorites) {
+                favoritesSet = new Set(user.favorites.map(f => f.id));
+            }
         }
+    } catch (error) {
+        console.error("Category: Failed to fetch user favorites", error);
     }
 
     return (

@@ -9,31 +9,40 @@ import { calculateProductPrice } from '@/lib/price-utils';
 const prisma = new PrismaClient();
 
 async function getProduct(slug: string) {
-    const product = await prisma.product.findUnique({
-        where: { slug },
-        include: {
-            images: true,
-            categories: true
-        }
-    });
-
-    if (!product) return null;
-    return product;
+    try {
+        const product = await prisma.product.findUnique({
+            where: { slug },
+            include: {
+                images: true,
+                categories: true
+            }
+        });
+        if (!product) return null;
+        return product;
+    } catch (error) {
+        console.error("Product: Failed to fetch product", error);
+        return null;
+    }
 }
 
 async function getRelatedProducts(currentProductId: string, categorySlug?: string) {
     if (!categorySlug) return [];
 
-    return await prisma.product.findMany({
-        where: {
-            categories: {
-                some: { slug: categorySlug }
+    try {
+        return await prisma.product.findMany({
+            where: {
+                categories: {
+                    some: { slug: categorySlug }
+                },
+                id: { not: currentProductId }
             },
-            id: { not: currentProductId }
-        },
-        take: 4,
-        include: { images: true, categories: true }
-    });
+            take: 4,
+            include: { images: true, categories: true }
+        });
+    } catch (error) {
+        console.error("Product: Failed to fetch related products", error);
+        return [];
+    }
 }
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {

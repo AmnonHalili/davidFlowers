@@ -5,19 +5,23 @@ import { notFound } from 'next/navigation';
 const prisma = new PrismaClient();
 
 async function getCategory(slug: string) {
-    const category = await prisma.category.findUnique({
-        where: { slug: decodeURIComponent(slug) },
-        include: {
-            products: {
-                include: {
-                    images: true,
-                    categories: true
+    try {
+        const category = await prisma.category.findUnique({
+            where: { slug: decodeURIComponent(slug) },
+            include: {
+                products: {
+                    include: {
+                        images: true,
+                        categories: true
+                    }
                 }
             }
-        }
-    });
-
-    return category;
+        });
+        return category;
+    } catch (error) {
+        console.error("Shop/Category: Failed to fetch category", error);
+        return null;
+    }
 }
 
 

@@ -4,14 +4,18 @@ import ProductCard from '@/components/shop/ProductCard';
 const prisma = new PrismaClient();
 
 async function getProducts() {
-    const products = await prisma.product.findMany({
-        include: {
-            images: true,
-            categories: true
-        }
-    });
-
-    return products;
+    try {
+        const products = await prisma.product.findMany({
+            include: {
+                images: true,
+                categories: true
+            }
+        });
+        return products;
+    } catch (error) {
+        console.error("Shop: Failed to fetch products", error);
+        return [];
+    }
 }
 
 export default async function ShopPage() {
