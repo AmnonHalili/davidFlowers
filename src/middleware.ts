@@ -2,21 +2,9 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export default clerkMiddleware(async (auth, req) => {
-    try {
-        const path = req.nextUrl.pathname;
-        const isProtectedRoute = path.startsWith('/account') || path.startsWith('/admin');
-
-        if (isProtectedRoute) {
-            const { userId, redirectToSignIn } = await auth();
-            if (!userId) {
-                return redirectToSignIn();
-            }
-        }
-        return NextResponse.next();
-    } catch (error) {
-        console.error('Middleware execution failed:', error);
-        return NextResponse.next();
-    }
+    // Temporary Debug: Pass through everything to see if the middleware wrapper itself crashes.
+    // If this works, the crash was in the auth() logic or missing keys during auth() call.
+    return NextResponse.next();
 });
 
 export const config = {
