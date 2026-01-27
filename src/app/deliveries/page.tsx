@@ -101,7 +101,7 @@ export default function DeliveriesPage() {
                             <p className="font-serif text-2xl mb-2">איסוף עצמי? נשמח לראותכם!</p>
                             <p className="font-light text-sm opacity-90">רחוב רחבעם זאבי 4, אשקלון</p>
                             <a
-                                href="https://waze.com/ul?ll=31.66926,34.57149&navigate=yes"
+                                href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-block mt-4 text-xs font-bold uppercase tracking-widest border-b border-white pb-1 hover:text-david-green hover:border-david-green transition-colors"

@@ -13,7 +13,7 @@ export default function Footer() {
                             <p>פרחים טריים, עיצובים ייחודיים ומתנות מרגשות באשקלון והסביבה.</p>
                             <div className="flex flex-col gap-1">
                                 <a
-                                    href="https://waze.com/ul?ll=31.66926,34.57149&navigate=yes"
+                                    href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="hover:text-white transition-colors flex items-center gap-2"

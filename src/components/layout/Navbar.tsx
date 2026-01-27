@@ -43,7 +43,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                             </a>
                             <span className="text-stone-700 hidden md:inline">|</span>
                             <a
-                                href="https://waze.com/ul?ll=31.66926,34.57149&navigate=yes"
+                                href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1.5 hover:text-stone-300 transition-colors hidden md:flex"
@@ -55,7 +55,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                         <div className="flex items-center gap-4">
                             {/* Mobile Address (shown only on mobile on right side if needed, or hidden to save space) */}
                             <a
-                                href="https://waze.com/ul?ll=31.66926,34.57149&navigate=yes"
+                                href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1.5 block md:hidden hover:text-stone-300 transition-colors"

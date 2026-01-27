@@ -170,7 +170,7 @@ export default function AboutPage() {
                                 לקטלוג המשלוחים
                             </Link>
                             <a
-                                href="https://waze.com/ul?ll=31.66926,34.57149&navigate=yes"
+                                href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="border border-david-beige text-david-beige px-10 py-4 uppercase tracking-widest font-bold text-xs hover:bg-david-beige/10 transition-colors"
