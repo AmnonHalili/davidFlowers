@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, Circle, Package, Truck, Home } from 'lucide-react';
+import { CheckCircle2, Package, Truck, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface OrderTimelineProps {

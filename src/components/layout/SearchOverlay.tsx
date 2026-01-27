@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Loader2, ArrowLeft } from 'lucide-react';
+import { X, Search, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useDebounce } from '@/hooks/use-debounce'; // Assuming this hook exists based on open files
 import { searchProducts } from '@/app/actions/product-actions';
+import { parsePrice } from '@/lib/price-utils';
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -15,7 +16,17 @@ interface SearchOverlayProps {
 
 export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<any[]>([]);
+    interface Product {
+        id: string;
+        name: string;
+        slug: string;
+        price: number | string | unknown;
+        salePrice?: number | string | unknown | null;
+        images: { url: string }[];
+        availableFrom?: string | Date | null;
+        allowPreorder?: boolean;
+    }
+    const [results, setResults] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const debouncedQuery = useDebounce(query, 500);
@@ -144,13 +155,13 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                         </div>
                                         <h3 className="font-serif text-stone-900 group-hover:text-david-green transition-colors">{product.name}</h3>
                                         <p className="text-sm text-stone-500">
-                                            {Number(product.salePrice) > 0 ? (
+                                            {parsePrice(product.salePrice) > 0 ? (
                                                 <span className="flex items-center gap-2">
-                                                    <span className="text-rose-600 font-medium">₪{Number(product.salePrice).toFixed(0)}</span>
-                                                    <span className="line-through text-[10px] opacity-50">₪{Number(product.price).toFixed(0)}</span>
+                                                    <span className="text-rose-600 font-medium">₪{parsePrice(product.salePrice).toFixed(0)}</span>
+                                                    <span className="line-through text-[10px] opacity-50">₪{parsePrice(product.price).toFixed(0)}</span>
                                                 </span>
                                             ) : (
-                                                `₪${Number(product.price).toFixed(0)}`
+                                                `₪${parsePrice(product.price).toFixed(0)}`
                                             )}
                                         </p>
                                     </Link>
