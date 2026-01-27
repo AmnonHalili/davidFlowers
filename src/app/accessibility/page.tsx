@@ -80,7 +80,7 @@ export default function AccessibilityPage() {
 
                             <div className="space-y-4 md:border-r md:border-stone-200 md:pr-6 md:mr-6 rtl:md:border-l-0 rtl:md:border-r rtl:md:pr-6 rtl:md:mr-6">
                                 <div className="space-y-1">
-                                    <h3 className="font-bold text-lg text-david-green">פרחי ינאי</h3>
+                                    <h3 className="font-bold text-lg text-david-green">פרחי דוד</h3>
                                     <p className="text-xs text-stone-500">
                                         תעשה ככל יכולה על מנת להנגיש את האתר בצורה המיטבית ולענות לפניות בצורה המקצועית והמהירה ביותר.
                                     </p>
