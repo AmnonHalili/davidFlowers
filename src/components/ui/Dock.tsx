@@ -9,7 +9,6 @@ export interface DockProps {
     magnification?: number;
     distance?: number;
     panelHeight?: number;
-    borderRadius?: number;
 }
 
 export interface DockItemProps {
@@ -26,7 +25,6 @@ export function Dock({
     magnification = 60,
     distance = 140,
     panelHeight = 64,
-    borderRadius = 24,
 }: DockProps) {
     const mouseX = useMotionValue(Infinity);
 
@@ -47,7 +45,6 @@ export function Dock({
             */}
             {React.Children.map(children, (child) => {
                 if (React.isValidElement(child)) {
-                    // @ts-ignore
                     return React.cloneElement(child, { mouseX, magnification, distance });
                 }
                 return child;
@@ -90,7 +87,7 @@ export function DockItem({
 
 // Simplified version for text links which might not need full icon circular dock behavior
 // but rather just scaling text.
-export function DockLink({ children, mouseX, magnification = 1.2, distance = 100, className, onClick }: any) {
+export function DockLink({ children, mouseX, magnification = 1.2, distance = 100, className, onClick }: { children: React.ReactNode, mouseX?: MotionValue, magnification?: number, distance?: number, className?: string, onClick?: () => void }) {
     const ref = useRef<HTMLDivElement>(null);
     const distanceCalc = useTransform(mouseX || new MotionValue(Infinity), (val) => {
         const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };

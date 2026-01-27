@@ -22,6 +22,7 @@ interface OrderConfirmationEmailProps {
     shippingAddress: string;
     deliveryDate?: string;
     deliveryNotes?: string;
+    cardMessage?: string;
 }
 
 export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
@@ -32,6 +33,7 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
     shippingAddress,
     deliveryDate,
     deliveryNotes,
+    cardMessage,
 }) => (
     <Html dir="rtl" lang="he">
         <Head>
@@ -70,7 +72,7 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
                     ))}
                     <Hr style={divider} />
                     <Section style={totalRow}>
-                        <Text style={totalLabel}>סה"כ לתשלום:</Text>
+                        <Text style={totalLabel}>סה&quot;כ לתשלום:</Text>
                         <Text style={totalAmountStyle}>₪{totalAmount.toFixed(2)}</Text>
                     </Section>
 

@@ -43,8 +43,8 @@ export async function sendOrderConfirmation(data: SendOrderConfirmationData) {
         console.log(`✅ Email sent to ${data.to}:`, emailData?.id);
         return { success: true, data: emailData };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[EMAIL_SEND_ERROR]', error);
-        return { success: false, error: error.message || 'Failed to send email' };
+        return { success: false, error: (error as Error).message || 'Failed to send email' };
     }
 }

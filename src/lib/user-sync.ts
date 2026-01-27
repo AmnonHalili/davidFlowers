@@ -1,6 +1,6 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { PrismaClient } from '@prisma/client';
-import { redirect } from 'next/navigation';
+
 
 const prisma = new PrismaClient();
 

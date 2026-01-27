@@ -1,4 +1,4 @@
-import { calculateNextDeliveryDate, formatDate, DayOfWeek, Frequency } from './subscription-utils';
+import { calculateNextDeliveryDate, formatDate } from './subscription-utils';
 
 function testLogic() {
     console.log('--- David Flowers Delivery Logic Verification ---\n');

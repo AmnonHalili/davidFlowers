@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
-import { Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Plan = {
@@ -48,8 +47,8 @@ export default function SubscriptionConfigurator({ plan }: { plan: Plan }) {
                         <button
                             onClick={() => setFrequency('WEEKLY')}
                             className={`py-3 px-2 text-sm border rounded-lg transition-all ${frequency === 'WEEKLY'
-                                    ? 'border-david-green bg-david-green/5 text-david-green font-bold shadow-sm'
-                                    : 'border-stone-200 text-stone-600 hover:border-stone-300'
+                                ? 'border-david-green bg-david-green/5 text-david-green font-bold shadow-sm'
+                                : 'border-stone-200 text-stone-600 hover:border-stone-300'
                                 }`}
                         >
                             כל שבוע
@@ -57,8 +56,8 @@ export default function SubscriptionConfigurator({ plan }: { plan: Plan }) {
                         <button
                             onClick={() => setFrequency('BIWEEKLY')}
                             className={`py-3 px-2 text-sm border rounded-lg transition-all ${frequency === 'BIWEEKLY'
-                                    ? 'border-david-green bg-david-green/5 text-david-green font-bold shadow-sm'
-                                    : 'border-stone-200 text-stone-600 hover:border-stone-300'
+                                ? 'border-david-green bg-david-green/5 text-david-green font-bold shadow-sm'
+                                : 'border-stone-200 text-stone-600 hover:border-stone-300'
                                 }`}
                         >
                             כל שבועיים
@@ -73,8 +72,8 @@ export default function SubscriptionConfigurator({ plan }: { plan: Plan }) {
                         <button
                             onClick={() => setDeliveryDay('THURSDAY')}
                             className={`py-3 px-2 text-sm border rounded-lg transition-all ${deliveryDay === 'THURSDAY'
-                                    ? 'border-david-green bg-david-green/5 text-david-green font-bold shadow-sm'
-                                    : 'border-stone-200 text-stone-600 hover:border-stone-300'
+                                ? 'border-david-green bg-david-green/5 text-david-green font-bold shadow-sm'
+                                : 'border-stone-200 text-stone-600 hover:border-stone-300'
                                 }`}
                         >
                             יום חמישי
@@ -82,8 +81,8 @@ export default function SubscriptionConfigurator({ plan }: { plan: Plan }) {
                         <button
                             onClick={() => setDeliveryDay('FRIDAY')}
                             className={`py-3 px-2 text-sm border rounded-lg transition-all ${deliveryDay === 'FRIDAY'
-                                    ? 'border-david-green bg-david-green/5 text-david-green font-bold shadow-sm'
-                                    : 'border-stone-200 text-stone-600 hover:border-stone-300'
+                                ? 'border-david-green bg-david-green/5 text-david-green font-bold shadow-sm'
+                                : 'border-stone-200 text-stone-600 hover:border-stone-300'
                                 }`}
                         >
                             יום שישי
@@ -114,8 +113,8 @@ export default function SubscriptionConfigurator({ plan }: { plan: Plan }) {
         <button
             onClick={() => setIsConfiguring(true)}
             className={`w-full py-4 text-sm font-bold uppercase tracking-widest transition-colors mt-auto ${plan.isPopular
-                    ? 'bg-david-green text-white hover:bg-david-green/90 shadow-md'
-                    : 'bg-stone-900 text-white hover:bg-stone-800'
+                ? 'bg-david-green text-white hover:bg-david-green/90 shadow-md'
+                : 'bg-stone-900 text-white hover:bg-stone-800'
                 }`}
         >
             אני רוצה כזה

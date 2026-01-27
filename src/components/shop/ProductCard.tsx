@@ -10,14 +10,14 @@ import { useState, useEffect } from 'react';
 interface ProductCardProps {
     id: string;
     name: string;
-    price: number | string | any;
+    price: number | string | unknown;
     image: string;
     slug: string;
     category?: string;
     stock: number;
     hoverImage?: string;
     isFavorited?: boolean;
-    salePrice?: number | string | any | null;
+    salePrice?: number | string | unknown | null;
     saleStartDate?: Date | string | null;
     saleEndDate?: Date | string | null;
     availableFrom?: Date | string | null;
