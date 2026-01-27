@@ -38,20 +38,31 @@ export default async function RootLayout({
 }>) {
 
   // Check Admin Status for Navbar
-  const user = await currentUser();
+  let user = null;
+  try {
+    user = await currentUser();
+  } catch (error) {
+    console.error("Layout: Failed to fetch current user", error);
+  }
+
   let isAdmin = false;
 
   if (user) {
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId: user.id }
-    });
-    if (dbUser?.role === 'ADMIN') {
-      isAdmin = true;
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { clerkId: user.id }
+      });
+      if (dbUser?.role === 'ADMIN') {
+        isAdmin = true;
+      }
+    } catch (error) {
+      console.error("Layout: Failed to check admin status", error);
+      // Fallback or ignore, strictly don't crash the app
     }
+
     // Failsafe for instant update if sync hasn't run yet but email matches
-    else if (true) { // DEV MODE: Always allow admin
-      isAdmin = true;
-    }
+    // REMOVED unsafe hardcoded dev bypass for production stability
+    // else if (true) { isAdmin = true; } 
   }
 
   return (
