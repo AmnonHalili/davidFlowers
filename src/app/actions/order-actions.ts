@@ -28,7 +28,7 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
             include: {
                 items: {
                     include: {
-                        product: true
+                        product: { include: { images: true } }
                     }
                 }
             }
@@ -52,7 +52,7 @@ export async function getOrders() {
             user: true,
             items: {
                 include: {
-                    product: true
+                    product: { include: { images: true } }
                 }
             }
         }
@@ -66,7 +66,7 @@ export async function getOrder(id: string) {
             user: true,
             items: {
                 include: {
-                    product: true
+                    product: { include: { images: true } }
                 }
             }
         }

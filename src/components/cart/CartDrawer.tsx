@@ -815,7 +815,7 @@ export default function CartDrawer() {
                                                     <span>{currentShippingCost > 0 ? `₪${currentShippingCost.toFixed(2)}` : 'חינם'}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900 pt-3 border-t border-stone-100">
-                                                    <span>סה"כ</span>
+                                                    <span>{'סה"כ'}</span>
                                                     <span>₪{(finalTotal + currentShippingCost).toFixed(2)}</span>
                                                 </div>
                                             </div>

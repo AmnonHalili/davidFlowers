@@ -70,7 +70,7 @@ async function getStats() {
 
     const formattedRecentOrders = recentOrders.map(order => ({
         id: order.id,
-        customerName: order.recipientName || order.user.name || order.user.email,
+        customerName: order.recipientName || order.user?.name || order.user?.email || 'Unknown',
         total: Number(order.totalAmount),
         status: order.status,
         date: order.createdAt.toLocaleDateString('he-IL'),

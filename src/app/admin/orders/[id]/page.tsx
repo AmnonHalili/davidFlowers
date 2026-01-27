@@ -150,7 +150,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                                 <Mail className="w-5 h-5 text-stone-400" />
                                 <div>
                                     <div className="text-xs text-stone-400 mb-0.5">דוא"ל</div>
-                                    <div className="text-stone-900 text-sm">{order.user.email}</div>
+                                    <div className="text-stone-900 text-sm">{order.user?.email || order.ordererEmail}</div>
                                 </div>
                             </div>
 

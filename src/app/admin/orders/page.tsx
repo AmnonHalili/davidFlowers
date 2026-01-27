@@ -41,7 +41,7 @@ export default async function AdminOrdersPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="font-medium text-stone-900">{order.recipientName}</div>
-                                        <div className="text-xs text-stone-400">{order.user.email}</div>
+                                        <div className="text-xs text-stone-400">{order.user?.email || order.ordererEmail}</div>
                                     </td>
                                     <td className="px-6 py-4 text-stone-600">
                                         {format(new Date(order.createdAt), 'dd/MM/yyyy')}

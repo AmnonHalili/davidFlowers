@@ -29,7 +29,13 @@ export default function DemoPage() {
                         </p>
                     </div>
 
-                    <ProductSubscriptionForm />
+                    <ProductSubscriptionForm product={{
+                        id: 'demo-1',
+                        name: 'The Noble Peony',
+                        price: 350,
+                        image: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9',
+                        allowPreorder: true
+                    }} />
                 </div>
             </div>
         </main>
