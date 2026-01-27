@@ -1,6 +1,8 @@
 'use server';
 
 import prisma from '@/lib/prisma';
+import { OrderStatus } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
 export type OrderStatusResult = {
     success: boolean;
@@ -40,5 +42,48 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
     } catch (error) {
         console.error('Error fetching order status:', error);
         return { success: false, error: 'אירעה שגיאה בבדיקת הסטטוס. אנא נסה שנית מאוחר יותר.' };
+    }
+}
+
+export async function getOrders() {
+    return await prisma.order.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+            user: true,
+            items: {
+                include: {
+                    product: true
+                }
+            }
+        }
+    });
+}
+
+export async function getOrder(id: string) {
+    return await prisma.order.findUnique({
+        where: { id },
+        include: {
+            user: true,
+            items: {
+                include: {
+                    product: true
+                }
+            }
+        }
+    });
+}
+
+export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+    try {
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status }
+        });
+        revalidatePath('/admin/orders');
+        revalidatePath(`/admin/orders/${orderId}`);
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        return { success: false, error: 'Failed to update order status' };
     }
 }

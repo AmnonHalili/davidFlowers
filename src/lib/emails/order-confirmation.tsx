@@ -71,7 +71,7 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
                     <Hr style={divider} />
                     <Section style={totalRow}>
                         <Text style={totalLabel}>סה"כ לתשלום:</Text>
-                        <Text style={totalAmount}>₪{totalAmount.toFixed(2)}</Text>
+                        <Text style={totalAmountStyle}>₪{totalAmount.toFixed(2)}</Text>
                     </Section>
 
                     {/* Delivery Info */}
@@ -88,6 +88,12 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
                         <Section style={notesBox}>
                             <Text style={notesLabel}>הערות למשלוח:</Text>
                             <Text style={notesText}>{deliveryNotes}</Text>
+                        </Section>
+                    )}
+                    {cardMessage && ( // Added conditional rendering for cardMessage
+                        <Section style={notesBox}>
+                            <Text style={notesLabel}>הודעה לכרטיס ברכה:</Text>
+                            <Text className="text-stone-600 italic leading-relaxed">&quot;{cardMessage}&quot;</Text>
                         </Section>
                     )}
 
@@ -222,7 +228,7 @@ const totalLabel = {
     textAlign: 'right' as const,
 };
 
-const totalAmount = {
+const totalAmountStyle = {
     fontSize: '24px',
     fontWeight: 'bold',
     color: '#2d5016',

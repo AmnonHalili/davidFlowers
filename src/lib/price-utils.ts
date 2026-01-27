@@ -1,7 +1,7 @@
 /**
  * Helper to safely parse any price format (Decimal, string, number) into a number
  */
-export function parsePrice(value: any): number {
+export function parsePrice(value: unknown): number {
     if (value === null || value === undefined) return 0;
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
@@ -9,16 +9,18 @@ export function parsePrice(value: any): number {
         return isNaN(parsed) ? 0 : parsed;
     }
     // Handle Prisma Decimal (has .toNumber() or .toString())
-    if (typeof value === 'object') {
-        if (typeof value.toNumber === 'function') return value.toNumber();
-        if (typeof value.toString === 'function') return parseFloat(value.toString());
+    if (typeof value === 'object' && value !== null) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const v = value as any;
+        if (typeof v.toNumber === 'function') return v.toNumber();
+        if (typeof v.toString === 'function') return parseFloat(v.toString());
     }
     return 0;
 }
 
 export function calculateProductPrice(product: {
-    price: number | string | any;
-    salePrice?: number | string | any | null;
+    price: number | string | unknown;
+    salePrice?: number | string | unknown | null;
     saleStartDate?: Date | string | null;
     saleEndDate?: Date | string | null;
 }) {
