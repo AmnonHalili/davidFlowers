@@ -216,7 +216,7 @@ export default function CartDrawer() {
 
     // Calculate dynamic shipping cost
     const currentShippingCost = shippingMethod === 'delivery'
-        ? (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : (SHIPPING_COSTS[selectedCity] || 30)) // Fallback to 30 if no city selected yet
+        ? (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : (SHIPPING_COSTS[selectedCity] || 45)) // Fallback to 45 (non-Ashkelon default)
         : 0;
 
     const finalTotal = subtotal - (appliedCoupon?.amount || 0);
@@ -461,7 +461,7 @@ export default function CartDrawer() {
                                                         <span className="block text-sm font-bold mb-0.5">משלוח</span>
                                                         <span className={`text-[10px] ${shippingMethod === 'delivery' ? 'text-white/60' : 'text-stone-400'}`}>אשקלון והסביבה</span>
                                                         <span className="absolute top-4 left-4 text-xs font-bold">
-                                                            {subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : selectedCity ? `₪${SHIPPING_COSTS[selectedCity]}` : 'מ-₪25'}
+                                                            {subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : selectedCity ? `₪${SHIPPING_COSTS[selectedCity] || 45}` : 'מ-₪25'}
                                                         </span>
                                                     </button>
                                                 </div>

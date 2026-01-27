@@ -48,7 +48,7 @@ export default function DeliveriesPage() {
                             <div className="space-y-2">
                                 <h3 className="font-serif text-xl text-stone-900">עלויות משלוח</h3>
                                 <ul className="text-stone-600 font-light space-y-2">
-                                    <li>• <strong>משלוח רגיל באשקלון:</strong> 30 ₪</li>
+                                    <li>• <strong>משלוח רגיל באשקלון:</strong> 25 ₪</li>
                                     <li>• <strong>משלוח חינם:</strong> בקנייה מעל 350 ₪</li>
                                     <li>• <strong>איסוף עצמי:</strong> חינם מהחנות (רחבעם זאבי 4, אשקלון)</li>
                                 </ul>
