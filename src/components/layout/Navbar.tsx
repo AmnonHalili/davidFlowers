@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ShoppingBag, User, Menu, Search, Lock, Phone, MapPin, Heart } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
@@ -14,8 +14,17 @@ import { Dock, DockLink } from '@/components/ui/Dock';
 export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const { openCart, itemsCount } = useCart();
     const pathname = usePathname();
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     if (pathname?.startsWith('/admin')) return null;
 
@@ -32,9 +41,12 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
 
     return (
         <header className="relative z-50 rtl" dir="rtl">
-            <nav className="fixed top-0 left-0 right-0 bg-david-beige z-50 transition-all duration-300 border-b border-[#DCDBCF]">
+            <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${pathname === '/'
+                    ? (isScrolled ? 'bg-black/40 backdrop-blur-md border-b border-white/10 shadow-lg' : 'bg-transparent border-none')
+                    : 'bg-david-beige border-b border-[#DCDBCF]'
+                }`}>
                 {/* Top Contact Bar */}
-                <div className="bg-stone-900 text-white py-1.5 px-4 text-[10px] md:text-xs font-medium tracking-wide">
+                <div className={`text-white py-1.5 px-4 text-[10px] md:text-xs font-medium tracking-wide ${pathname === '/' ? 'bg-transparent' : 'bg-stone-900'}`}>
                     <div className="max-w-screen-2xl mx-auto flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <a href="tel:0535879344" className="flex items-center gap-1.5 hover:text-stone-300 transition-colors">
@@ -61,7 +73,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                                 className="flex items-center gap-1.5 block md:hidden hover:text-stone-300 transition-colors"
                             >
                                 <MapPin className="w-3 h-3" />
-                                <span>אשקלון</span>
+                                <span>רחבעם זאבי 4, אשקלון</span>
                             </a>
                         </div>
                     </div>
@@ -73,7 +85,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                     <div className="md:hidden flex justify-start z-10">
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
-                            className="text-david-green p-2 cursor-pointer"
+                            className={`${pathname === '/' ? 'text-white' : 'text-david-green'} p-2 cursor-pointer`}
                         >
                             <Menu className="w-6 h-6" />
                         </button>
@@ -86,7 +98,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                                 src="/David-Logo-removebg-preview.png"
                                 alt="David Flowers"
                                 fill
-                                className="object-contain"
+                                className={`object-contain ${pathname === '/' ? 'brightness-0 invert' : ''}`}
                                 sizes="(max-width: 768px) 120px, 200px"
                                 priority
                             />
@@ -100,7 +112,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                                 <DockLink key={link.label}>
                                     <Link
                                         href={link.href}
-                                        className="text-david-green text-lg font-medium hover:text-opacity-70 transition-colors whitespace-nowrap px-2"
+                                        className={`${pathname === '/' ? 'text-white/90 hover:text-white' : 'text-david-green'} text-lg font-medium hover:text-opacity-70 transition-colors whitespace-nowrap px-2`}
                                     >
                                         {link.label}
                                     </Link>
@@ -115,7 +127,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                         {/* Search */}
                         <button
                             onClick={() => setIsSearchOpen(true)}
-                            className="hidden md:block text-david-green hover:opacity-70 transition-opacity"
+                            className={`hidden md:block ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity`}
                         >
                             <Search className="w-5 h-5" strokeWidth={1.5} />
                         </button>
@@ -126,24 +138,24 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                             </div>
                         </SignedIn>
                         <SignedOut>
-                            <Link href="/sign-in" className="hidden md:block text-david-green hover:opacity-70 transition-opacity">
+                            <Link href="/sign-in" className={`hidden md:block ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity`}>
                                 <User className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
                         </SignedOut>
 
                         {isAdmin && (
-                            <Link href="/admin" className="hidden md:block text-david-green hover:opacity-70 transition-opacity" title="ניהול האתר">
+                            <Link href="/admin" className={`hidden md:block ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity`} title="ניהול האתר">
                                 <Lock className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
                         )}
 
-                        <Link href="/wishlist" className="hidden md:block text-david-green hover:opacity-70 transition-opacity" title="המועדפים שלי">
+                        <Link href="/wishlist" className={`hidden md:block ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity`} title="המועדפים שלי">
                             <Heart className="w-5 h-5" strokeWidth={1.5} />
                         </Link>
 
                         <button
                             onClick={openCart}
-                            className="relative text-david-green hover:opacity-70 transition-opacity p-1"
+                            className={`relative ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-1`}
                         >
                             <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
                             {itemsCount > 0 && (
@@ -157,7 +169,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
             </nav>
 
             {/* Spacer to prevent content from hiding behind fixed navbar (increased height for TopBar) */}
-            <div className="h-28 md:h-32" />
+            {pathname !== '/' && <div className="h-28 md:h-32" />}
 
             {/* Mobile Menu Overlay */}
             <AnimatePresence>

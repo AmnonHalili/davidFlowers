@@ -59,10 +59,10 @@ export default function Home() {
               אל תחכו לאירוע מיוחד. משלוחי פרחים טריים באשקלון והסביבה שהופכים כל רגע משגרה לחגיגה.
             </p>
 
-            <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center items-center">
+            <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center items-center pb-20 md:pb-0">
               <Link
                 href="/shop"
-                className="px-10 py-4 bg-white text-stone-900 uppercase tracking-widest text-xs font-bold hover:bg-stone-100 transition-colors min-w-[200px]"
+                className="px-10 py-4 bg-[#1B3322] text-white uppercase tracking-widest text-xs font-bold hover:bg-[#1B3322]/90 transition-colors min-w-[200px] shadow-lg"
               >
                 להזמנת משלוח
               </Link>
