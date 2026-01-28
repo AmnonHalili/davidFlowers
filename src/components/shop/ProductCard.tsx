@@ -6,6 +6,7 @@ import { useCart } from '@/context/CartContext';
 import WishlistButton from './WishlistButton';
 import { calculateProductPrice } from '@/lib/price-utils';
 import { useState, useEffect } from 'react';
+import Modal from '../ui/Modal';
 
 interface ProductCardProps {
     id: string;
@@ -22,11 +23,14 @@ interface ProductCardProps {
     saleEndDate?: Date | string | null;
     availableFrom?: Date | string | null;
     allowPreorder?: boolean;
+    isVariablePrice?: boolean;
+    variations?: any;
 }
 
 export default function ProductCard({
     id, name, price, image, slug, category, stock, hoverImage, isFavorited,
-    salePrice, saleStartDate, saleEndDate, availableFrom, allowPreorder
+    salePrice, saleStartDate, saleEndDate, availableFrom, allowPreorder,
+    isVariablePrice, variations
 }: ProductCardProps) {
     const isOutOfStock = stock <= 0;
     const { addItem } = useCart();
@@ -46,6 +50,7 @@ export default function ProductCard({
     const isLocked = isFuture && !allowPreorder;
 
     const [isAdded, setIsAdded] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Countdown Timer Logic
     const [timeLeft, setTimeLeft] = useState('');
@@ -87,6 +92,14 @@ export default function ProductCard({
         e.preventDefault();
         e.stopPropagation();
         if (isOutOfStock || isLocked) return;
+
+        // Logic for Variable Price Products (Open Modal)
+        if (isVariablePrice && variations) {
+            setIsModalOpen(true);
+            return;
+        }
+
+        // Logic for Simple Products
         addItem({
             id: id,
             productId: id,
@@ -104,9 +117,32 @@ export default function ProductCard({
         setTimeout(() => setIsAdded(false), 2000);
     };
 
+    const handleVariationAdd = (size: string, variation: any) => {
+        addItem({
+            id: id, // Keep main product ID as base
+            productId: id,
+            name: `${name} - ${variation.label}`,
+            selectedSize: size, // New cart field
+            sizeLabel: variation.label, // New cart field
+            price: variation.price,
+            image: image,
+            quantity: 1,
+            type: 'ONETIME',
+            availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
+        });
+
+        setIsModalOpen(false);
+        setIsAdded(true);
+        setTimeout(() => setIsAdded(false), 2000);
+    };
+
     return (
-        <Link href={`/product/${slug}`} className="group block space-y-4 rtl relative" dir="rtl">
-            <div className="relative aspect-square overflow-hidden bg-stone-100 rounded-sm">
+        <Link
+            href={`/product/${slug}`}
+            className="group block w-full min-w-0 space-y-3 md:space-y-4 rtl relative"
+            dir="rtl"
+        >
+            <div className="relative aspect-square md:aspect-[4/5] w-full overflow-hidden bg-stone-100 rounded-sm">
                 {/* Main Image */}
                 <img
                     src={image}
@@ -124,24 +160,24 @@ export default function ProductCard({
                 )}
 
                 {/* Badges Container */}
-                <div className="absolute top-0 left-0 right-0 p-3 flex flex-col items-start gap-2 z-30 pointer-events-none">
+                <div className="absolute top-0 left-0 right-0 p-2 md:p-3 flex flex-col items-start gap-1 md:gap-2 z-30 pointer-events-none">
                     {isOnSale && !isOutOfStock && !isFuture && (
-                        <div className="bg-rose-600 text-white text-[11px] font-serif tracking-wide px-3 py-1 shadow-sm">
+                        <div className="bg-rose-600 text-white text-[10px] md:text-[11px] font-serif tracking-wide px-2 py-0.5 md:px-3 md:py-1 shadow-sm">
                             SALE
                         </div>
                     )}
                     {canPreorder && (
-                        <div className="bg-david-green text-white text-[11px] font-serif tracking-wide px-3 py-1 shadow-sm">
+                        <div className="bg-david-green text-white text-[10px] md:text-[11px] font-serif tracking-wide px-2 py-0.5 md:px-3 md:py-1 shadow-sm">
                             PRE-ORDER
                         </div>
                     )}
                     {isLocked && (
-                        <div className="bg-stone-900/90 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest backdrop-blur-sm border border-white/20">
+                        <div className="bg-stone-900/90 text-white text-[10px] font-bold px-2 py-0.5 md:px-3 md:py-1 uppercase tracking-widest backdrop-blur-sm border border-white/20">
                             בקרוב
                         </div>
                     )}
                     {isOutOfStock && !isFuture && (
-                        <div className="bg-stone-900 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest backdrop-blur-sm">
+                        <div className="bg-stone-900 text-white text-[10px] font-bold px-2 py-0.5 md:px-2 md:py-1 uppercase tracking-widest backdrop-blur-sm">
                             אזל מהמלאי
                         </div>
                     )}
@@ -175,11 +211,11 @@ export default function ProductCard({
                 )}
 
                 {/* Wishlist Button */}
-                <div className="absolute top-3 left-3 z-30 pointer-events-auto">
+                <div className="absolute top-2 left-2 md:top-3 md:left-3 z-30 pointer-events-auto">
                     <WishlistButton
                         productId={id}
                         initialIsFavorited={isFavorited}
-                        className="bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white text-stone-600 hover:text-rose-600"
+                        className="bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white text-stone-600 hover:text-rose-600 w-8 h-8 md:w-9 md:h-9"
                     />
                 </div>
 
@@ -188,71 +224,107 @@ export default function ProductCard({
 
                 {/* "Quick Actions" Bottom Up Slide (Desktop Only) */}
                 {!isLocked && (
-                    <div className="hidden md:block absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-20">
-                        <button
-                            onClick={handleQuickAdd}
-                            className={`w-full py-4 uppercase text-xs tracking-[0.2em] font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isAdded
-                                ? 'bg-david-green text-white'
-                                : canPreorder
-                                    ? 'bg-david-green text-white hover:bg-david-green/90'
-                                    : 'bg-stone-900 text-white hover:bg-stone-800'
-                                }`}
-                        >
-                            {isAdded ? (
-                                <>
+                    <>
+                        <div className="hidden md:block absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-20">
+                            <button
+                                onClick={handleQuickAdd}
+                                className={`w-full py-4 uppercase text-xs tracking-[0.2em] font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isAdded
+                                    ? 'bg-david-green text-white'
+                                    : canPreorder
+                                        ? 'bg-david-green text-white hover:bg-david-green/90'
+                                        : 'bg-stone-900 text-white hover:bg-stone-800'
+                                    }`}
+                            >
+                                {isAdded ? (
+                                    <>
+                                        <Check className="w-4 h-4" strokeWidth={3} />
+                                        <span>נוסף לסל</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+                                        {isOutOfStock ? 'אזל מהמלאי' : canPreorder ? 'הזמנה מוקדמת' : 'הוסף לסל'}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Mobile Quick Add Button (Overlay) */}
+                        {!isOutOfStock && (
+                            <button
+                                onClick={handleQuickAdd}
+                                className={`md:hidden absolute bottom-2 right-2 z-30 w-8 h-8 rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95 ${isAdded ? 'bg-david-green text-white' : 'bg-white/90 text-stone-900 backdrop-blur-sm'
+                                    }`}
+                            >
+                                {isAdded ? (
                                     <Check className="w-4 h-4" strokeWidth={3} />
-                                    <span>נוסף לסל</span>
-                                </>
-                            ) : (
-                                <>
+                                ) : (
                                     <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-                                    {isOutOfStock ? 'אזל מהמלאי' : canPreorder ? 'הזמנה מוקדמת' : 'הוסף לסל'}
-                                </>
-                            )}
-                        </button>
-                    </div>
+                                )}
+                            </button>
+                        )}
+                    </>
                 )}
             </div>
 
-            <div className="text-center space-y-2 pt-2">
+            <div className="text-center space-y-1 md:space-y-2 pt-1 md:pt-2">
                 {category && (
-                    <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400">{category}</span>
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400 block pb-1">{category}</span>
                 )}
-                <h3 className="font-serif text-xl text-stone-900 group-hover:text-stone-600 transition-colors duration-300">
+                <h3 className="font-serif text-sm md:text-xl text-stone-900 leading-tight group-hover:text-stone-600 transition-colors duration-300 line-clamp-2 min-h-[1.25em]">
                     {name}
                 </h3>
                 <div className="flex justify-center items-center gap-3 relative">
                     {isOnSale ? (
                         <>
-                            <span className="font-medium text-rose-600 text-lg font-serif">
+                            <span className="font-medium text-rose-600 text-sm md:text-lg font-serif">
+                                {isVariablePrice && <span className="text-xs text-stone-500 font-sans ml-1">החל מ-</span>}
                                 ₪{typeof displayPrice === 'number' && !isNaN(displayPrice) ? displayPrice.toFixed(0) : '0'}
                             </span>
-                            <span className="text-sm text-stone-400 line-through decoration-stone-300 font-serif">
+                            <span className="text-xs md:text-sm text-stone-400 line-through decoration-stone-300 font-serif">
                                 ₪{typeof regularPrice === 'number' && !isNaN(regularPrice) ? regularPrice.toFixed(0) : '0'}
                             </span>
                         </>
                     ) : (
-                        <p className="font-medium text-stone-600 text-lg font-serif">
+                        <p className="font-medium text-stone-600 text-sm md:text-lg font-serif">
+                            {isVariablePrice && <span className="text-xs text-stone-500 font-sans ml-1">החל מ-</span>}
                             ₪{typeof Number(price) === 'number' && !isNaN(Number(price)) ? Number(price).toFixed(0) : '0'}
                         </p>
                     )}
 
-                    {/* Mobile Quick Add Icon */}
-                    {!isLocked && !isOutOfStock && (
-                        <button
-                            onClick={handleQuickAdd}
-                            className={`md:hidden flex items-center justify-center w-8 h-8 rounded-full shadow-md active:scale-95 transition-all duration-300 ${isAdded ? 'bg-david-green text-white' : 'bg-stone-900 text-white'
-                                }`}
-                        >
-                            {isAdded ? (
-                                <Check className="w-4 h-4" strokeWidth={3} />
-                            ) : (
-                                <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-                            )}
-                        </button>
-                    )}
                 </div>
             </div>
+
+            {/* Size Selection Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="בחר גודל"
+            >
+                <div className="space-y-4">
+                    <div className="flex flex-col gap-3">
+                        {variations && (['small', 'medium', 'large'] as const).map((size) => {
+                            const variation = variations[size];
+                            if (!variation) return null;
+                            return (
+                                <button
+                                    key={size}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleVariationAdd(size, variation);
+                                    }}
+                                    className="flex items-center justify-between p-4 rounded-xl border border-stone-200 hover:border-david-green hover:bg-stone-50 transition-all group/btn"
+                                >
+                                    <span className="font-medium text-stone-900">{variation.label}</span>
+                                    <span className="font-serif text-lg font-medium text-stone-900 group-hover/btn:text-david-green">
+                                        ₪{variation.price}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </Modal>
         </Link>
     );
 }

@@ -175,7 +175,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                     price: Number(displayPrice), // Use calculated price
                                     image: mainImage,
                                     availableFrom: product.availableFrom,
-                                    allowPreorder: product.allowPreorder
+                                    allowPreorder: product.allowPreorder,
+                                    isVariablePrice: product.isVariablePrice,
+                                    variations: product.variations
                                 }} />
                             ) : (
                                 <div className="bg-stone-100 p-6 rounded-lg text-center space-y-2">

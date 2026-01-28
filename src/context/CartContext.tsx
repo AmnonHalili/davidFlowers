@@ -16,6 +16,9 @@ export type CartItem = {
     // Subscription specifics
     frequency?: 'WEEKLY' | 'BIWEEKLY';
     deliveryDay?: string;
+    // Size Variations
+    selectedSize?: string;
+    sizeLabel?: string;
 };
 
 type CartContextType = {
@@ -43,7 +46,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             try {
                 const parsed = JSON.parse(savedCart);
                 // Sanitize items: ensure price is number and valid
-                const validItems = Array.isArray(parsed) ? parsed.filter(item =>
+                const validItems = Array.isArray(parsed) ? parsed.filter((item: any) =>
                     item &&
                     typeof item.price === 'number' &&
                     !isNaN(item.price) &&
@@ -68,12 +71,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const addItem = (newItem: CartItem) => {
         setItems((currentItems) => {
-            // Check if item already exists (logic can be complex with variants, simplified here)
+            // Check if item already exists with same variation/options
             const existing = currentItems.find(
                 (i) => i.productId === newItem.productId &&
                     i.type === newItem.type &&
                     i.frequency === newItem.frequency &&
-                    i.availableFrom === newItem.availableFrom
+                    i.availableFrom === newItem.availableFrom &&
+                    i.selectedSize === newItem.selectedSize // Critical Grouping Logic
             );
 
             if (existing) {
@@ -83,6 +87,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             }
             return [...currentItems, newItem];
         });
+        setIsOpen(true); // Auto open cart on add
     };
 
     const removeItem = (id: string) => {

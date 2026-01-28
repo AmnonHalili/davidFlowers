@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, RefreshCw, ShoppingBag } from 'lucide-react';
 import { useCart, CartItem } from '@/context/CartContext';
 import { useParams } from 'next/navigation';
+import BouquetSizeSelector from './product/BouquetSizeSelector';
 
 type PurchaseType = 'SUBSCRIPTION' | 'ONETIME';
 type Frequency = 'WEEKLY' | 'BIWEEKLY';
@@ -18,6 +19,8 @@ interface ProductSubscriptionFormProps {
     image: string;
     availableFrom?: Date | string | null;
     allowPreorder?: boolean;
+    isVariablePrice?: boolean;
+    variations?: any; // JSON object
   }
 }
 
@@ -27,6 +30,20 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   const [frequency, setFrequency] = useState<Frequency>('WEEKLY');
   const [deliveryDay, setDeliveryDay] = useState<DayOfWeek>('FRIDAY');
   const [giftNote, setGiftNote] = useState('');
+
+  // Size Variation State
+  const [selectedSize, setSelectedSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [currentPrice, setCurrentPrice] = useState(product.price);
+
+  useEffect(() => {
+    if (product.isVariablePrice && product.variations) {
+      if (product.variations[selectedSize]) {
+        setCurrentPrice(product.variations[selectedSize].price);
+      }
+    } else {
+      setCurrentPrice(product.price);
+    }
+  }, [selectedSize, product.isVariablePrice, product.variations, product.price]);
 
   // Scheduling Logic
   const now = new Date();
@@ -38,18 +55,23 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   const handleAddToCart = () => {
     if (isLocked) return;
 
+    const basePrice = currentPrice;
+    const finalPrice = purchaseType === 'SUBSCRIPTION' ? basePrice * 0.85 : basePrice;
+
     const newItem: CartItem = {
       id: `${product.id}-${Date.now()}`,
       productId: product.id,
       name: product.name,
-      price: purchaseType === 'SUBSCRIPTION' ? product.price * 0.85 : product.price, // 15% discount logic
-      originalPrice: purchaseType === 'SUBSCRIPTION' ? product.price : undefined, // Track original for subs
+      price: finalPrice,
+      originalPrice: purchaseType === 'SUBSCRIPTION' ? basePrice : undefined,
       image: product.image,
       quantity: 1,
       type: purchaseType,
       availableFrom: product.availableFrom ? new Date(product.availableFrom).toISOString() : undefined,
       frequency: purchaseType === 'SUBSCRIPTION' ? frequency : undefined,
       deliveryDay: purchaseType === 'SUBSCRIPTION' ? deliveryDay : undefined,
+      selectedSize: product.isVariablePrice ? selectedSize : undefined,
+      sizeLabel: product.isVariablePrice && product.variations ? product.variations[selectedSize].label : undefined,
     };
 
     addItem(newItem);
@@ -105,6 +127,21 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
         </div>
       )}
 
+      {/* Size Variations Selector */}
+      {product.isVariablePrice && product.variations && (
+        <div className="space-y-4">
+          <BouquetSizeSelector
+            variations={product.variations}
+            selectedSize={selectedSize}
+            onSelect={setSelectedSize}
+          />
+
+          <div className="text-center py-2">
+            <span className="text-2xl font-serif text-stone-900">₪{currentPrice.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+
       {/* Type Toggle */}
       <div className="flex p-1 bg-stone-100 rounded-lg">
         <button
@@ -140,8 +177,8 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
               <label className="text-xs uppercase tracking-wider font-medium text-stone-900">תדירות</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: 'WEEKLY', label: 'מדי שבוע', price: `₪${(product.price * 0.85).toFixed(0)} / משלוח` },
-                  { id: 'BIWEEKLY', label: 'כל שבועיים', price: `₪${(product.price * 0.85).toFixed(0)} / משלוח` },
+                  { id: 'WEEKLY', label: 'מדי שבוע', price: `₪${(currentPrice * 0.85).toFixed(0)} / משלוח` },
+                  { id: 'BIWEEKLY', label: 'כל שבועיים', price: `₪${(currentPrice * 0.85).toFixed(0)} / משלוח` },
                 ].map((opt) => (
                   <button
                     key={opt.id}
@@ -202,7 +239,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
         <span>
           {canPreorder
             ? 'בצע הזמנה מוקדמת'
-            : purchaseType === 'SUBSCRIPTION' ? 'הוספה למנוי' : 'הוספה לסל'
+            : purchaseType === 'SUBSCRIPTION' ? 'הוספה למנוי' : `הוספה לסל - ₪${currentPrice.toFixed(2)}`
           }
         </span>
         <span className="group-hover:-translate-x-1 transition-transform">←</span>

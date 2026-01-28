@@ -38,6 +38,11 @@ model Product {
   salePrice    Decimal?
   saleStartDate DateTime?
   saleEndDate  DateTime?
+  
+  // Size Variations Logic
+  isVariablePrice Boolean @default(false)
+  variations      Json?   // Stores { small: {label, price}, medium: {label, price}, large: {label, price} }
+
   availableFrom DateTime?  // Scheduled launch date
   allowPreorder Boolean    @default(false) // If true, can buy before launch (delivery restricted)
   images       ProductImage[] // Upgraded to model for better SEO/metadata
@@ -117,6 +122,7 @@ model OrderItem {
   productId String
   quantity  Int
   price     Decimal
+  selectedSize String? // e.g. "Small", "Medium - Standard"
 }
 
 model Subscription {
