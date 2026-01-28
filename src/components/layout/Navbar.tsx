@@ -187,7 +187,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'tween', duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                            className="fixed top-0 right-0 bottom-0 w-[300px] bg-david-beige z-[60] p-8 shadow-2xl border-l border-[#DCDBCF]"
+                            className="fixed top-0 right-0 bottom-0 w-[300px] bg-david-beige z-[60] p-8 shadow-2xl border-l border-[#DCDBCF] overflow-y-auto"
                         >
                             <div className="flex justify-between items-center mb-12">
                                 <span className="font-serif text-2xl text-david-green">תפריט</span>

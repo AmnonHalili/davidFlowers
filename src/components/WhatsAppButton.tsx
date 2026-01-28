@@ -15,7 +15,7 @@ export default function WhatsAppButton() {
             animate={{ scale: 1, opacity: 1 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-50 flex items-center justify-center p-3.5 bg-[#1B3322] text-white rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.25)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:bg-[#23422c] transition-all group overflow-hidden"
+            className="fixed bottom-6 right-6 z-40 flex items-center justify-center p-3.5 bg-[#1B3322] text-white rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.25)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:bg-[#23422c] transition-all group overflow-hidden"
             aria-label="Contact us on WhatsApp"
         >
             {/* WhatsApp Icon (SVG) - Official Brand Path */}
