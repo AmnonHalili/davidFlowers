@@ -189,18 +189,18 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                             transition={{ type: 'tween', duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                             className="fixed top-0 right-0 bottom-0 w-[300px] bg-david-beige z-[60] p-8 shadow-2xl border-l border-[#DCDBCF] overflow-y-auto"
                         >
-                            <div className="flex justify-between items-center mb-12">
+                            <div className="flex justify-between items-center mb-0">
                                 <span className="font-serif text-2xl text-david-green">תפריט</span>
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="text-david-green/60 hover:text-david-green">
                                     סגירה
                                 </button>
                             </div>
-                            <div className="flex flex-col gap-6">
+                            <div className="flex flex-col gap-0.5">
                                 {navLinks.map((item) => (
                                     <Link
                                         key={item.label}
                                         href={item.href}
-                                        className="text-2xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm"
+                                        className="text-lg font-light tracking-wider text-david-green hover:bg-david-green/5 py-1.5 px-2 transition-colors rounded-sm"
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
                                         {item.label}
@@ -209,41 +209,41 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                                 {isAdmin && (
                                     <Link
                                         href="/admin"
-                                        className="text-2xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm flex items-center gap-2 mt-4 border-t border-david-green/10 pt-6"
+                                        className="text-lg font-light tracking-wider text-david-green hover:bg-david-green/5 py-1.5 px-2 transition-colors rounded-sm flex items-center gap-2 mt-2 border-t border-david-green/10 pt-4"
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        <Lock className="w-5 h-5" />
+                                        <Lock className="w-4 h-4" />
                                         ניהול האתר
                                     </Link>
                                 )}
 
-                                <div className="border-t border-david-green/10 pt-6 mt-4 space-y-4">
+                                <div className="border-t border-david-green/10 pt-4 mt-2 space-y-2">
                                     <Link
                                         href="/wishlist"
-                                        className="text-xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm flex items-center gap-2"
+                                        className="text-base font-light tracking-wider text-david-green hover:bg-david-green/5 py-1.5 px-2 transition-colors rounded-sm flex items-center gap-2"
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        <Heart className="w-5 h-5" />
+                                        <Heart className="w-4 h-4" />
                                         המועדפים שלי
                                     </Link>
 
                                     <SignedIn>
                                         <Link
                                             href="/account"
-                                            className="text-xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm flex items-center gap-2"
+                                            className="text-base font-light tracking-wider text-david-green hover:bg-david-green/5 py-1.5 px-2 transition-colors rounded-sm flex items-center gap-2"
                                             onClick={() => setIsMobileMenuOpen(false)}
                                         >
-                                            <User className="w-5 h-5" />
+                                            <User className="w-4 h-4" />
                                             החשבון שלי
                                         </Link>
                                     </SignedIn>
                                     <SignedOut>
                                         <Link
                                             href="/sign-in"
-                                            className="text-xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm flex items-center gap-2"
+                                            className="text-base font-light tracking-wider text-david-green hover:bg-david-green/5 py-1.5 px-2 transition-colors rounded-sm flex items-center gap-2"
                                             onClick={() => setIsMobileMenuOpen(false)}
                                         >
-                                            <User className="w-5 h-5" />
+                                            <User className="w-4 h-4" />
                                             התחברות / הרשמה
                                         </Link>
                                     </SignedOut>
