@@ -133,7 +133,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                         </button>
 
                         <SignedIn>
-                            <div className="scale-90 origin-center">
+                            <div className="hidden md:block scale-90 origin-center">
                                 <UserButton userProfileMode="navigation" userProfileUrl="/account" afterSignOutUrl="/" />
                             </div>
                         </SignedIn>
@@ -155,11 +155,11 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
 
                         <button
                             onClick={openCart}
-                            className={`relative ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-1`}
+                            className={`relative ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-2`}
                         >
-                            <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
+                            <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
                             {itemsCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-david-green text-david-beige text-[10px] flex items-center justify-center rounded-full">
+                                <span className="absolute 0 top-0 -right-0 w-4 h-4 bg-david-green text-david-beige text-[10px] flex items-center justify-center rounded-full">
                                     {itemsCount}
                                 </span>
                             )}
@@ -216,6 +216,38 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                                         ניהול האתר
                                     </Link>
                                 )}
+
+                                <div className="border-t border-david-green/10 pt-6 mt-4 space-y-4">
+                                    <Link
+                                        href="/wishlist"
+                                        className="text-xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm flex items-center gap-2"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    >
+                                        <Heart className="w-5 h-5" />
+                                        המועדפים שלי
+                                    </Link>
+
+                                    <SignedIn>
+                                        <Link
+                                            href="/account"
+                                            className="text-xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm flex items-center gap-2"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                        >
+                                            <User className="w-5 h-5" />
+                                            החשבון שלי
+                                        </Link>
+                                    </SignedIn>
+                                    <SignedOut>
+                                        <Link
+                                            href="/sign-in"
+                                            className="text-xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm flex items-center gap-2"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                        >
+                                            <User className="w-5 h-5" />
+                                            התחברות / הרשמה
+                                        </Link>
+                                    </SignedOut>
+                                </div>
                             </div>
                         </motion.div>
                     </>

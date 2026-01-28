@@ -38,6 +38,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { PrismaClient } from '@prisma/client';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import AccessibilityWidget from '@/components/AccessibilityWidget';
+import CookieConsent from '@/components/ui/CookieConsent';
 import { Toaster } from 'sonner';
 
 const prisma = new PrismaClient();
@@ -87,6 +88,7 @@ export default async function RootLayout({
             <CartDrawer />
             <WhatsAppButton />
             <AccessibilityWidget />
+            <CookieConsent />
             <Toaster position="top-center" richColors />
           </CartProvider>
         </body>
