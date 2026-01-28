@@ -42,8 +42,8 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
     return (
         <header className="relative z-50 rtl" dir="rtl">
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${pathname === '/'
-                    ? (isScrolled ? 'bg-black/40 backdrop-blur-md border-b border-white/10 shadow-lg' : 'bg-transparent border-none')
-                    : 'bg-david-beige border-b border-[#DCDBCF]'
+                ? (isScrolled ? 'bg-black/40 backdrop-blur-md border-b border-white/10 shadow-lg' : 'bg-gradient-to-b from-black/50 to-transparent border-none')
+                : 'bg-david-beige border-b border-[#DCDBCF]'
                 }`}>
                 {/* Top Contact Bar */}
                 <div className={`text-white py-1.5 px-4 text-[10px] md:text-xs font-medium tracking-wide ${pathname === '/' ? 'bg-transparent' : 'bg-stone-900'}`}>
@@ -112,7 +112,7 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                                 <DockLink key={link.label}>
                                     <Link
                                         href={link.href}
-                                        className={`${pathname === '/' ? 'text-white/90 hover:text-white' : 'text-david-green'} text-lg font-medium hover:text-opacity-70 transition-colors whitespace-nowrap px-2`}
+                                        className={`${pathname === '/' ? 'text-white/90 hover:text-white' : 'text-david-green'} text-base font-light tracking-wider hover:text-opacity-70 transition-colors whitespace-nowrap px-3`}
                                     >
                                         {link.label}
                                     </Link>
@@ -200,12 +200,22 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                                     <Link
                                         key={item.label}
                                         href={item.href}
-                                        className="text-2xl font-light text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm"
+                                        className="text-2xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm"
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
                                         {item.label}
                                     </Link>
                                 ))}
+                                {isAdmin && (
+                                    <Link
+                                        href="/admin"
+                                        className="text-2xl font-light tracking-wider text-david-green hover:bg-david-green/5 p-2 transition-colors rounded-sm flex items-center gap-2 mt-4 border-t border-david-green/10 pt-6"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    >
+                                        <Lock className="w-5 h-5" />
+                                        ניהול האתר
+                                    </Link>
+                                )}
                             </div>
                         </motion.div>
                     </>
