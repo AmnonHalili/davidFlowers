@@ -99,7 +99,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     <div className="relative">
                         <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-0 md:mx-0">
                             {/* Main Image */}
-                            <div className="snap-center min-w-full aspect-[3/4] bg-stone-100 overflow-hidden relative">
+                            <div className="snap-center min-w-full h-[65vh] md:h-auto md:aspect-[3/4] bg-stone-100 overflow-hidden relative">
                                 <img
                                     src={mainImage}
                                     alt={product.name}
@@ -149,17 +149,19 @@ export default async function ProductPage({ params }: { params: { slug: string }
                             </span>
                             <h1 className="font-serif text-3xl md:text-5xl text-stone-900">{product.name}</h1>
 
-                            {/* Price Display */}
-                            <div className="flex items-center gap-3">
-                                {isOnSale ? (
-                                    <>
-                                        <p className="text-xl md:text-2xl font-medium text-rose-600">₪{displayPrice.toFixed(2)}</p>
-                                        <p className="text-lg text-stone-400 line-through">₪{regularPrice.toFixed(2)}</p>
-                                    </>
-                                ) : (
-                                    <p className="text-xl md:text-2xl font-light text-stone-900">₪{displayPrice.toFixed(2)}</p>
-                                )}
-                            </div>
+                            {/* Price Display (Hidden for Variable Products to avoid duplication) */}
+                            {!product.isVariablePrice && (
+                                <div className="flex items-center gap-3">
+                                    {isOnSale ? (
+                                        <>
+                                            <p className="text-xl md:text-2xl font-medium text-rose-600">₪{displayPrice.toFixed(2)}</p>
+                                            <p className="text-lg text-stone-400 line-through">₪{regularPrice.toFixed(2)}</p>
+                                        </>
+                                    ) : (
+                                        <p className="text-xl md:text-2xl font-light text-stone-900">₪{displayPrice.toFixed(2)}</p>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="prose prose-stone text-stone-600 font-light leading-relaxed text-sm md:text-base">
                                 <p>{product.description}</p>

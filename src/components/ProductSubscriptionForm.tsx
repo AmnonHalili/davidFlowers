@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, RefreshCw, ShoppingBag } from 'lucide-react';
 import { useCart, CartItem } from '@/context/CartContext';
@@ -34,6 +34,25 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   // Size Variation State
   const [selectedSize, setSelectedSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [currentPrice, setCurrentPrice] = useState(product.price);
+
+  // Sticky Bar Logic
+  const [isMainButtonVisible, setIsMainButtonVisible] = useState(true);
+  const mainButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsMainButtonVisible(entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+
+    if (mainButtonRef.current) {
+      observer.observe(mainButtonRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (product.isVariablePrice && product.variations) {
@@ -143,24 +162,37 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       )}
 
       {/* Type Toggle */}
-      <div className="flex p-1 bg-stone-100 rounded-lg">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setPurchaseType('SUBSCRIPTION')}
-          className={`flex-1 py-3 text-sm font-medium rounded-md transition-all ${purchaseType === 'SUBSCRIPTION'
-            ? 'bg-white text-stone-900 shadow-sm'
-            : 'text-stone-500 hover:text-stone-700'
+          className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-300 ${purchaseType === 'SUBSCRIPTION'
+            ? 'border-[#1B3322] bg-[#1B3322] text-white shadow-md'
+            : 'border-stone-200 bg-white text-stone-600 hover:border-[#C5A572] hover:bg-stone-50'
             }`}
         >
-          מנוי קבוע (חסוך 15%)
+          <div className="flex items-center gap-2 mb-1">
+            <RefreshCw className={`w-4 h-4 ${purchaseType === 'SUBSCRIPTION' ? 'text-[#C5A572]' : 'text-stone-400'}`} />
+            <span className="font-medium text-sm">מנוי קבוע</span>
+          </div>
+          <span className={`text-xs ${purchaseType === 'SUBSCRIPTION' ? 'text-stone-200' : 'text-stone-500'}`}>
+            חסוך 15% מהמחיר
+          </span>
         </button>
+
         <button
           onClick={() => setPurchaseType('ONETIME')}
-          className={`flex-1 py-3 text-sm font-medium rounded-md transition-all ${purchaseType === 'ONETIME'
-            ? 'bg-white text-stone-900 shadow-sm'
-            : 'text-stone-500 hover:text-stone-700'
+          className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-300 ${purchaseType === 'ONETIME'
+            ? 'border-[#1B3322] bg-[#1B3322] text-white shadow-md'
+            : 'border-stone-200 bg-white text-stone-600 hover:border-[#C5A572] hover:bg-stone-50'
             }`}
         >
-          חד פעמי
+          <div className="flex items-center gap-2 mb-1">
+            <ShoppingBag className={`w-4 h-4 ${purchaseType === 'ONETIME' ? 'text-[#C5A572]' : 'text-stone-400'}`} />
+            <span className="font-medium text-sm">חד פעמי</span>
+          </div>
+          <span className={`text-xs ${purchaseType === 'ONETIME' ? 'text-stone-200' : 'text-stone-500'}`}>
+            רכישה רגילה
+          </span>
         </button>
       </div>
 
@@ -230,6 +262,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       </div>
 
       <button
+        ref={mainButtonRef}
         onClick={handleAddToCart}
         className={`w-full text-white py-4 font-medium tracking-wide transition-colors flex items-center justify-center gap-2 group ${canPreorder
           ? 'bg-david-green hover:bg-david-green/90'
@@ -248,6 +281,23 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       <p className="text-center text-[10px] text-stone-400">
         תשלום מאובטח באמצעות Stripe. ניתן לבטל את המנוי בכל עת.
       </p>
+
+      {/* Mobile Sticky Bottom Bar */}
+      <div className={`md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-stone-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] transition-transform duration-300 z-50 ${isMainButtonVisible ? 'translate-y-full' : 'translate-y-0'
+        }`}>
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <p className="text-xs text-stone-500 mb-0.5">סה"כ לתשלום:</p>
+            <p className="text-xl font-serif font-medium text-stone-900">₪{currentPrice.toFixed(2)}</p>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            className="bg-[#1B3322] text-white px-8 py-3 rounded-full font-medium shadow-lg active:scale-95 transition-all text-sm"
+          >
+            {canPreorder ? 'שריון מוצר' : 'הוספה לסל'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
