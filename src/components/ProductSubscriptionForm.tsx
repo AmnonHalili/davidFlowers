@@ -21,6 +21,7 @@ interface ProductSubscriptionFormProps {
     allowPreorder?: boolean;
     isVariablePrice?: boolean;
     variations?: any; // JSON object
+    isSubscriptionEnabled?: boolean;
   }
 }
 
@@ -161,40 +162,42 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
         </div>
       )}
 
-      {/* Type Toggle */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => setPurchaseType('SUBSCRIPTION')}
-          className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-300 ${purchaseType === 'SUBSCRIPTION'
-            ? 'border-[#1B3322] bg-[#1B3322] text-white shadow-md'
-            : 'border-stone-200 bg-white text-stone-600 hover:border-[#C5A572] hover:bg-stone-50'
-            }`}
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <RefreshCw className={`w-4 h-4 ${purchaseType === 'SUBSCRIPTION' ? 'text-[#C5A572]' : 'text-stone-400'}`} />
-            <span className="font-medium text-sm">מנוי קבוע</span>
-          </div>
-          <span className={`text-xs ${purchaseType === 'SUBSCRIPTION' ? 'text-stone-200' : 'text-stone-500'}`}>
-            חסוך 15% מהמחיר
-          </span>
-        </button>
+      {/* Type Toggle - Only show if subscription is enabled */}
+      {product.isSubscriptionEnabled && (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setPurchaseType('SUBSCRIPTION')}
+            className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-300 ${purchaseType === 'SUBSCRIPTION'
+              ? 'border-[#1B3322] bg-[#1B3322] text-white shadow-md'
+              : 'border-stone-200 bg-white text-stone-600 hover:border-[#C5A572] hover:bg-stone-50'
+              }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <RefreshCw className={`w-4 h-4 ${purchaseType === 'SUBSCRIPTION' ? 'text-[#C5A572]' : 'text-stone-400'}`} />
+              <span className="font-medium text-sm">מנוי קבוע</span>
+            </div>
+            <span className={`text-xs ${purchaseType === 'SUBSCRIPTION' ? 'text-stone-200' : 'text-stone-500'}`}>
+              חסוך 15% מהמחיר
+            </span>
+          </button>
 
-        <button
-          onClick={() => setPurchaseType('ONETIME')}
-          className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-300 ${purchaseType === 'ONETIME'
-            ? 'border-[#1B3322] bg-[#1B3322] text-white shadow-md'
-            : 'border-stone-200 bg-white text-stone-600 hover:border-[#C5A572] hover:bg-stone-50'
-            }`}
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <ShoppingBag className={`w-4 h-4 ${purchaseType === 'ONETIME' ? 'text-[#C5A572]' : 'text-stone-400'}`} />
-            <span className="font-medium text-sm">חד פעמי</span>
-          </div>
-          <span className={`text-xs ${purchaseType === 'ONETIME' ? 'text-stone-200' : 'text-stone-500'}`}>
-            רכישה רגילה
-          </span>
-        </button>
-      </div>
+          <button
+            onClick={() => setPurchaseType('ONETIME')}
+            className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-300 ${purchaseType === 'ONETIME'
+              ? 'border-[#1B3322] bg-[#1B3322] text-white shadow-md'
+              : 'border-stone-200 bg-white text-stone-600 hover:border-[#C5A572] hover:bg-stone-50'
+              }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <ShoppingBag className={`w-4 h-4 ${purchaseType === 'ONETIME' ? 'text-[#C5A572]' : 'text-stone-400'}`} />
+              <span className="font-medium text-sm">חד פעמי</span>
+            </div>
+            <span className={`text-xs ${purchaseType === 'ONETIME' ? 'text-stone-200' : 'text-stone-500'}`}>
+              רכישה רגילה
+            </span>
+          </button>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {purchaseType === 'SUBSCRIPTION' && (

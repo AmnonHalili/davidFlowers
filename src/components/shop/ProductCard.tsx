@@ -7,6 +7,7 @@ import WishlistButton from './WishlistButton';
 import { calculateProductPrice } from '@/lib/price-utils';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
+import BouquetSizeSelector from '../product/BouquetSizeSelector';
 
 interface ProductCardProps {
     id: string;
@@ -51,6 +52,7 @@ export default function ProductCard({
 
     const [isAdded, setIsAdded] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedSize, setSelectedSize] = useState<'small' | 'medium' | 'large'>('medium');
 
     // Countdown Timer Logic
     const [timeLeft, setTimeLeft] = useState('');
@@ -88,13 +90,16 @@ export default function ProductCard({
         return () => clearInterval(timer);
     }, [isOnSale, saleEndDate]);
 
+    const hasVariations = variations && Object.keys(variations).length > 0;
+
     const handleQuickAdd = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
         if (isOutOfStock || isLocked) return;
 
         // Logic for Variable Price Products (Open Modal)
-        if (isVariablePrice && variations) {
+        if (hasVariations) {
             setIsModalOpen(true);
             return;
         }
@@ -117,12 +122,15 @@ export default function ProductCard({
         setTimeout(() => setIsAdded(false), 2000);
     };
 
-    const handleVariationAdd = (size: string, variation: any) => {
+    const handleVariationAdd = () => {
+        if (!variations || !variations[selectedSize]) return;
+        const variation = variations[selectedSize];
+
         addItem({
             id: id, // Keep main product ID as base
             productId: id,
             name: `${name} - ${variation.label}`,
-            selectedSize: size, // New cart field
+            selectedSize: selectedSize, // New cart field
             sizeLabel: variation.label, // New cart field
             price: variation.price,
             image: image,
@@ -142,7 +150,7 @@ export default function ProductCard({
             className="group block w-full min-w-0 space-y-3 md:space-y-4 rtl relative"
             dir="rtl"
         >
-            <div className="relative aspect-square md:aspect-[4/5] w-full overflow-hidden bg-stone-100 rounded-sm">
+            <div className="relative aspect-[4/5] w-full overflow-hidden bg-stone-100 rounded-sm">
                 {/* Main Image */}
                 <img
                     src={image}
@@ -267,11 +275,11 @@ export default function ProductCard({
                 )}
             </div>
 
-            <div className="text-center space-y-1 md:space-y-2 pt-1 md:pt-2">
+            <div className="text-center space-y-1 mt-2">
                 {category && (
-                    <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400 block pb-1">{category}</span>
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400 block pb-0.5">{category}</span>
                 )}
-                <h3 className="font-serif text-sm md:text-xl text-stone-900 leading-tight group-hover:text-stone-600 transition-colors duration-300 line-clamp-2 min-h-[1.25em]">
+                <h3 className="font-serif text-sm md:text-lg text-stone-900 leading-tight group-hover:text-stone-600 transition-colors duration-300 line-clamp-2 min-h-[1.25em]">
                     {name}
                 </h3>
                 <div className="flex justify-center items-center gap-3 relative">
@@ -295,36 +303,35 @@ export default function ProductCard({
                 </div>
             </div>
 
-            {/* Size Selection Modal */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="בחר גודל"
-            >
-                <div className="space-y-4">
-                    <div className="flex flex-col gap-3">
-                        {variations && (['small', 'medium', 'large'] as const).map((size) => {
-                            const variation = variations[size];
-                            if (!variation) return null;
-                            return (
-                                <button
-                                    key={size}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleVariationAdd(size, variation);
-                                    }}
-                                    className="flex items-center justify-between p-4 rounded-xl border border-stone-200 hover:border-david-green hover:bg-stone-50 transition-all group/btn"
-                                >
-                                    <span className="font-medium text-stone-900">{variation.label}</span>
-                                    <span className="font-serif text-lg font-medium text-stone-900 group-hover/btn:text-david-green">
-                                        ₪{variation.price}
-                                    </span>
-                                </button>
-                            );
-                        })}
+            {/* Size Selection Modal - Only for Variable Products */}
+            {hasVariations && (
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="בחר גודל"
+                >
+                    <div className="space-y-4">
+                        <div className="space-y-6">
+                            <BouquetSizeSelector
+                                variations={variations}
+                                selectedSize={selectedSize}
+                                onSelect={setSelectedSize}
+                                hideLabel
+                            />
+
+                            <button
+                                onClick={handleVariationAdd}
+                                className="w-full bg-[#1B3322] text-white py-4 rounded-full font-medium shadow-md hover:bg-[#1B3322]/90 transition-all flex items-center justify-center gap-2 group"
+                            >
+                                <span>הוסף לסל</span>
+                                <span>-</span>
+                                <span>₪{variations[selectedSize]?.price}</span>
+                                <ShoppingBag className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </Modal>
+                </Modal>
+            )}
         </Link>
     );
 }

@@ -45,6 +45,7 @@ model Product {
 
   availableFrom DateTime?  // Scheduled launch date
   allowPreorder Boolean    @default(false) // If true, can buy before launch (delivery restricted)
+  isSubscriptionEnabled Boolean @default(false) // New field: Allow subscription or enforce one-time only
   images       ProductImage[] // Upgraded to model for better SEO/metadata
   categories   Category[] @relation("ProductToCategory")
   orders       OrderItem[]

@@ -6,6 +6,7 @@ interface BouquetSizeSelectorProps {
     variations: Record<string, { label: string; price: number }>;
     selectedSize: 'small' | 'medium' | 'large';
     onSelect: (size: 'small' | 'medium' | 'large') => void;
+    hideLabel?: boolean;
 }
 
 const SIZE_MAPPING = {
@@ -26,13 +27,16 @@ const SIZE_MAPPING = {
 export default function BouquetSizeSelector({
     variations,
     selectedSize,
-    onSelect
+    onSelect,
+    hideLabel = false
 }: BouquetSizeSelectorProps) {
     return (
         <div className="space-y-4">
-            <label className="text-xs uppercase tracking-wider font-medium text-stone-900 block text-center md:text-right">
-                בחר גודל
-            </label>
+            {!hideLabel && (
+                <label className="text-xs uppercase tracking-wider font-medium text-stone-900 block text-center md:text-right">
+                    בחר גודל
+                </label>
+            )}
 
             <div className="grid grid-cols-3 gap-3 md:gap-4">
                 {(['small', 'medium', 'large'] as const).map((size) => {
@@ -45,9 +49,13 @@ export default function BouquetSizeSelector({
                     return (
                         <button
                             key={size}
-                            onClick={() => onSelect(size)}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onSelect(size);
+                            }}
                             className={`
-                                relative flex flex-col items-center justify-between p-3 md:p-4 rounded-sm transition-all duration-300
+                                relative flex flex-col items-center justify-between p-2 rounded-sm transition-all duration-300
                                 border border-[#C5A572] h-full group
                                 ${isActive
                                     ? 'bg-[#1B3322] text-white shadow-md scale-[1.02]'
@@ -56,7 +64,7 @@ export default function BouquetSizeSelector({
                             `}
                         >
                             {/* Illustration */}
-                            <div className="relative w-28 h-28 md:w-48 md:h-48 mb-4 mt-2 transition-all duration-300">
+                            <div className="relative w-28 h-28 md:w-48 md:h-48 mb-2 mt-1 transition-all duration-300">
                                 <Image
                                     src={image}
                                     alt={alt}

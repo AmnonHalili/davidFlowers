@@ -35,6 +35,9 @@ export async function createProduct(formData: FormData) {
 
     const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w\u0590-\u05FF-]+/g, '');
 
+    // Subscription Logic
+    const isSubscriptionEnabled = formData.get('isSubscriptionEnabled') === 'true';
+
     // Variations Logic
     const isVariablePriceStr = formData.get('isVariablePrice') as string;
     const isVariablePrice = isVariablePriceStr === 'true';
@@ -67,6 +70,7 @@ export async function createProduct(formData: FormData) {
             saleEndDate,
             availableFrom,
             allowPreorder,
+            isSubscriptionEnabled,
             isVariablePrice,
             variations,
             categories: {
@@ -116,6 +120,9 @@ export async function updateProduct(id: string, formData: FormData) {
     const availableFrom = availableFromStr ? new Date(availableFromStr) : null;
     const allowPreorder = allowPreorderStr === 'on';
 
+    // Subscription Logic
+    const isSubscriptionEnabled = formData.get('isSubscriptionEnabled') === 'true';
+
     // Variations Logic
     const isVariablePriceStr = formData.get('isVariablePrice') as string;
     const isVariablePrice = isVariablePriceStr === 'true';
@@ -152,6 +159,7 @@ export async function updateProduct(id: string, formData: FormData) {
             saleEndDate,
             availableFrom,
             allowPreorder,
+            isSubscriptionEnabled,
             isVariablePrice,
             variations,
             categories: {
