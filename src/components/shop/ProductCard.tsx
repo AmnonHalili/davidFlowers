@@ -52,7 +52,7 @@ export default function ProductCard({
 
     const [isAdded, setIsAdded] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedSize, setSelectedSize] = useState<'small' | 'medium' | 'large'>('medium');
+    const [selectedSize, setSelectedSize] = useState<'standard' | 'medium' | 'large'>('medium');
 
     // Countdown Timer Logic
     const [timeLeft, setTimeLeft] = useState('');

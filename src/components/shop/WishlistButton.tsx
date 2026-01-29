@@ -50,9 +50,10 @@ export default function WishlistButton({ productId, initialIsFavorited = false, 
         <button
             onClick={handleToggle}
             className={`
-                group p-2 rounded-full transition-all duration-300
+                group rounded-full transition-all duration-300
                 hover:bg-white/90 hover:shadow-sm
                 disabled:opacity-50 disabled:cursor-not-allowed
+                flex items-center justify-center
                 ${className}
             `}
             disabled={isPending}

@@ -33,7 +33,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   const [giftNote, setGiftNote] = useState('');
 
   // Size Variation State
-  const [selectedSize, setSelectedSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [selectedSize, setSelectedSize] = useState<'standard' | 'medium' | 'large'>('medium');
   const [currentPrice, setCurrentPrice] = useState(product.price);
 
   // Sticky Bar Logic

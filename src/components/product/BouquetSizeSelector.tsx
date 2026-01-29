@@ -3,14 +3,14 @@
 import Image from 'next/image';
 
 interface BouquetSizeSelectorProps {
-    variations: Record<string, { label: string; price: number }>;
-    selectedSize: 'small' | 'medium' | 'large';
-    onSelect: (size: 'small' | 'medium' | 'large') => void;
+    variations: Record<string, { label: string; price: number; stock?: number }>;
+    selectedSize: 'standard' | 'medium' | 'large';
+    onSelect: (size: 'standard' | 'medium' | 'large') => void;
     hideLabel?: boolean;
 }
 
 const SIZE_MAPPING = {
-    small: {
+    standard: {
         image: '/small-zer.png',
         alt: 'זר קטן'
     },
@@ -39,7 +39,7 @@ export default function BouquetSizeSelector({
             )}
 
             <div className="grid grid-cols-3 gap-3 md:gap-4">
-                {(['small', 'medium', 'large'] as const).map((size) => {
+                {(['standard', 'medium', 'large'] as const).map((size) => {
                     const variation = variations[size];
                     if (!variation) return null;
 

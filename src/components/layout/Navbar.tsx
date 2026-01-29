@@ -81,13 +81,19 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
 
                 <div className="max-w-screen-2xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between md:grid md:grid-cols-12 relative">
 
-                    {/* Mobile: Hamburger Menu (Right Side / Start) */}
-                    <div className="md:hidden flex justify-start z-10">
+                    {/* Mobile: Hamburger Menu & Search (Right Side / Start) */}
+                    <div className="md:hidden flex items-center justify-start z-10 gap-1">
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
                             className={`${pathname === '/' ? 'text-white' : 'text-david-green'} p-2 cursor-pointer`}
                         >
                             <Menu className="w-6 h-6" />
+                        </button>
+                        <button
+                            onClick={() => setIsSearchOpen(true)}
+                            className={`${pathname === '/' ? 'text-white' : 'text-david-green'} p-2 cursor-pointer`}
+                        >
+                            <Search className="w-5 h-5" />
                         </button>
                     </div>
 
@@ -122,9 +128,9 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                     </div>
 
                     {/* Left Side: Icons (Cart, User, etc.) */}
-                    <div className="md:col-span-2 flex items-center justify-end gap-3 md:gap-5 z-10">
+                    <div className="md:col-span-2 flex items-center justify-end gap-1 md:gap-5 z-10">
 
-                        {/* Search */}
+                        {/* Desktop Search */}
                         <button
                             onClick={() => setIsSearchOpen(true)}
                             className={`hidden md:block ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity`}
@@ -149,8 +155,8 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                             </Link>
                         )}
 
-                        <Link href="/wishlist" className={`hidden md:block ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity`} title="המועדפים שלי">
-                            <Heart className="w-5 h-5" strokeWidth={1.5} />
+                        <Link href="/wishlist" className={`${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-2`} title="המועדפים שלי">
+                            <Heart className="w-5 h-5 md:w-5 md:h-5" strokeWidth={1.5} />
                         </Link>
 
                         <button

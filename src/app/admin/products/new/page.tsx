@@ -41,13 +41,14 @@ function PriceSection({ isVariablePrice, variations, handleVariationChange }: an
 
     return (
         <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-            <div className="grid grid-cols-3 gap-4 text-center text-xs text-stone-500 font-medium bg-white p-2 border-b">
+            <div className="grid grid-cols-4 gap-4 text-center text-xs text-stone-500 font-medium bg-white p-2 border-b">
                 <span>גודל</span>
                 <span>תווית (ניתן לעריכה)</span>
                 <span>מחיר (₪)</span>
+                <span>מלאי</span>
             </div>
-            {['small', 'medium', 'large'].map((size) => (
-                <div key={size} className="grid grid-cols-3 gap-4 items-center">
+            {['standard', 'medium', 'large'].map((size) => (
+                <div key={size} className="grid grid-cols-4 gap-4 items-center">
                     <span className="text-sm font-bold text-stone-900 capitalize">{size}</span>
                     <input
                         type="text"
@@ -61,20 +62,15 @@ function PriceSection({ isVariablePrice, variations, handleVariationChange }: an
                         onChange={(e) => handleVariationChange(size, 'price', parseFloat(e.target.value))}
                         className="p-2 border border-stone-200 rounded text-sm"
                     />
+                    <input
+                        type="number"
+                        value={variations[size].stock}
+                        onChange={(e) => handleVariationChange(size, 'stock', parseInt(e.target.value) || 0)}
+                        className="p-2 border border-stone-200 rounded text-sm"
+                        min="0"
+                    />
                 </div>
             ))}
-            <div className="space-y-2 pt-4 border-t">
-                <label className="text-sm font-medium text-stone-900">מלאי כללי</label>
-                <input
-                    name="stock"
-                    type="number"
-                    required
-                    placeholder="0"
-                    min="0"
-                    className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none"
-                />
-                <p className="text-xs text-stone-500">המלאי מנוהל ברמת המוצר הכללי וירד בכל הזמנה ללא קשר לגודל.</p>
-            </div>
         </div>
     );
 }
@@ -85,9 +81,9 @@ export default function NewProductPage() {
     const [isSubscriptionEnabled, setIsSubscriptionEnabled] = useState(false);
 
     const [variations, setVariations] = useState<any>({
-        small: { label: 'Small', price: 0 },
-        medium: { label: 'Medium', price: 0 },
-        large: { label: 'Large', price: 0 }
+        standard: { label: 'Standard', price: 0, stock: 0 },
+        medium: { label: 'Medium', price: 0, stock: 0 },
+        large: { label: 'Large', price: 0, stock: 0 }
     });
 
     const handleVariationChange = (size: any, field: any, value: any) => {
@@ -99,6 +95,8 @@ export default function NewProductPage() {
             }
         }));
     };
+
+    const [showSale, setShowSale] = useState(false);
 
     return (
         <div className="p-10 max-w-3xl mx-auto">
@@ -114,13 +112,14 @@ export default function NewProductPage() {
                 <p className="text-stone-500 mt-2">מלא את הפרטים ליצירת זר חדש בקטלוג.</p>
             </div>
 
-            <form action={createProduct} className="bg-white p-8 rounded-lg border border-stone-200 shadow-sm space-y-8">
+            <form action={createProduct} className="bg-white p-6 md:p-8 rounded-xl border border-stone-200 shadow-sm space-y-8">
                 <input type="hidden" name="isVariablePrice" value={isVariablePrice.toString()} />
                 <input type="hidden" name="isSubscriptionEnabled" value={isSubscriptionEnabled.toString()} />
                 <input type="hidden" name="variations" value={JSON.stringify(variations)} />
 
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-bold text-stone-900 border-b border-stone-100 pb-3">פרטים בסיסיים</h3>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-stone-900">שם המוצר</label>
                             <input
@@ -128,18 +127,18 @@ export default function NewProductPage() {
                                 type="text"
                                 required
                                 placeholder="למשל: סחלב נסיכותי"
-                                className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none"
+                                className="w-full text-right p-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
                             />
                         </div>
 
-                        <div className="col-span-2 space-y-4">
+                        <div className="space-y-4">
                             <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 flex items-center justify-between">
                                 <div className="space-y-0.5">
                                     <label className="text-sm font-medium text-stone-900 block">אפשר רכישת מנוי</label>
                                     <p className="text-xs text-stone-500">האם לאפשר ללקוחות לרכוש מוצר זה כמנוי קבוע?</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-stone-500">{isSubscriptionEnabled ? 'פעיל' : 'כבוי'}</span>
+                                    <span className="text-xs text-stone-500 font-medium">{isSubscriptionEnabled ? 'פעיל' : 'כבוי'}</span>
                                     <label className="relative inline-flex items-center cursor-pointer" dir="ltr">
                                         <input
                                             type="checkbox"
@@ -156,7 +155,7 @@ export default function NewProductPage() {
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-medium text-stone-900">אפשר בחירת גדלים</label>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-stone-500">{isVariablePrice ? 'פעיל' : 'כבוי'}</span>
+                                        <span className="text-xs text-stone-500 font-medium">{isVariablePrice ? 'פעיל' : 'כבוי'}</span>
                                         <label className="relative inline-flex items-center cursor-pointer" dir="ltr">
                                             <input
                                                 type="checkbox"
@@ -177,52 +176,73 @@ export default function NewProductPage() {
                             </div>
                         </div>
 
-                        {/* Sale and Desc */}
-                        <div className="space-y-4 pt-4 border-t border-stone-100">
-                            <h3 className="text-sm font-bold text-stone-900">מבצעים והנחות</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-stone-900">מחיר מבצע (₪)</label>
-                                    <input
-                                        name="salePrice"
-                                        type="number"
-                                        placeholder="למשל: 50"
-                                        step="0.01"
-                                        className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none"
-                                    />
-                                    <p className="text-xs text-stone-500">השאר ריק אם אין מבצע</p>
+                        <div className="space-y-4 pt-6 border-t border-stone-100">
+                            <div className="bg-white md:bg-transparent p-5 md:p-0 -mx-6 md:mx-0 border-y md:border-0 border-stone-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-base md:text-lg font-bold text-stone-900">מבצעים והנחות</h3>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-medium text-stone-500">{showSale ? 'פעיל' : 'כבוי'}</span>
+                                        <label className="relative inline-flex items-center cursor-pointer" dir="ltr">
+                                            <input
+                                                type="checkbox"
+                                                checked={showSale}
+                                                onChange={(e) => setShowSale(e.target.checked)}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-david-green"></div>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-stone-900">תאריך התחלה</label>
-                                    <input
-                                        name="saleStartDate"
-                                        type="datetime-local"
-                                        className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none ltr"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-stone-900">תאריך סיום</label>
-                                    <input
-                                        name="saleEndDate"
-                                        type="datetime-local"
-                                        className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none ltr"
-                                    />
-                                </div>
+
+                                {showSale && (
+                                    <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 pt-4 border-t border-stone-100">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-stone-900 block">מחיר מבצע (₪)</label>
+                                            <input
+                                                name="salePrice"
+                                                type="number"
+                                                placeholder="50"
+                                                step="0.01"
+                                                className="w-full text-right p-3.5 text-base border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 focus:border-transparent outline-none font-mono transition-all"
+                                            />
+                                            <p className="text-xs text-stone-500 leading-relaxed">השאר ריק אם אין מבצע</p>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-stone-900 block">תאריך התחלה</label>
+                                                <input
+                                                    name="saleStartDate"
+                                                    type="datetime-local"
+                                                    className="w-full text-right p-3.5 text-base border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 focus:border-transparent outline-none ltr transition-all"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-stone-900 block">תאריך סיום</label>
+                                                <input
+                                                    name="saleEndDate"
+                                                    type="datetime-local"
+                                                    className="w-full text-right p-3.5 text-base border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 focus:border-transparent outline-none ltr transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2 pt-4 border-t border-stone-100">
                             <label className="text-sm font-medium text-stone-900">תיאור מלא</label>
                             <textarea
                                 name="description"
                                 required
                                 rows={4}
-                                className="w-full text-right p-3 border border-stone-200 rounded-md focus:ring-1 focus:ring-stone-900 outline-none resize-none"
+                                className="w-full text-right p-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none resize-none"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-stone-900">קטגוריות (ניתן לבחור יותר מאחת)</label>
+                        <div className="space-y-2 pt-4 border-t border-stone-100">
+                            <label className="text-sm font-medium text-stone-900">קטגוריות</label>
                             <CategoryMultiSelect />
                         </div>
                     </div>
