@@ -30,12 +30,12 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
 
     const navLinks = [
         { label: 'זרי פרחים', href: '/category/bouquets' },
-        { label: 'עציצים', href: '/category/plants' },
         { label: 'מתנות ומתוקים', href: '/category/gifts' },
-        { label: 'שוקולדים', href: '/category/chocolates' },
         { label: 'בלונים', href: '/category/balloons' },
         { label: 'חתן וכלה', href: '/category/wedding' },
+        { label: 'עציצים', href: '/category/plants' },
         { label: 'כלים ואגרטלים', href: '/category/vases' },
+        { label: 'שוקולדים', href: '/category/chocolates' },
         { label: 'אודות', href: '/about' },
     ];
 

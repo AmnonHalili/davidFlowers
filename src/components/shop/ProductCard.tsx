@@ -251,7 +251,7 @@ export default function ProductCard({
                                 ) : (
                                     <>
                                         <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-                                        {isOutOfStock ? 'אזל מהמלאי' : canPreorder ? 'הזמנה מוקדמת' : 'הוסף לסל'}
+                                        {isOutOfStock ? 'אזל מהמלאי' : canPreorder ? 'הזמנה מוקדמת' : 'הוספה לסל'}
                                     </>
                                 )}
                             </button>
