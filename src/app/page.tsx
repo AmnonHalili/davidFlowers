@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowLeft, Flower2 } from 'lucide-react';
 import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
+import CategoryExplorer from '@/components/home/CategoryExplorer';
 
 // Configuration for Hero Videos
 const HERO_VIDEOS = [
@@ -99,61 +100,8 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Featured Categories */}
-      <section className="py-16 md:py-32 bg-white px-4 md:px-6">
-        <div className="max-w-screen-2xl mx-auto space-y-12 md:space-y-16">
-          <div className="flex justify-between items-end">
-            <div className="space-y-2">
-              <span className="block text-[10px] md:text-xs uppercase tracking-widest text-stone-500">מהדורות מיוחדות</span>
-              <h2 className="font-serif text-3xl md:text-4xl text-stone-900">קטגוריות מובילות</h2>
-            </div>
-            <Link href="/shop" className="hidden md:flex items-center gap-2 text-xs uppercase tracking-widest hover:text-stone-500 transition-colors">
-              לכל הזרים <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-4">
-            {[
-              {
-                name: 'הזר השבועי',
-                image: 'https://images.unsplash.com/photo-1599580667087-9bb3cb8533bc?q=80&w=1000&auto=format&fit=crop',
-                link: '/category/bouquets'
-              },
-              {
-                name: 'כלות ואירועים',
-                image: '/AVIRA-T-55.jpg',
-                link: '/category/wedding'
-              },
-              {
-                name: 'יבשים ונצחיים',
-                image: 'https://images.unsplash.com/photo-1627514787955-32e67df1bb8c?q=80&w=1000&auto=format&fit=crop',
-                link: '/category/gifts'
-              }
-            ].map((cat, i) => (
-              <Link href={cat.link} key={cat.name} className="group relative aspect-[3/4] overflow-hidden bg-stone-100 block">
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-colors" />
-                <div className="absolute bottom-6 left-6 right-6 text-right">
-                  <h3 className="text-white font-serif text-2xl mb-2">{cat.name}</h3>
-                  <span className="inline-block border-b border-white pb-1 text-white text-xs uppercase tracking-widest opacity-0 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                    גלה עוד
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <div className="md:hidden flex justify-center pt-8">
-            <Link href="/shop" className="text-xs uppercase tracking-widest border-b border-stone-900 pb-1">
-              לכל הקטגוריות
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Featured Categories - Replaced with Dynamic Explorer */}
+      <CategoryExplorer />
 
       {/* Value Proposition */}
       <section className="bg-stone-50 py-24 px-6 border-y border-stone-200">

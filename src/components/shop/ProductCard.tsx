@@ -261,13 +261,13 @@ export default function ProductCard({
                         {!isOutOfStock && (
                             <button
                                 onClick={handleQuickAdd}
-                                className={`md:hidden absolute bottom-2 right-2 z-30 w-8 h-8 rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95 ${isAdded ? 'bg-david-green text-white' : 'bg-white/90 text-stone-900 backdrop-blur-sm'
+                                className={`md:hidden absolute bottom-3 right-3 z-30 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95 ${isAdded ? 'bg-david-green text-white' : 'bg-white text-stone-900 border border-stone-100'
                                     }`}
                             >
                                 {isAdded ? (
-                                    <Check className="w-4 h-4" strokeWidth={3} />
+                                    <Check className="w-5 h-5" strokeWidth={3} />
                                 ) : (
-                                    <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+                                    <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
                                 )}
                             </button>
                         )}

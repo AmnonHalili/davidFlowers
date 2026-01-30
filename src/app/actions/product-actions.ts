@@ -281,3 +281,36 @@ export async function getUpsellProducts() {
         return { success: false, products: [] };
     }
 }
+
+export async function getProductsByCategory(categorySlug: string, limit: number = 8) {
+    try {
+        const products = await prisma.product.findMany({
+            where: {
+                categories: {
+                    some: {
+                        slug: categorySlug
+                    }
+                },
+                stock: { gt: 0 } // Only show in-stock items
+            },
+            take: limit,
+            orderBy: {
+                createdAt: 'desc' // Newest first
+            },
+            include: {
+                images: {
+                    take: 2 // get main and hover
+                },
+                // We might need to check wishlist status here if we have userId,
+                // but for public homepage cacheability, better to fetch wishlist separately or client-side.
+            }
+        });
+
+        // Simple transformation if needed, or return raw
+        return { success: true, products };
+
+    } catch (error) {
+        console.error(`Error fetching products for category ${categorySlug}:`, error);
+        return { success: false, products: [] };
+    }
+}
