@@ -106,6 +106,9 @@ export default function Home() {
         <CategoryExplorer />
       </section>
 
+      {/* Instagram Feed */}
+      <InstagramFeed />
+
 
       {/* Value Proposition */}
       <section className="bg-stone-50 py-24 px-6 border-y border-stone-200">
@@ -123,8 +126,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Instagram Feed */}
-      <InstagramFeed />
+
     </main>
   );
 }

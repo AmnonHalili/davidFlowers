@@ -157,13 +157,19 @@ export default function CartDrawer() {
     }, [items]);
 
     const minDeliveryDate = useMemo(() => {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
 
-        if (preOrderConstraintDate && preOrderConstraintDate > tomorrow) {
-            return preOrderConstraintDate.toISOString().split('T')[0];
+        if (preOrderConstraintDate) {
+            // Compare timestamps to be safe
+            if (preOrderConstraintDate.getTime() > today.getTime()) {
+                return preOrderConstraintDate.toISOString().split('T')[0];
+            }
         }
-        return tomorrow.toISOString().split('T')[0];
+        return todayStr;
     }, [preOrderConstraintDate]);
 
     // Reset time when date changes if selected time is no longer valid

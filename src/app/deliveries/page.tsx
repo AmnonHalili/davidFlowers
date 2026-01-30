@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Truck, Clock, MapPin, ShieldCheck } from 'lucide-react';
 
 export const metadata = {
-    title: 'משלוחים | דוד פרחים',
+    title: 'משלוחים |פרחי דוד',
     description: 'מדיניות משלוחים, אזורי חלוקה וזמני אספקה - דוד פרחים אשקלון.',
 };
 

@@ -92,13 +92,33 @@ export async function POST(req: Request) {
             };
         });
 
-        // 2.5 VALIDATE DELIVERY DATE against availability
-        if (latestAvailableFrom && desiredDeliveryDate) {
+        // 2.5 VALIDATE DELIVERY DATE against availability & PAST DATES
+        if (desiredDeliveryDate) {
             const deliveryDate = new Date(desiredDeliveryDate);
-            const launchDate = latestAvailableFrom as Date;
-            if (deliveryDate < launchDate) {
+
+            // Check against Launch Date
+            if (latestAvailableFrom) {
+                const launchDate = latestAvailableFrom as Date;
+                if (deliveryDate < launchDate) {
+                    return NextResponse.json({
+                        error: `Delivery date must be at or after ${launchDate.toLocaleDateString('he-IL')}`
+                    }, { status: 400 });
+                }
+            }
+
+            // Check against TODAY (Global Past Date check)
+            // Use Israel Timezone for "Today" start
+            const now = new Date();
+            const todayIL = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jerusalem" }));
+            todayIL.setHours(0, 0, 0, 0); // Start of today
+
+            // Normalize delivery date to start of day for fair comparison
+            const deliveryCheck = new Date(deliveryDate);
+            deliveryCheck.setHours(0, 0, 0, 0);
+
+            if (deliveryCheck < todayIL) {
                 return NextResponse.json({
-                    error: `Delivery date must be at or after ${launchDate.toLocaleDateString('he-IL')}`
+                    error: 'Cannot select a date in the past'
                 }, { status: 400 });
             }
         }

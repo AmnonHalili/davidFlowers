@@ -7,7 +7,7 @@ export default function Footer() {
                     {/* Right: Brand Info */}
                     <div className="space-y-6 text-right">
                         <div className="relative w-[180px] h-[60px] md:w-[220px] md:h-[80px]">
-                            <h3 className="font-serif text-3xl tracking-widest leading-none">דוד פרחים</h3>
+                            <h3 className="font-serif text-3xl tracking-widest leading-none">פרחי דוד</h3>
                         </div>
                         <div className="space-y-4 text-sm font-light text-david-beige/80">
                             <p>פרחים טריים, עיצובים ייחודיים ומתנות מרגשות באשקלון והסביבה.</p>
