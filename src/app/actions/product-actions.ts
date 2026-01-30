@@ -9,7 +9,7 @@ import { CATEGORIES, getCategoryName } from '@/lib/categories';
 export async function createProduct(formData: FormData) {
     const name = formData.get('name') as string;
     let price = parseFloat(formData.get('price') as string);
-    const stock = parseInt(formData.get('stock') as string) || 0;
+    let stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
     const imageUrl = formData.get('imageUrl') as string;
 
@@ -56,6 +56,14 @@ export async function createProduct(formData: FormData) {
         } else {
             price = 0; // Fallback if no valid prices found
         }
+
+        // Calculate total stock from variations
+        const variationStocks = Object.values(variations)
+            .map((v: any) => parseInt(v.stock) || 0);
+
+        if (variationStocks.length > 0) {
+            stock = variationStocks.reduce((sum, s) => sum + s, 0);
+        }
     }
 
     await prisma.product.create({
@@ -100,7 +108,7 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(id: string, formData: FormData) {
     const name = formData.get('name') as string;
     let price = parseFloat(formData.get('price') as string);
-    const stock = parseInt(formData.get('stock') as string) || 0;
+    let stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
     const imageUrl = formData.get('imageUrl') as string;
 
@@ -140,6 +148,14 @@ export async function updateProduct(id: string, formData: FormData) {
             price = Math.min(...variationPrices);
         } else {
             price = 0; // Fallback if no valid prices found
+        }
+
+        // Calculate total stock from variations
+        const variationStocks = Object.values(variations)
+            .map((v: any) => parseInt(v.stock) || 0);
+
+        if (variationStocks.length > 0) {
+            stock = variationStocks.reduce((sum, s) => sum + s, 0);
         }
     }
 
