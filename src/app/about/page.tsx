@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { Heart, Star, Sun } from 'lucide-react';
 
 export const metadata = {
-    title: 'אודות | דוד פרחים',
-    description: 'הסיפור של דוד פרחים - חנות הפרחים האיכותית באשקלון.',
+    title: 'אודות |פרחי דוד',
+    description: 'הסיפור של פרחי דוד - חנות הפרחים האיכותית באשקלון.',
 };
 
 export default function AboutPage() {

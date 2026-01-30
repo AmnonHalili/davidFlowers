@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowLeft, Flower2 } from 'lucide-react';
 import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
 import CategoryExplorer from '@/components/home/CategoryExplorer';
+import InstagramFeed from '@/components/home/InstagramFeed';
 
 // Configuration for Hero Videos
 const HERO_VIDEOS = [
@@ -68,7 +69,7 @@ export default function Home() {
                 להזמנת משלוח
               </Link>
               <Link
-                href="/shop"
+                href="#best-sellers"
                 className="px-10 py-4 border border-white text-white uppercase tracking-widest text-xs font-bold hover:bg-white/10 transition-colors min-w-[200px]"
               >
                 לזרים הנמכרים ביותר
@@ -101,7 +102,10 @@ export default function Home() {
       </div>
 
       {/* Featured Categories - Replaced with Dynamic Explorer */}
-      <CategoryExplorer />
+      <section id="best-sellers" className="scroll-mt-24">
+        <CategoryExplorer />
+      </section>
+
 
       {/* Value Proposition */}
       <section className="bg-stone-50 py-24 px-6 border-y border-stone-200">
@@ -118,6 +122,9 @@ export default function Home() {
           </button>
         </div>
       </section>
+
+      {/* Instagram Feed */}
+      <InstagramFeed />
     </main>
   );
 }
