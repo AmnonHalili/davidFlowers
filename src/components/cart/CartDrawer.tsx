@@ -252,7 +252,7 @@ export default function CartDrawer() {
                     ordererName,
                     ordererPhone,
                     ordererEmail,
-                    desiredDeliveryDate: date && time ? new Date(`${date}T${time}`).toISOString() : null,
+                    desiredDeliveryDate: date && time ? new Date(`${date}T${time.split(' - ')[0]}`).toISOString() : null,
                     deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null, // 🆕
                     couponId: appliedCoupon?.id,
                     selectedCity: shippingMethod === 'delivery' ? selectedCity : null,
