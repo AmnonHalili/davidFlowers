@@ -12,11 +12,13 @@ interface OrderHistoryItemProps {
 export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
+    const isPickup = order.shippingAddress === 'Self Pickup';
+
     const statusLabels: Record<string, string> = {
         PENDING: 'ממתין',
         PAID: 'שולם',
-        SHIPPED: 'נשלח',
-        DELIVERED: 'נמסר',
+        SHIPPED: isPickup ? 'מוכן לאיסוף' : 'נשלח',
+        DELIVERED: isPickup ? 'נאסף' : 'נמסר',
         CANCELLED: 'בוטל',
     };
 
@@ -78,8 +80,10 @@ export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
                     <div className="p-6 bg-stone-50/50 space-y-6">
                         {/* Timeline */}
                         <div className="bg-white p-6 rounded-lg border border-stone-100 shadow-sm">
-                            <h4 className="font-bold text-stone-900 mb-4 text-sm uppercase tracking-wider">סטטוס משלוח</h4>
-                            <OrderTimeline status={order.status} />
+                            <h4 className="font-bold text-stone-900 mb-4 text-sm uppercase tracking-wider">
+                                {isPickup ? 'סטטוס איסוף' : 'סטטוס משלוח'}
+                            </h4>
+                            <OrderTimeline status={order.status} isPickup={isPickup} />
                         </div>
 
                         {/* Order Details Grid */}
@@ -106,11 +110,16 @@ export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
 
                             {/* Shipping Info */}
                             <div className="space-y-3">
-                                <h4 className="font-bold text-stone-900 text-sm uppercase tracking-wider">פרטי משלוח</h4>
+                                <h4 className="font-bold text-stone-900 text-sm uppercase tracking-wider">
+                                    {isPickup ? 'פרטי איסוף' : 'פרטי משלוח'}
+                                </h4>
                                 <div className="bg-white p-4 border border-stone-100 rounded-lg text-sm space-y-2 text-stone-600">
                                     <p><span className="font-bold">נמען:</span> {order.recipientName}</p>
                                     <p><span className="font-bold">טלפון:</span> {order.recipientPhone}</p>
-                                    <p><span className="font-bold">כתובת:</span> {order.shippingStreet}, {order.shippingCity}</p>
+                                    <p>
+                                        <span className="font-bold">{isPickup ? 'מיקום:' : 'כתובת:'}</span>{' '}
+                                        {isPickup ? 'איסוף עצמי מהחנות (אשקלון)' : `${order.shippingAddress}`}
+                                    </p>
                                     {order.notes && <p><span className="font-bold text-david-green">הערות:</span> {order.notes}</p>}
                                 </div>
                             </div>

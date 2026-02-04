@@ -5,14 +5,15 @@ import { motion } from 'framer-motion';
 
 interface OrderTimelineProps {
     status: string;
+    isPickup?: boolean;
 }
 
-export default function OrderTimeline({ status }: OrderTimelineProps) {
+export default function OrderTimeline({ status, isPickup = false }: OrderTimelineProps) {
     const steps = [
         { id: 'PENDING', label: 'נקלטה', icon: CheckCircle2 },
         { id: 'PAID', label: 'בטיפול', icon: Package },
-        { id: 'SHIPPED', label: 'במשלוח', icon: Truck },
-        { id: 'DELIVERED', label: 'נמסר', icon: Home },
+        { id: 'SHIPPED', label: isPickup ? 'מוכן לאיסוף' : 'במשלוח', icon: Truck },
+        { id: 'DELIVERED', label: isPickup ? 'נאסף' : 'נמסר', icon: isPickup ? Truck : Home },
     ];
 
     // Status Mapping and Current Step Index
