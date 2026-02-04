@@ -227,30 +227,34 @@ async function createPayPlusPayment(data: {
 
         console.log(`[PAY_PLUS] Attempting to create payment page for order ${orderId}`);
 
-        const response = await fetch('https://restapi.payplus.co.il/api/v1/payment-pages/create', {
+        // Correct endpoint according to latest documentation
+        const response = await fetch('https://restapi.payplus.co.il/api/v1.0/PaymentPages/generateLink', {
             method: 'POST',
             headers: {
                 'Authorization': JSON.stringify({
                     'api_key': payPlusApiKey,
                     'secret_key': payPlusSecretKey
                 }),
+                'api-key': payPlusApiKey, // Fallback separate header
+                'secret-key': payPlusSecretKey, // Fallback separate header
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+                payment_page_uid: payPlusPaymentPageUid,
                 terminal_uid: payPlusTerminalId,
-                ...(payPlusPaymentPageUid && { payment_page_uid: payPlusPaymentPageUid }),
                 amount: amount,
                 currency_code: 'ILS',
                 customer: {
                     customer_name: customerName,
                     phone: customerPhone,
-                    ...(customerEmail && { email: customerEmail })
+                    email: customerEmail || ''
                 },
-                more_info: orderId, // Store orderId for webhook
-                success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success?orderId=${orderId}`,
-                error_url: `${process.env.NEXT_PUBLIC_APP_URL}/cancel?orderId=${orderId}`,
+                more_info: orderId,
+                refURL_success: `${process.env.NEXT_PUBLIC_APP_URL}/success?orderId=${orderId}`,
+                refURL_failure: `${process.env.NEXT_PUBLIC_APP_URL}/cancel?orderId=${orderId}`,
                 sendEmailApproval: false,
-                sendEmailFailure: false
+                sendEmailFailure: false,
+                charge_method: 1 // Regular Charge
             })
         });
 
@@ -258,21 +262,20 @@ async function createPayPlusPayment(data: {
 
         if (!response.ok) {
             console.error(`[PAY_PLUS_ERROR] Status: ${response.status}`, result);
-            throw new Error(`Pay Plus API error: ${response.status} - ${JSON.stringify(result)}`);
+            throw new Error(`Pay Plus API error: ${result.message || result.status_text || response.status}`);
         }
 
-        if (!result.data?.payment_page_link) {
-            console.error('[PAY_PLUS_ERROR] Missing link in result:', result);
-            throw new Error('No payment link returned from Pay Plus');
+        if (result.status === 'error' || !result.data?.payment_page_link) {
+            console.error('[PAY_PLUS_ERROR] API returned error state:', result);
+            throw new Error(result.message || 'No payment link returned from Pay Plus');
         }
 
         console.log(`✅ Pay Plus payment page created for order ${orderId}`);
         return result.data.payment_page_link;
 
-    } catch (error) {
-        console.error('[PAY_PLUS_ERROR]', error);
-        // Fallback to mock on error only in development if needed, 
-        // but for production failures we should probably not just redirect to success
-        return `${process.env.NEXT_PUBLIC_APP_URL}/success?orderId=${orderId}&mock=true&error=payplus_failed`;
+    } catch (error: any) {
+        console.error('[PAY_PLUS_ERROR] Process failed:', error);
+        // Throw the error instead of falling back to mock success in production
+        throw new Error(`PayPlus failed: ${error.message}`);
     }
 }

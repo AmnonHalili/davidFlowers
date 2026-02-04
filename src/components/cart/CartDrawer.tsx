@@ -4,6 +4,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, Trash2, Lock, ShoppingBag, Loader2, Tag, Check } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
@@ -78,6 +79,7 @@ const SHIPPING_COSTS: Record<string, number> = {
 
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, addItem, updateQuantity, cartTotal } = useCart();
+    const { user: clerkUser, isSignedIn } = useUser();
     const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [address, setAddress] = useState('');
@@ -197,24 +199,29 @@ export default function CartDrawer() {
                 }
             });
 
-            // Load User Profile (Address/Phone pre-fill)
+            // 1. FAST PRE-FILL FROM CLERK (Immediate)
+            if (isSignedIn && clerkUser) {
+                setIsLoggedIn(true);
+                if (!ordererName && clerkUser.fullName) setOrdererName(clerkUser.fullName);
+                if (!ordererEmail && clerkUser.primaryEmailAddress?.emailAddress) {
+                    setOrdererEmail(clerkUser.primaryEmailAddress.emailAddress);
+                }
+            }
+
+            // 2. DETAILED PRE-FILL FROM DATABASE (Address, Phone)
             import('@/app/actions/user-actions').then(({ getUserProfile }) => {
                 getUserProfile().then(user => {
                     if (user) {
                         setIsLoggedIn(true);
-                        if (user.name) {
-                            setOrdererName(user.name);
-                        }
-                        if (user.phone) {
-                            setOrdererPhone(user.phone);
-                        }
-                        if (user.email) setOrdererEmail(user.email);
-                        if (user.address) setAddress(user.address);
+                        if (user.name && !ordererName) setOrdererName(user.name);
+                        if (user.phone && !ordererPhone) setOrdererPhone(user.phone);
+                        if (user.email && !ordererEmail) setOrdererEmail(user.email);
+                        if (user.address && !address) setAddress(user.address);
                     }
                 });
             });
         }
-    }, [isOpen]);
+    }, [isOpen, isSignedIn, clerkUser]);
 
     const FREE_SHIPPING_THRESHOLD = 350;
     // Calculate totals locally to include discount
@@ -507,7 +514,7 @@ export default function CartDrawer() {
                                                             </div>
 
                                                             {/* Create Account Checkbox - Only for Guests */}
-                                                            {!isLoggedIn && (
+                                                            {!isSignedIn && (
                                                                 <div className="flex items-center gap-2 pt-1">
                                                                     <input
                                                                         type="checkbox"
