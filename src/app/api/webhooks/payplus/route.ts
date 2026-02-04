@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         console.log(`✅ Order ${orderId} marked as PAID (transaction: ${transaction_uid})`);
 
         // Send email confirmation to customer
-        const customerEmail = updatedOrder.user?.email;
+        const customerEmail = updatedOrder.user?.email || updatedOrder.ordererEmail;
 
         if (customerEmail) {
             // Import email service
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
             sendOrderConfirmation({
                 to: customerEmail,
                 orderNumber: updatedOrder.id,
-                customerName: updatedOrder.recipientName,
+                customerName: updatedOrder.ordererName || updatedOrder.recipientName,
                 items: updatedOrder.items.map(item => ({
                     name: item.product.name,
                     quantity: item.quantity,
