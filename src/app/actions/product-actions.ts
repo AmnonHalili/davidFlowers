@@ -267,7 +267,11 @@ export async function searchProducts(query: string) {
             }
         });
 
-        return products;
+        return products.map(p => ({
+            ...p,
+            price: Number(p.price),
+            salePrice: p.salePrice ? Number(p.salePrice) : null
+        }));
     } catch (error) {
         console.error('Error searching products:', error);
         return [];
@@ -291,7 +295,13 @@ export async function getUpsellProducts() {
             }
         });
 
-        return { success: true, products };
+        const safeProducts = products.map(p => ({
+            ...p,
+            price: Number(p.price),
+            salePrice: p.salePrice ? Number(p.salePrice) : null
+        }));
+
+        return { success: true, products: safeProducts };
     } catch (error) {
         console.error('Error fetching upsell products:', error);
         return { success: false, products: [] };
@@ -322,8 +332,14 @@ export async function getProductsByCategory(categorySlug: string, limit: number 
             }
         });
 
-        // Simple transformation if needed, or return raw
-        return { success: true, products };
+        // Transform Decimals to Numbers for Client Components
+        const safeProducts = products.map(p => ({
+            ...p,
+            price: Number(p.price),
+            salePrice: p.salePrice ? Number(p.salePrice) : null
+        }));
+
+        return { success: true, products: safeProducts };
 
     } catch (error) {
         console.error(`Error fetching products for category ${categorySlug}:`, error);
