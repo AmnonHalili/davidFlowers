@@ -27,7 +27,7 @@ export async function POST(req: Request) {
             frequency as Frequency
         );
 
-        // Mock response (In a real app, you'd create a Stripe Checkout Session here 
+        // Mock response (In a real app, you'd create a PayPlus Checkout Session here 
         // and then save the Subscription to Prisma once the payment is confirmed)
         return NextResponse.json({
             success: true,
@@ -43,8 +43,8 @@ export async function POST(req: Request) {
                     address: shippingAddress,
                     message: cardMessage || 'No gift note included.'
                 },
-                // Mocking Stripe integration
-                stripeRedirectUrl: 'https://checkout.stripe.com/mock-session'
+                // Mocking PayPlus integration
+                payplusRedirectUrl: 'https://payplus.co.il/mock-session'
             }
         });
     } catch (error) {

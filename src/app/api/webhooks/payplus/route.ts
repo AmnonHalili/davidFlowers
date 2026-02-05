@@ -29,7 +29,7 @@ export async function POST(req: Request) {
             where: { id: orderId },
             data: {
                 status: 'PAID',
-                stripePaymentId: transaction_uid // Reuse this field for Pay Plus transaction ID
+                payplusTransactionId: transaction_uid
             },
             include: {
                 items: {

@@ -51,12 +51,20 @@ function generateTimeSlots(dateString: string): string[] {
     if (isToday) {
         const currentHour = now.getHours();
 
-        slots = slots.filter(slot => {
-            // Parse start time of the slot (e.g. "10:00" from "10:00 - 13:00")
-            const startTimePart = slot.split(' - ')[0];
-            const startHour = parseInt(startTimePart.split(':')[0], 10);
+        // Cutoff for same-day delivery: 18:00 on weekdays, 12:00 on Friday
+        const cutoffHour = (holidayStatus === 'FRIDAY_LIKE' || dayOfWeek === 5) ? 12 : 18;
 
-            return startHour > currentHour;
+        if (currentHour >= cutoffHour) {
+            return []; // Too late for same day
+        }
+
+        slots = slots.filter(slot => {
+            // Parse end time of the slot (e.g. "13:00" from "10:00 - 13:00")
+            const endTimePart = slot.split(' - ')[1];
+            const endHour = parseInt(endTimePart.split(':')[0], 10);
+
+            // Allow selecting a slot if it hasn't ended yet
+            return endHour > currentHour;
         });
     }
 
@@ -95,6 +103,7 @@ export default function CartDrawer() {
     const [time, setTime] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState(''); // 🆕 הערות למשלוח
+    const [newsletterConsent, setNewsletterConsent] = useState(true); // 🆕 הסכמה לדיוור
     interface UpsellItem {
         id: string;
         productId: string;
@@ -263,7 +272,8 @@ export default function CartDrawer() {
                     deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null, // 🆕
                     couponId: appliedCoupon?.id,
                     selectedCity: shippingMethod === 'delivery' ? selectedCity : null,
-                    shippingCost: currentShippingCost
+                    shippingCost: currentShippingCost,
+                    newsletterConsent: newsletterConsent // 🆕
                 }),
             });
 
@@ -526,6 +536,20 @@ export default function CartDrawer() {
                                                                     </label>
                                                                 </div>
                                                             )}
+
+                                                            {/* Newsletter Opt-in (NEW) */}
+                                                            <div className="flex items-start gap-2 pt-2 pb-1">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id="newsletter"
+                                                                    checked={newsletterConsent}
+                                                                    onChange={(e) => setNewsletterConsent(e.target.checked)}
+                                                                    className="w-4 h-4 mt-0.5 rounded border-stone-300 text-david-green focus:ring-david-green cursor-pointer"
+                                                                />
+                                                                <label htmlFor="newsletter" className="text-xs text-stone-600 cursor-pointer select-none leading-relaxed">
+                                                                    אשמח לקבל עדכונים על מבצעים, הנחות ומוצרים חדשים (ניוזלטר) 💐
+                                                                </label>
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -694,6 +718,47 @@ export default function CartDrawer() {
                         {/* Footer - Fixed at bottom with Glassmorphism */}
                         {items.length > 0 && (
                             <div className="p-8 border-t border-white/50 bg-white/85 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-20 space-y-6">
+                                {/* Coupon Input (Always Visible) */}
+                                {!appliedCoupon ? (
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <Tag className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                                            <input
+                                                type="text"
+                                                value={couponCode}
+                                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                                                placeholder="יש לך קוד קופון?"
+                                                className="w-full bg-stone-50 border border-stone-200 rounded-lg py-2 pr-10 pl-3 text-sm focus:outline-none focus:border-david-green uppercase"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleApplyCoupon}
+                                            disabled={!couponCode || couponLoading}
+                                            className="bg-stone-900 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                                        >
+                                            {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'החל'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between bg-green-50 border border-green-100 p-3 rounded-lg animate-in fade-in zoom-in-95">
+                                        <div className="flex items-center gap-2 text-green-700">
+                                            <Tag className="w-4 h-4" />
+                                            <span className="font-bold text-sm tracking-wide">{appliedCoupon.code}</span>
+                                            <span className="text-xs bg-white px-1.5 py-0.5 rounded shadow-sm">
+                                                -{appliedCoupon.type === 'PERCENTAGE' ? '' : '₪'}{appliedCoupon.amount}{appliedCoupon.type === 'PERCENTAGE' ? '%' : ''}
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={handleRemoveCoupon}
+                                            className="text-green-700 hover:bg-green-100 p-1.5 rounded-full transition-colors"
+                                            title="הסר קופון"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+
                                 <AnimatePresence mode="wait">
                                     {/* Totals Box for Cart View */}
                                     {checkoutStep === 'cart' && (
@@ -738,46 +803,7 @@ export default function CartDrawer() {
                                                     </div>
                                                 </div>
                                             )}
-                                            {/* Coupon Input */}
-                                            {!appliedCoupon ? (
-                                                <div className="flex gap-2">
-                                                    <div className="relative flex-1">
-                                                        <Tag className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                                                        <input
-                                                            type="text"
-                                                            value={couponCode}
-                                                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                                            onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                                                            placeholder="יש לך קוד קופון?"
-                                                            className="w-full bg-stone-50 border border-stone-200 rounded-lg py-2 pr-10 pl-3 text-sm focus:outline-none focus:border-david-green uppercase"
-                                                        />
-                                                    </div>
-                                                    <button
-                                                        onClick={handleApplyCoupon}
-                                                        disabled={!couponCode || couponLoading}
-                                                        className="bg-stone-900 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-                                                    >
-                                                        {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'החל'}
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-between bg-green-50 border border-green-100 p-3 rounded-lg animate-in fade-in zoom-in-95">
-                                                    <div className="flex items-center gap-2 text-green-700">
-                                                        <Tag className="w-4 h-4" />
-                                                        <span className="font-bold text-sm tracking-wide">{appliedCoupon.code}</span>
-                                                        <span className="text-xs bg-white px-1.5 py-0.5 rounded shadow-sm">
-                                                            -{appliedCoupon.type === 'PERCENTAGE' ? '' : '₪'}{appliedCoupon.amount}{appliedCoupon.type === 'PERCENTAGE' ? '%' : ''}
-                                                        </span>
-                                                    </div>
-                                                    <button
-                                                        onClick={handleRemoveCoupon}
-                                                        className="text-green-700 hover:bg-green-100 p-1.5 rounded-full transition-colors"
-                                                        title="הסר קופון"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            )}
+
 
                                             <div className="space-y-1">
                                                 <div className="flex justify-between items-center text-sm text-stone-600">

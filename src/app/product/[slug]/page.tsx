@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import ProductSubscriptionForm from '@/components/ProductSubscriptionForm';
 import ProductCard from '@/components/shop/ProductCard';
 import Link from 'next/link';
@@ -7,6 +8,28 @@ import { ArrowRight } from 'lucide-react';
 import { calculateProductPrice } from '@/lib/price-utils';
 
 const prisma = new PrismaClient();
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+    const decodedSlug = decodeURIComponent(params.slug);
+    const product = await prisma.product.findUnique({
+        where: { slug: decodedSlug }
+    }) as any;
+
+    if (!product) return {};
+
+    const title = product.metaTitle || `${product.name} | פרחים באשקלון | פרחי דוד`;
+    const description = product.metaDescription || `${product.name} - פרחים טריים ואיכותיים בפרחי דוד. משלוח מהיר באשקלון והסביבה. הזמינו עכשיו!`;
+
+    return {
+        title,
+        description,
+        keywords: `${product.name}, פרחים באשקלון, משלוח פרחים, מתנות באשקלון`,
+        openGraph: {
+            title,
+            description,
+        }
+    };
+}
 
 async function getProduct(slug: string) {
     try {
@@ -193,7 +216,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                         <div className="space-y-4 pt-4 md:pt-8 bg-stone-50/50 p-4 -mx-6 md:bg-transparent md:p-0 md:mx-0 rounded-lg md:rounded-none">
                             <div className="flex gap-4 items-start">
                                 <span className="text-stone-900 font-medium text-xs uppercase tracking-wider min-w-[80px]">משלוח:</span>
-                                <p className="text-xs text-stone-500 leading-relaxed">משלוח חינם למנויים. הזמנות חד-פעמיות - ₪35. משלוח מהיום להיום בהזמנה עד השעה 10:00.</p>
+                                <p className="text-xs text-stone-500 leading-relaxed">משלוח מהיום להיום: בימי חול בהזמנה עד 18:00, בשישי עד 12:00. משלוח באשקלון ₪25, מושבים בסביבה ₪45.</p>
                             </div>
                             <div className="flex gap-4 items-start">
                                 <span className="text-stone-900 font-medium text-xs uppercase tracking-wider min-w-[80px]">טריות:</span>

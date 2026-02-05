@@ -15,7 +15,6 @@
     "@hebcal/core": "^6.0.8",
     "@prisma/client": "^6.19.2",
     "@react-email/components": "^1.0.6",
-    "@stripe/stripe-js": "^8.6.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.24.0",
     "lucide-react": "^0.562.0",
@@ -27,8 +26,7 @@
     "react-email": "^5.2.5",
     "recharts": "^3.6.0",
     "resend": "^6.8.0",
-    "sonner": "^1.4.0",
-    "stripe": "^20.1.0"
+    "sonner": "^1.4.0"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -48,9 +48,10 @@ export default function DeliveriesPage() {
                             <div className="space-y-2">
                                 <h3 className="font-serif text-xl text-stone-900">עלויות משלוח</h3>
                                 <ul className="text-stone-600 font-light space-y-2">
-                                    <li>• <strong>משלוח רגיל באשקלון:</strong> 25 ₪</li>
-                                    <li>• <strong>משלוח חינם:</strong> בקנייה מעל 350 ₪</li>
-                                    <li>• <strong>איסוף עצמי:</strong> חינם מהחנות (רחבעם זאבי 4, אשקלון)</li>
+                                    <li>• <strong>משלוח באשקלון:</strong> ₪25</li>
+                                    <li>• <strong>מושבים בסביבה:</strong> ₪45</li>
+                                    <li>• <strong>משלוח חינם:</strong> בקנייה מעל ₪350</li>
+                                    <li>• <strong>איסוף עצמי:</strong> חינם (רחבעם זאבי 4, אשקלון)</li>
                                 </ul>
                             </div>
                         </div>
@@ -63,11 +64,11 @@ export default function DeliveriesPage() {
                             <div className="space-y-2">
                                 <h3 className="font-serif text-xl text-stone-900">זמני אספקה</h3>
                                 <p className="text-stone-600 font-light leading-relaxed">
-                                    <strong>הזמנות עד השעה 14:00:</strong> יסופקו באותו היום (בכפוף למלאי).
+                                    <strong>הזמנה מהיום להיום (ימים א-ה):</strong> עד השעה 18:00.
                                     <br />
-                                    <strong>הזמנות אחרי 14:00:</strong> יסופקו ביום העסקים הבא.
+                                    <strong>הזמנה מהיום להיום (ימי שישי):</strong> עד השעה 12:00.
                                     <br />
-                                    <strong>ימי שישי וערבי חג:</strong> משלוחים עד שעה לפני כניסת השבת/חג.
+                                    <strong>אחרי שעות אלו:</strong> המשלוח יסופק ביום העסקים הבא.
                                 </p>
                             </div>
                         </div>

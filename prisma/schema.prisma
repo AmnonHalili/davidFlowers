@@ -51,6 +51,11 @@ model Product {
   orders       OrderItem[]
   subscriptions Subscription[]
   favoritedBy  User[]     @relation("UserFavorites")
+  
+  // SEO Fields
+  metaTitle       String?
+  metaDescription String?
+
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -73,8 +78,33 @@ model Category {
   parentId  String?
   children  Category[] @relation("CategoryToCategory")
   products  Product[]  @relation("ProductToCategory")
+
+  // SEO Fields
+  metaTitle       String?
+  metaDescription String?
+
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+}
+
+model BlogPost {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  excerpt         String
+  content         String   @db.Text
+  image           String?
+  author          String   @default("David Flowers")
+  
+  // SEO Fields
+  metaTitle       String?
+  metaDescription String?
+  
+  isPublished     Boolean  @default(false)
+  publishedAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Order {
@@ -99,13 +129,15 @@ model Order {
   cardMessage       String?
   deliveryNotes     String?     // Special instructions for courier
   
-  stripePaymentId   String?     @unique
+  payplusTransactionId String?     @unique
   paymentMethod     PaymentMethod @default(CREDIT_CARD)
   
   couponId          String?
   coupon            Coupon?       @relation(fields: [couponId], references: [id])
   discountAmount    Decimal       @default(0)
 
+  newsletterConsent Boolean     @default(false)
+  
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 }
@@ -143,7 +175,7 @@ model Subscription {
   shippingAddress   String
   cardMessage       String?
   
-  stripeSubscriptionId String?       @unique
+  payplusSubscriptionId String?       @unique
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 }

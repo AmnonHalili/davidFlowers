@@ -1,14 +1,39 @@
-
+import prisma from '@/lib/prisma';
+import { Metadata } from 'next';
 import ProductCard from '@/components/shop/ProductCard';
 import FilterBar from '@/components/shop/FilterBar';
-import { notFound } from 'next/navigation';
 import { CATEGORIES } from '@/lib/categories';
 import { auth } from '@clerk/nextjs/server';
-import prisma from '@/lib/prisma';
+import { notFound } from 'next/navigation';
 
 interface CategoryPageProps {
     params: { slug: string };
     searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+    const slug = decodeURIComponent(params.slug);
+
+    // Try to get category info from DB for SEO fields
+    const dbCategory = (await prisma.category.findUnique({
+        where: { slug }
+    })) as any;
+
+    const categoryInfo = CATEGORIES.find((c: any) => c.slug === slug);
+    const categoryName = dbCategory?.name || categoryInfo?.name || slug;
+
+    const title = dbCategory?.metaTitle || `${categoryName} באשקלון | פרחי דוד`;
+    const description = dbCategory?.metaDescription || `משלוח ${categoryName} באשקלון והסביבה. מגוון ${categoryName} טריים ואיכותיים בפרחי דוד.`;
+
+    return {
+        title,
+        description,
+        keywords: `${categoryName} באשקלון, משלוח ${categoryName}, ${categoryName} מחיר, פרחים אשקלון`,
+        openGraph: {
+            title,
+            description,
+        }
+    };
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {

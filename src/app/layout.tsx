@@ -15,9 +15,12 @@ const frankRuhl = Frank_Ruhl_Libre({
 });
 
 export const metadata: Metadata = {
-  title: 'David Flowers | משלוחי פרחים יוקרתיים',
-  description: 'זרי פרחים שזורים ביד, במשלוח עד הבית.',
+  title: 'פרחי דוד | משלוח פרחים באשקלון, מתנות ועציצים',
+  description: 'פרחי דוד - חנות פרחים באשקלון המציעה משלוחי פרחים טריים, עציצים, ומתנות מעוצבות. משלוח מהיום להיום באשקלון והסביבה.',
+  keywords: 'פרחים באשקלון, משלוח פרחים באשקלון, מתנות באשקלון, עציצים באשקלון, חנות פרחים אשקלון, זרי פרחים אשקלון',
   openGraph: {
+    title: 'פרחי דוד | משלוח פרחים באשקלון',
+    description: 'משלוחי פרחים טריים, עציצים ומתנות באשקלון והסביבה.',
     images: ['/logo_original.jpg'],
   },
   twitter: {
@@ -39,6 +42,7 @@ import { PrismaClient } from '@prisma/client';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import AccessibilityWidget from '@/components/AccessibilityWidget';
 import CookieConsent from '@/components/ui/CookieConsent';
+import PromoPopup from '@/components/ui/PromoPopup';
 import { Toaster } from 'sonner';
 
 const prisma = new PrismaClient();
@@ -89,6 +93,7 @@ export default async function RootLayout({
             <WhatsAppButton />
             <AccessibilityWidget />
             <CookieConsent />
+            <PromoPopup />
             <Toaster position="top-center" richColors />
           </CartProvider>
         </body>

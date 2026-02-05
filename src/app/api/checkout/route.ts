@@ -24,7 +24,8 @@ export async function POST(req: Request) {
             deliveryNotes,
             couponId,
             selectedCity,
-            shippingCost: clientShippingCost = 0
+            shippingCost: clientShippingCost = 0,
+            newsletterConsent // Added
         } = body;
 
         const SHIPPING_COSTS: Record<string, number> = {
@@ -153,6 +154,7 @@ export async function POST(req: Request) {
                 desiredDeliveryDate: desiredDeliveryDate ? new Date(desiredDeliveryDate) : null,
                 deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null,
                 ...(couponId && { coupon: { connect: { id: couponId } } }),
+                newsletterConsent: newsletterConsent || false, // Added newsletterConsent
                 items: {
                     create: validItems.map((item: any) => ({
                         product: { connect: { id: item.productId } },

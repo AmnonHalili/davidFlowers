@@ -115,11 +115,11 @@ async function getStats() {
     });
 
     return {
-        revenue: totalRevenue._sum.totalAmount || 0,
+        revenue: Number(totalRevenue._sum.totalAmount) || 0,
         pendingOrders,
         totalProducts,
         lowStockProducts,
-        salesData: salesData, // Now passing the full array
+        salesData: salesData,
         recentOrders: formattedRecentOrders,
         hotProducts
     };

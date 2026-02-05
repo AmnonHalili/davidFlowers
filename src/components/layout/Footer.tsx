@@ -46,6 +46,7 @@ export default function Footer() {
                             <ul className="space-y-4 text-sm font-light">
                                 <li><a href="/" className="hover:text-white transition-colors block">דף הבית</a></li>
                                 <li><a href="/shop" className="hover:text-white transition-colors block">קטלוג מוצרים</a></li>
+                                <li><a href="/blog" className="hover:text-white transition-colors block">בלוג ועולם התוכן</a></li>
                                 <li><a href="/about" className="hover:text-white transition-colors block">אודות</a></li>
                                 <li><a href="/deliveries" className="hover:text-white transition-colors block">משלוחים</a></li>
                                 <li><a href="/contact" className="hover:text-white transition-colors block">יצירת קשר</a></li>

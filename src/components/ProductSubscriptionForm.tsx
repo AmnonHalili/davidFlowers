@@ -282,7 +282,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       </button>
 
       <p className="text-center text-[10px] text-stone-400">
-        תשלום מאובטח באמצעות Stripe. ניתן לבטל את המנוי בכל עת.
+        תשלום מאובטח באמצעות PayPlus. ניתן לבטל את המנוי בכל עת.
       </p>
 
       {/* Mobile Sticky Bottom Bar */}
