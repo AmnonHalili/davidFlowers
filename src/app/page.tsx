@@ -61,19 +61,33 @@ export default function Home() {
               אל תחכו לאירוע מיוחד. משלוחי פרחים טריים באשקלון והסביבה שהופכים כל רגע משגרה לחגיגה.
             </p>
 
-            <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center items-center pb-20 md:pb-0">
-              <Link
-                href="/shop"
-                className="px-10 py-4 bg-[#1B3322] text-white uppercase tracking-widest text-xs font-bold hover:bg-[#1B3322]/90 transition-colors min-w-[200px] shadow-lg"
+            <div className="pt-8 flex flex-col md:flex-row gap-5 justify-center items-center pb-20 md:pb-0">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full md:w-auto"
               >
-                להזמנת משלוח
-              </Link>
-              <Link
-                href="#best-sellers"
-                className="px-10 py-4 border border-white text-white uppercase tracking-widest text-xs font-bold hover:bg-white/10 transition-colors min-w-[200px]"
+                <Link
+                  href="/shop"
+                  className="group relative flex items-center justify-center gap-3 px-10 py-4 bg-[#1B3322] text-white uppercase tracking-widest text-xs font-bold rounded-full shadow-[0_10px_30px_-10px_rgba(27,51,34,0.5)] transition-all duration-300 hover:bg-[#25442e]"
+                >
+                  <span>להזמנת משלוח</span>
+                  <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+                </Link>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full md:w-auto"
               >
-                לזרים הנמכרים ביותר
-              </Link>
+                <Link
+                  href="#best-sellers"
+                  className="flex items-center justify-center px-10 py-4 border border-white/30 text-white uppercase tracking-widest text-xs font-bold rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all duration-300"
+                >
+                  לזרים הנמכרים ביותר
+                </Link>
+              </motion.div>
             </div>
           </motion.div>
         </div>
@@ -87,13 +101,13 @@ export default function Home() {
           className="inline-block"
         >
           {/* Duplicated content for seamless generic marquee loop */}
-          <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוח חינם בהזמנה ראשונה - קוד קופון: WELCOME</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">10% הנחה בהזמנה ראשונה - קוד קופון: DAVID10</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוחים מהיום להיום באשקלון והסביבה</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">עטוף באהבה: 100% טריות מובטחת</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
-          <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוח חינם בהזמנה ראשונה - קוד קופון: WELCOME</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">10% הנחה בהזמנה ראשונה - קוד קופון: DAVID10</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוחים מהיום להיום באשקלון והסביבה</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>

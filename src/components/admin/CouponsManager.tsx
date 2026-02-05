@@ -15,6 +15,7 @@ export default function CouponsManager() {
     const [type, setType] = useState<'PERCENTAGE' | 'FIXED'>('PERCENTAGE');
     const [amount, setAmount] = useState('');
     const [limit, setLimit] = useState('');
+    const [firstOrderOnly, setFirstOrderOnly] = useState(false);
     const [creating, setCreating] = useState(false);
 
     useEffect(() => {
@@ -35,7 +36,8 @@ export default function CouponsManager() {
             code,
             discountType: type,
             discountAmount: Number(amount),
-            usageLimit: limit ? Number(limit) : undefined
+            usageLimit: limit ? Number(limit) : undefined,
+            isFirstOrderOnly: firstOrderOnly
         });
 
         if (res.success) {
@@ -124,6 +126,17 @@ export default function CouponsManager() {
                                 className="w-full p-2 border border-stone-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-david-green/20"
                             />
                         </div>
+                        <div className="space-y-2 flex items-center h-[42px]">
+                            <label className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={firstOrderOnly}
+                                    onChange={(e) => setFirstOrderOnly(e.target.checked)}
+                                    className="w-4 h-4 rounded border-stone-200 text-david-green focus:ring-david-green/20"
+                                />
+                                הזמנה ראשונה בלבד
+                            </label>
+                        </div>
                         <button
                             type="submit"
                             disabled={creating}
@@ -143,6 +156,7 @@ export default function CouponsManager() {
                             <th className="px-6 py-4">קוד</th>
                             <th className="px-6 py-4">סוג</th>
                             <th className="px-6 py-4">ערך</th>
+                            <th className="px-6 py-4">הזמנה ראשונה</th>
                             <th className="px-6 py-4">שימושים</th>
                             <th className="px-6 py-4">פעולות</th>
                         </tr>
@@ -161,6 +175,13 @@ export default function CouponsManager() {
                                     </td>
                                     <td className="px-6 py-4 font-bold">
                                         {coupon.discountType === 'PERCENTAGE' ? `${coupon.discountAmount}%` : `₪${coupon.discountAmount}`}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {coupon.isFirstOrderOnly ? (
+                                            <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">כן</span>
+                                        ) : (
+                                            <span className="text-stone-400">לא</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         {coupon.usageCount} / {coupon.usageLimit || '∞'}

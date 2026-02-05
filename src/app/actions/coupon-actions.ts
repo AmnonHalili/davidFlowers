@@ -13,6 +13,7 @@ export async function createCoupon(data: {
     discountAmount: number;
     usageLimit?: number | null;
     validUntil?: Date | null;
+    isFirstOrderOnly?: boolean;
 }) {
     // Basic admin check
     const { userId } = await auth();
@@ -40,6 +41,7 @@ export async function createCoupon(data: {
                 discountAmount: data.discountAmount,
                 usageLimit: data.usageLimit ?? null,
                 validUntil: data.validUntil ?? null,
+                isFirstOrderOnly: data.isFirstOrderOnly ?? false,
             }
         });
 
@@ -106,6 +108,26 @@ export async function validateCoupon(code: string, cartTotal: number) {
 
         if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
             return { success: false, error: 'הקופון הגיע למכסת השימוש' };
+        }
+
+        // --- First Order Only Check ---
+        if (coupon.isFirstOrderOnly) {
+            const { userId } = await auth();
+
+            if (userId) {
+                // Check if user has any existing orders (not cancelled)
+                const existingOrders = await prisma.order.findFirst({
+                    where: {
+                        user: { clerkId: userId },
+                        status: { not: 'CANCELLED' }
+                    }
+                });
+
+                if (existingOrders) {
+                    return { success: false, error: 'קופון זה תקף להזמנה ראשונה בלבד' };
+                }
+            }
+            // For guests, we'll check later in the checkout process when email is available
         }
 
         // Calculate Discount

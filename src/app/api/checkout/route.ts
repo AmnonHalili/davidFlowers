@@ -137,6 +137,28 @@ export async function POST(req: Request) {
 
         const totalAmount = calculatedSubtotal + finalShippingCost; // Using calculated subtotal
 
+        // 2.7 VALIDATE COUPON (First Order Only check)
+        if (couponId) {
+            const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
+            if (coupon?.isFirstOrderOnly) {
+                const existingOrder = await prisma.order.findFirst({
+                    where: {
+                        OR: [
+                            ...(userId ? [{ user: { clerkId: userId } }] : []),
+                            { ordererEmail: ordererEmail }
+                        ],
+                        status: { not: 'CANCELLED' }
+                    }
+                });
+
+                if (existingOrder) {
+                    return NextResponse.json({
+                        error: 'קופון זה תקף להזמנה ראשונה בלבד'
+                    }, { status: 400 });
+                }
+            }
+        }
+
         // 3. CREATE ORDER IN DATABASE (PENDING STATUS)
         const order = await prisma.order.create({
             data: {

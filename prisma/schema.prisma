@@ -190,6 +190,7 @@ model Coupon {
   validUntil     DateTime?
   usageLimit     Int?        // Null = unlimited
   usageCount     Int         @default(0)
+  isFirstOrderOnly Boolean     @default(false)
   createdAt      DateTime    @default(now())
   orders         Order[]
 }
