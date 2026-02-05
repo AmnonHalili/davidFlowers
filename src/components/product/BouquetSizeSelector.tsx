@@ -69,6 +69,7 @@ export default function BouquetSizeSelector({
                                     src={image}
                                     alt={alt}
                                     fill
+                                    priority
                                     className={`
                                         object-contain transition-all duration-300
                                         ${isActive

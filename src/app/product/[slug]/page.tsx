@@ -231,7 +231,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
             {relatedProducts.length > 0 && (
                 <div className="max-w-screen-xl mx-auto px-6 mt-32 border-t border-stone-100 pt-20">
                     <h2 className="font-serif text-3xl text-stone-900 mb-12 text-center">אולי תאהבו גם...</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-8 md:gap-8">
                         {relatedProducts.map((related: any) => (
                             <ProductCard
                                 key={related.id}

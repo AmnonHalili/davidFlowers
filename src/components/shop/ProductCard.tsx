@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ShoppingBag, Timer, Check } from 'lucide-react';
+import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import WishlistButton from './WishlistButton';
 import { calculateProductPrice } from '@/lib/price-utils';
@@ -144,26 +145,44 @@ export default function ProductCard({
         setTimeout(() => setIsAdded(false), 2000);
     };
 
+    const handleMouseEnter = () => {
+        if (hasVariations) {
+            // Preload modal illustration images
+            const images = ['/small-zer.png', '/medium-zer.png', '/big-zer.png'];
+            images.forEach(src => {
+                const img = new (window as any).Image();
+                img.src = src;
+            });
+        }
+    };
+
     return (
         <Link
             href={`/product/${slug}`}
             className="group block w-full min-w-0 space-y-3 md:space-y-4 rtl relative"
             dir="rtl"
+            onMouseEnter={handleMouseEnter}
         >
             <div className="relative aspect-[4/5] w-full overflow-hidden bg-stone-100 rounded-sm">
                 {/* Main Image */}
-                <img
+                <Image
                     src={image}
                     alt={name}
-                    className={`w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105 ${hoverImage ? 'group-hover:opacity-0' : ''} ${isOutOfStock ? 'grayscale opacity-80' : ''}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                    className={`object-cover transition-all duration-700 ease-in-out group-hover:scale-105 ${hoverImage ? 'group-hover:opacity-0' : ''} ${isOutOfStock ? 'grayscale opacity-80' : ''}`}
+                    loading="lazy"
                 />
 
                 {/* Second Image (Crossfade) */}
                 {hoverImage && (
-                    <img
+                    <Image
                         src={hoverImage}
                         alt={`${name} hover`}
-                        className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-in-out scale-105"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                        className="absolute inset-0 object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-in-out scale-105"
+                        loading="lazy"
                     />
                 )}
 
@@ -279,23 +298,23 @@ export default function ProductCard({
                 {category && (
                     <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400 block pb-0.5">{category}</span>
                 )}
-                <h3 className="font-serif text-sm md:text-lg text-stone-900 leading-tight group-hover:text-stone-600 transition-colors duration-300 line-clamp-2 min-h-[1.25em]">
+                <h3 className="font-serif text-[13px] md:text-lg text-stone-900 leading-tight group-hover:text-stone-600 transition-colors duration-300 line-clamp-2 min-h-[2.5em] flex items-center justify-center">
                     {name}
                 </h3>
                 <div className="flex justify-center items-center gap-3 relative">
                     {isOnSale ? (
                         <>
-                            <span className="font-medium text-rose-600 text-sm md:text-lg font-serif">
-                                {isVariablePrice && <span className="text-xs text-stone-500 font-sans ml-1">החל מ-</span>}
+                            <span className="font-medium text-rose-600 text-[15px] md:text-lg font-serif">
+                                {isVariablePrice && <span className="text-[10px] text-stone-500 font-sans ml-1 text-right">החל מ-</span>}
                                 ₪{typeof displayPrice === 'number' && !isNaN(displayPrice) ? displayPrice.toFixed(0) : '0'}
                             </span>
-                            <span className="text-xs md:text-sm text-stone-400 line-through decoration-stone-300 font-serif">
+                            <span className="text-[11px] md:text-sm text-stone-400 line-through decoration-stone-300 font-serif">
                                 ₪{typeof regularPrice === 'number' && !isNaN(regularPrice) ? regularPrice.toFixed(0) : '0'}
                             </span>
                         </>
                     ) : (
-                        <p className="font-medium text-stone-600 text-sm md:text-lg font-serif">
-                            {isVariablePrice && <span className="text-xs text-stone-500 font-sans ml-1">החל מ-</span>}
+                        <p className="font-medium text-stone-600 text-[15px] md:text-lg font-serif">
+                            {isVariablePrice && <span className="text-[10px] text-stone-500 font-sans ml-1 text-right">החל מ-</span>}
                             ₪{typeof Number(price) === 'number' && !isNaN(Number(price)) ? Number(price).toFixed(0) : '0'}
                         </p>
                     )}

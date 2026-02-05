@@ -141,7 +141,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                         <p className="text-xl text-stone-400">טרם נוספו מוצרים לקטגוריה זו.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-8 md:gap-8">
                         {products.map((product: any) => (
                             <ProductCard
                                 key={product.id}

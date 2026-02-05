@@ -1,5 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 
 // Define protected routes
 const isProtectedRoute = createRouteMatcher([
@@ -8,15 +7,9 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-    // Only protect operational dashboard routes.
-    // Public store routes should NEVER crash due to auth middleware.
     if (isProtectedRoute(req)) {
-        const { userId, redirectToSignIn } = await auth();
-        if (!userId) {
-            return redirectToSignIn();
-        }
+        await auth.protect();
     }
-    return NextResponse.next();
 });
 
 export const config = {
