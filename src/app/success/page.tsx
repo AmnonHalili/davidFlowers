@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CheckCircle2, Package, MapPin, Calendar, ArrowLeft } from 'lucide-react';
 import { PrismaClient } from '@prisma/client';
 import Image from 'next/image';
+import PurchaseEvent from '@/components/analytics/PurchaseEvent';
 
 const prisma = new PrismaClient();
 
@@ -58,6 +59,16 @@ export default async function SuccessPage({
 
                 {/* Status Card */}
                 <div className="bg-white rounded-xl shadow-sm border border-stone-100 p-8 text-center mb-6">
+                    <PurchaseEvent
+                        orderId={order.id}
+                        total={Number(order.totalAmount)}
+                        items={order.items.map(item => ({
+                            item_id: item.productId,
+                            item_name: item.product?.name || 'Unknown',
+                            price: Number(item.price),
+                            quantity: item.quantity
+                        }))}
+                    />
                     <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 className="w-8 h-8 text-green-600" />
                     </div>

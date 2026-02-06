@@ -31,6 +31,9 @@ export const metadata: Metadata = {
     icon: '/logo_original.jpg',
     apple: '/logo_original.jpg',
   },
+  verification: {
+    google: 'rDkvHMWzuXR1l-ff5fT-OGHsMov-4gbkjnEAfBwpnkk',
+  },
 };
 
 import { CartProvider } from '@/context/CartContext';
@@ -44,6 +47,7 @@ import AccessibilityWidget from '@/components/AccessibilityWidget';
 import CookieConsent from '@/components/ui/CookieConsent';
 import PromoPopup from '@/components/ui/PromoPopup';
 import { Toaster } from 'sonner';
+import GoogleTagManager from '@/components/analytics/GoogleTagManager';
 
 const prisma = new PrismaClient();
 
@@ -85,6 +89,7 @@ export default async function RootLayout({
     <ClerkProvider localization={heIL}>
       <html lang="he" dir="rtl">
         <body className={`${heebo.variable} ${frankRuhl.variable} font-sans antialiased text-stone-900 bg-[#FAFAFA]`}>
+          <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
           <CartProvider>
             <Navbar isAdmin={isAdmin} />
             {children}

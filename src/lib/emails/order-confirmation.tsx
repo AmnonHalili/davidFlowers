@@ -43,8 +43,8 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
             <Container style={container}>
                 {/* Header */}
                 <Section style={header}>
-                    <Heading style={headerTitle}>דוד פרחים</Heading>
-                    <Text style={headerSubtitle}>תודה על הזמנתך!</Text>
+                    <Heading style={headerTitle}>פרחי דוד</Heading>
+                    <Text style={headerSubtitle}>רחבעם זאבי 4, אשקלון</Text>
                 </Section>
 
                 {/* Content */}

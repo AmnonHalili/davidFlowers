@@ -122,7 +122,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     <div className="relative">
                         <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-0 md:mx-0">
                             {/* Main Image */}
-                            <div className="snap-center min-w-full h-[65vh] md:h-auto md:aspect-[3/4] bg-stone-100 overflow-hidden relative">
+                            <div className="snap-center min-w-full h-[65vh] md:h-auto md:aspect-[3/4] bg-white overflow-hidden relative">
                                 <img
                                     src={mainImage}
                                     alt={product.name}
@@ -136,7 +136,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                             </div>
                             {/* Gallery Images */}
                             {galleryImages.map((img: any) => (
-                                <div key={img.id} className="snap-center min-w-full aspect-[3/4] bg-stone-100 overflow-hidden relative">
+                                <div key={img.id} className="snap-center min-w-full aspect-[3/4] bg-white overflow-hidden relative">
                                     <img src={img.url} alt={img.alt || product.name} className="w-full h-full object-cover" />
                                 </div>
                             ))}
@@ -156,7 +156,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                         {galleryImages.length > 0 && (
                             <div className="hidden md:grid grid-cols-4 gap-4 mt-4">
                                 {galleryImages.map((img: any) => (
-                                    <div key={img.id} className="aspect-square bg-stone-50 overflow-hidden cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+                                    <div key={img.id} className="aspect-square bg-white overflow-hidden cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
                                         <img src={img.url} alt={img.alt || product.name} className="w-full h-full object-cover" />
                                     </div>
                                 ))}

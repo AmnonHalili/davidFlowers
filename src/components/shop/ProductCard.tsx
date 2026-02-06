@@ -163,7 +163,7 @@ export default function ProductCard({
             dir="rtl"
             onMouseEnter={handleMouseEnter}
         >
-            <div className="relative aspect-[4/5] w-full overflow-hidden bg-stone-100 rounded-sm">
+            <div className="relative aspect-[4/5] w-full overflow-hidden bg-white rounded-sm">
                 {/* Main Image */}
                 <Image
                     src={image}
