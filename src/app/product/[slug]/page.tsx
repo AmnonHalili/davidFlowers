@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import ProductSubscriptionForm from '@/components/ProductSubscriptionForm';
 import ProductCard from '@/components/shop/ProductCard';
+import ViewItemEvent from '@/components/analytics/ViewItemEvent';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { calculateProductPrice } from '@/lib/price-utils';
@@ -100,6 +101,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
         description: product.description,
         image: mainImage,
         sku: product.id,
+        brand: {
+            '@type': 'Brand',
+            name: 'פרחי דוד'
+        },
         offers: {
             '@type': 'Offer',
             price: displayPrice.toFixed(2),
@@ -115,6 +120,18 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
+
+            {/* Analytics Tracking */}
+            <ViewItemEvent
+                product={{
+                    id: product.id,
+                    name: product.name,
+                    price: displayPrice,
+                    category: product.categories[0]?.name,
+                    image: mainImage
+                }}
+            />
+
             <div className="max-w-screen-xl mx-auto md:px-6 md:pt-8 pt-6">
 
                 {/* Back Button (Mobile & Desktop) */}

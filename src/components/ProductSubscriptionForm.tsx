@@ -6,6 +6,7 @@ import { ChevronDown, RefreshCw, ShoppingBag } from 'lucide-react';
 import { useCart, CartItem } from '@/context/CartContext';
 import { useParams } from 'next/navigation';
 import BouquetSizeSelector from './product/BouquetSizeSelector';
+import { sendGTMEvent } from '@/lib/gtm';
 
 type PurchaseType = 'SUBSCRIPTION' | 'ONETIME';
 type Frequency = 'WEEKLY' | 'BIWEEKLY';
@@ -95,6 +96,25 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
     };
 
     addItem(newItem);
+
+    // Track Add to Cart
+    sendGTMEvent({
+      event: 'add_to_cart',
+      ecommerce: {
+        currency: 'ILS',
+        value: finalPrice,
+        items: [
+          {
+            item_id: product.id,
+            item_name: product.name,
+            price: finalPrice,
+            quantity: 1,
+            item_category: purchaseType === 'SUBSCRIPTION' ? 'Subscription' : 'One Time',
+            item_variant: product.isVariablePrice ? selectedSize : undefined
+          }
+        ]
+      }
+    });
   };
 
   if (isLocked && launchDate) {
