@@ -93,8 +93,28 @@ export default async function ProductPage({ params }: { params: { slug: string }
         saleEndDate: product.saleEndDate
     });
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.name,
+        description: product.description,
+        image: mainImage,
+        sku: product.id,
+        offers: {
+            '@type': 'Offer',
+            price: displayPrice.toFixed(2),
+            priceCurrency: 'ILS',
+            availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            url: `https://davidflowers.co.il/product/${product.slug}`,
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white pb-32">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <div className="max-w-screen-xl mx-auto md:px-6 md:pt-8 pt-6">
 
                 {/* Back Button (Mobile & Desktop) */}
