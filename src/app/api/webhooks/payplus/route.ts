@@ -88,31 +88,6 @@ export async function POST(req: Request) {
             }).catch(err => console.error('[ADMIN_NOTIF_FAILED]', err));
 
             console.log(`📧 Email queued for ${customerEmail} and Admin`);
-
-            // WhatsApp Notification to Customer
-            const { sendOrderConfirmationWhatsApp } = await import('@/lib/whatsapp');
-            const customerPhone = updatedOrder.ordererPhone || updatedOrder.recipientPhone || updatedOrder.user?.phone;
-
-            if (customerPhone) {
-                sendOrderConfirmationWhatsApp({
-                    customerName: updatedOrder.ordererName || updatedOrder.recipientName,
-                    orderNumber: updatedOrder.id,
-                    totalAmount: Number(updatedOrder.totalAmount),
-                    shippingAddress: updatedOrder.shippingAddress,
-                    customerPhone: customerPhone
-                }).catch(err => console.error('[WHATSAPP_CUSTOMER_FAILED]', err));
-                console.log(`📱 WhatsApp queued for ${customerPhone}`);
-            }
-
-            // WhatsApp Notification to Admin
-            const { sendAdminNotificationWhatsApp } = await import('@/lib/whatsapp');
-            sendAdminNotificationWhatsApp({
-                customerName: updatedOrder.ordererName || updatedOrder.recipientName,
-                orderNumber: updatedOrder.id,
-                totalAmount: Number(updatedOrder.totalAmount),
-                shippingAddress: updatedOrder.shippingAddress
-            }).catch(err => console.error('[WHATSAPP_ADMIN_FAILED]', err));
-            console.log(`📱 WhatsApp queued for Admin`);
         } else {
             console.warn(`⚠️  No email found for order ${orderId}`);
         }
