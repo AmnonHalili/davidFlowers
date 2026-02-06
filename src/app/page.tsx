@@ -18,8 +18,58 @@ export default function Home() {
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 500], [0, 150]);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Florist',
+    name: 'פרחי דוד',
+    image: 'https://davidflowers.co.il/logo_original.jpg',
+    description: 'משלוחי פרחים טריים, עציצים ומתנות באשקלון והסביבה. חנות פרחים מובילה עם משלוחים מהיום להיום.',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Ashkelon',
+      addressCountry: 'IL'
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 31.669,
+      longitude: 34.574
+    },
+    url: 'https://davidflowers.co.il',
+    telephone: '+972-53-587-9344',
+    openingHoursSpecification: [
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: 'Sunday',
+        opens: '10:00',
+        closes: '19:30'
+      },
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday'
+        ],
+        opens: '09:00',
+        closes: '19:30'
+      },
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: 'Friday',
+        opens: '08:00',
+        closes: '14:30'
+      }
+    ],
+    priceRange: '₪₪'
+  };
+
   return (
     <main className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero Section */}
       <section className="relative h-screen w-full overflow-hidden">
         {/* Background - Video or Parallax Image */}
@@ -33,7 +83,7 @@ export default function Home() {
             >
               <img
                 src="/hero-bg.jpg"
-                alt="חנות פרחים דוד"
+                alt="פרחי דוד - משלוחי פרחים באשקלון והסביבה"
                 className="w-full h-[120%] object-cover opacity-90"
               />
             </motion.div>
