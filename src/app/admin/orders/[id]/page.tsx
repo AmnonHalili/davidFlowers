@@ -40,6 +40,18 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                 <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
             </div>
 
+            {/* Quick Actions Toolbar */}
+            <div className="flex gap-3 mb-6">
+                <button className="bg-white border border-stone-300 text-stone-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-stone-50 transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    הדפס קבלה
+                </button>
+                <button className="bg-white border border-stone-300 text-stone-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-stone-50 transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                    הפק מדבקת משלוח
+                </button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content: Items */}
                 <div className="lg:col-span-2 space-y-8">
@@ -65,6 +77,11 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                                             <h3 className="font-medium text-stone-900">{item.product.name}</h3>
                                             <span className="font-medium text-stone-900">₪{Number(item.price).toFixed(2)}</span>
                                         </div>
+                                        {item.selectedSize && (
+                                            <div className="text-sm text-stone-500 mb-1 bg-stone-50 inline-block px-2 py-0.5 rounded border border-stone-100">
+                                                מידה: {item.selectedSize}
+                                            </div>
+                                        )}
                                         <p className="text-sm text-stone-500 mb-2">כמות: {item.quantity}</p>
                                     </div>
                                 </div>

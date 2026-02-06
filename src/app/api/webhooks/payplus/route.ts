@@ -43,6 +43,90 @@ export async function POST(req: Request) {
 
         console.log(`✅ Order ${orderId} marked as PAID (transaction: ${transaction_uid})`);
 
+        // STOCK REDUCTION LOGIC
+        try {
+            console.log(`[STOCK_REDUCTION] Processing ${updatedOrder.items.length} items for order ${orderId}`);
+
+            for (const item of updatedOrder.items) {
+                const product = item.product;
+
+                if (product.isVariablePrice && product.variations) {
+                    // Handle Variable Product
+                    const variations = product.variations as Record<string, any>;
+                    let variantKeyToUpdate: string | null = null;
+
+                    // Try to find the matching variation key based on selectedSize
+                    // selectedSize usually comes like "Small" or "Medium - Standard"
+                    // The variation keys might be "small", "medium", etc.
+
+                    if (item.selectedSize) {
+                        // Strategy: Try to find a variation where the label matches the selectedSize
+                        // or where the key matches a normalized version of selectedSize
+                        const normalizedSize = item.selectedSize.toLowerCase();
+
+                        for (const [key, details] of Object.entries(variations)) {
+                            if (
+                                (details as any).label === item.selectedSize ||
+                                key.toLowerCase() === normalizedSize
+                            ) {
+                                variantKeyToUpdate = key;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (variantKeyToUpdate) {
+                        const currentVariantStock = (variations[variantKeyToUpdate] as any).stock || 0;
+                        const newVariantStock = Math.max(0, currentVariantStock - item.quantity);
+
+                        // Update the specific variation's stock in the JSON object
+                        variations[variantKeyToUpdate] = {
+                            ...variations[variantKeyToUpdate],
+                            stock: newVariantStock
+                        };
+
+                        // Also decrement main stock for aggregate tracking if needed, 
+                        // but primarily we update the JSON. 
+                        // Note: Some systems keep main stock as sum of variations. 
+                        // adhering to "decrement main stock field" for simple, but for variable taking care of JSON.
+                        // We will also decrement the main stock as a fallback/aggregate if logic dictates, 
+                        // but usually variable products depend on the JSON. 
+                        // Let's just update the JSON and the main stock count to keep them in sync if logical.
+                        // checking schema: stock Int @default(0). 
+                        // Let's update main stock as well to reflect total available? 
+                        // Or is main stock irrelevant for variable?
+                        // The prompt says "If a product is simple, decrement the main stock field."
+                        // "If a product is variable, update the specific size stock within the variations JSON field."
+                        // So I will STRICTLY follow that.
+
+                        await prisma.product.update({
+                            where: { id: product.id },
+                            data: {
+                                variations: variations
+                            }
+                        });
+                        console.log(`[STOCK_REDUCTION] Updated variation ${variantKeyToUpdate} for product ${product.name}. New stock: ${newVariantStock}`);
+
+                    } else {
+                        console.warn(`[STOCK_REDUCTION] Could not match variation for product ${product.name} with size ${item.selectedSize}`);
+                    }
+
+                } else {
+                    // Handle Simple Product
+                    const newStock = Math.max(0, product.stock - item.quantity);
+                    await prisma.product.update({
+                        where: { id: product.id },
+                        data: { stock: newStock }
+                    });
+                    console.log(`[STOCK_REDUCTION] Updated simple product ${product.name}. New stock: ${newStock}`);
+                }
+            }
+        } catch (stockError) {
+            console.error('[STOCK_REDUCTION_ERROR] Failed to reduce stock', stockError);
+            // We do NOT fail the webhook response because the payment was successful.
+            // Admin should be notified if possible (logging is a good start)
+        }
+
         // Send email confirmation to customer
         const customerEmail = updatedOrder.user?.email || updatedOrder.ordererEmail;
 
