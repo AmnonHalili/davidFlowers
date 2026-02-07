@@ -72,68 +72,79 @@ export default function Home() {
       />
       {/* Hero Section */}
       <section className="relative h-screen w-full overflow-hidden">
-        {/* Background - Video or Parallax Image */}
+        {/* Background - Video */}
         <div className="absolute inset-0 bg-stone-900">
           {HERO_VIDEOS.length > 0 ? (
             <SeamlessVideoPlayer videos={HERO_VIDEOS} />
           ) : (
-            <motion.div
-              style={{ y: y1 }}
-              className="w-full h-full"
-            >
-              <img
-                src="/hero-bg.jpg"
-                alt="פרחי דוד - משלוחי פרחים באשקלון והסביבה"
-                className="w-full h-[120%] object-cover opacity-90"
-              />
-            </motion.div>
+            <div className="w-full h-full bg-stone-900" />
           )}
 
-          {/* Professional Gradient Overlay for Text Readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30 md:via-transparent z-10" />
+          {/* Cinematic Warm Overlay (Sepia/Deep Green Tint) */}
+          <div className="absolute inset-0 bg-[#0F1A13]/40 mix-blend-multiply z-10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1A13]/80 via-transparent to-[#0F1A13]/30 z-10" />
+
+
+          {/* Grain Overlay for Texture (Optional, adds cinematic feel) - Removed due to missing asset */}
         </div>
+
+        {/* Parallax Botanical Element (Floating Rose Petal Effect) */}
+        <motion.div
+          style={{ y: y1, rotate: scrollY }}
+          className="absolute top-[15%] right-[10%] md:right-[20%] opacity-40 blur-[1px] z-20 pointer-events-none hidden md:block"
+        >
+          <img src="/medium-zer.png" alt="Floating Petal" className="w-32 h-32 md:w-48 md:h-48 object-contain drop-shadow-2xl" />
+        </motion.div>
 
         {/* Hero Content */}
         <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-24 md:pt-32 z-20">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="space-y-6 max-w-2xl"
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-8 max-w-4xl"
           >
-            <h2 className="text-[10px] md:text-sm tracking-[0.3em] uppercase font-medium text-white/90">
-              קולקציית חורף 2026
-            </h2>
-            <h1 className="font-serif text-[3.5rem] leading-[1.1] md:text-7xl lg:text-8xl tracking-tight md:leading-tight">
-              לשמח את <br className="md:hidden" /> מי שאתם אוהבים.
+            <div className="overflow-hidden">
+              <motion.h2
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                transition={{ delay: 0.2, duration: 0.8 }}
+                className="text-[11px] md:text-sm tracking-[0.4em] uppercase font-medium text-[#C5A572] mb-2"
+              >
+                Garden Elegance • Est. 2024
+              </motion.h2>
+            </div>
+
+            <h1 className="font-bellefair text-[2.8rem] leading-[1.05] md:text-5xl lg:text-[5.5rem] tracking-wide text-white drop-shadow-xl shadow-black/50">
+              <span className="block drop-shadow-lg">לשמח את</span>
+              <span className="block font-light italic text-[#E8E8E8]">מי שאתם אוהבים</span>
             </h1>
-            <p className="font-light text-white/80 text-base md:text-xl max-w-xs md:max-w-lg mx-auto leading-relaxed">
-              אל תחכו לאירוע מיוחד. משלוחי פרחים טריים באשקלון והסביבה שהופכים כל רגע משגרה לחגיגה.
+
+            <p className="font-sans font-light text-stone-100 text-lg md:text-xl max-w-lg mx-auto leading-relaxed tracking-[0.15em] mix-blend-screen">
+              אומנות השזירה פוגשת טריות חסרת פשרות. משלוחי פרחים באשקלון שהופכים רגעים לזיכרונות.
             </p>
 
-            <div className="pt-8 flex flex-col md:flex-row gap-5 justify-center items-center pb-20 md:pb-0">
+            <div className="pt-10 flex flex-col md:flex-row gap-6 justify-center items-center">
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full md:w-auto"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <Link
                   href="/shop"
-                  className="group relative flex items-center justify-center gap-3 px-10 py-4 bg-[#1B3322] text-white uppercase tracking-widest text-xs font-bold rounded-full shadow-[0_10px_30px_-10px_rgba(27,51,34,0.5)] transition-all duration-300 hover:bg-[#25442e]"
+                  className="group relative flex items-center justify-center gap-3 px-12 py-5 bg-white/10 border border-white/20 backdrop-blur-md text-white uppercase tracking-[0.2em] text-xs font-bold rounded-sm overflow-hidden transition-all duration-500 hover:bg-white/20 hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]"
                 >
-                  <span>להזמנת משלוח</span>
-                  <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+                  <span className="relative z-10">להזמנת משלוח</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 </Link>
               </motion.div>
 
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full md:w-auto"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <Link
                   href="#best-sellers"
-                  className="flex items-center justify-center px-10 py-4 border border-white/30 text-white uppercase tracking-widest text-xs font-bold rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all duration-300"
+                  className="flex items-center justify-center px-12 py-5 text-white/80 uppercase tracking-[0.2em] text-xs font-medium hover:text-white transition-colors border-b border-transparent hover:border-white/30"
                 >
                   לזרים הנמכרים ביותר
                 </Link>

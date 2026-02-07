@@ -14,6 +14,11 @@ const config: Config = {
         'david-beige': '#F8F7F2',
         'david-green': '#1A3B32',
       },
+      fontFamily: {
+        sans: ['var(--font-heebo)'],
+        serif: ['var(--font-frank-ruhl)'],
+        bellefair: ['var(--font-bellefair)'],
+      },
     },
   },
   plugins: [],

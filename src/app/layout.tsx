@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Heebo, Frank_Ruhl_Libre } from 'next/font/google';
+import { Heebo, Frank_Ruhl_Libre, Bellefair } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -12,6 +12,12 @@ const heebo = Heebo({
 const frankRuhl = Frank_Ruhl_Libre({
   subsets: ['hebrew', 'latin'],
   variable: '--font-frank-ruhl'
+});
+
+const bellefair = Bellefair({
+  weight: '400',
+  subsets: ['hebrew', 'latin'],
+  variable: '--font-bellefair'
 });
 
 export const metadata: Metadata = {
@@ -88,7 +94,7 @@ export default async function RootLayout({
   return (
     <ClerkProvider localization={heIL}>
       <html lang="he" dir="rtl">
-        <body className={`${heebo.variable} ${frankRuhl.variable} font-sans antialiased text-stone-900 bg-[#FAFAFA]`}>
+        <body className={`${heebo.variable} ${frankRuhl.variable} ${bellefair.variable} font-sans antialiased text-stone-900 bg-[#FAFAFA]`}>
           <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
           <CartProvider>
             <Navbar isAdmin={isAdmin} />
