@@ -5,12 +5,16 @@ import { ChevronDown, Package } from 'lucide-react';
 import Link from 'next/link';
 import OrderTimeline from '@/components/orders/OrderTimeline';
 
+import { useCart } from '@/context/CartContext';
+import { toast } from 'sonner';
+
 interface OrderHistoryItemProps {
-    order: any; // Using any for simplicity in rapid dev, ideally Prisma types
+    order: any;
 }
 
 export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const { addItem } = useCart();
 
     const isPickup = order.shippingAddress === 'Self Pickup';
 
@@ -28,6 +32,34 @@ export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
         SHIPPED: 'bg-blue-100 text-blue-800',
         DELIVERED: 'bg-purple-100 text-purple-800',
         CANCELLED: 'bg-red-100 text-red-800',
+    };
+
+    const handleBuyAgain = (e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        let count = 0;
+        order.items.forEach((item: any) => {
+            if (item.product) {
+                addItem({
+                    id: item.product.id,
+                    productId: item.product.id,
+                    name: item.product.name,
+                    price: Number(item.price),
+                    image: item.product.images?.[0]?.url || '/placeholder.jpg',
+                    quantity: item.quantity,
+                    type: 'ONETIME',
+                    selectedSize: item.selectedSize, // Assuming this field exists on OrderItem or mapped correctly
+                    sizeLabel: item.selectedSize // Simplified for now, mapped from selectedSize
+                });
+                count++;
+            }
+        });
+
+        if (count > 0) {
+            toast.success(`${count} פריטים נוספו לסל בהצלחה`);
+        } else {
+            toast.error('לא ניתן לשחזר את ההזמנה (ייתכן שהמוצרים הוסרו)');
+        }
     };
 
     return (
@@ -63,7 +95,13 @@ export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
                     {order.items.length} {order.items.length === 1 ? 'פריט' : 'פריטים'}
                 </div>
 
-                <div className="col-span-2 md:col-span-1 text-left hidden md:block">
+                <div className="col-span-2 md:col-span-1 flex items-center justify-end gap-3 hidden md:flex">
+                    <button
+                        onClick={handleBuyAgain}
+                        className="text-stone-900 text-xs font-bold border border-stone-200 px-3 py-1.5 rounded-full hover:bg-stone-900 hover:text-white transition-colors"
+                    >
+                        הזמן שוב
+                    </button>
                     <Link
                         href={`/success?orderId=${order.id}`}
                         onClick={(e) => e.stopPropagation()} // Prevent expansion when clicking link
@@ -126,7 +164,14 @@ export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
                         </div>
 
                         {/* Mobile Actions */}
-                        <div className="flex md:hidden justify-end pt-2">
+                        <div className="flex md:hidden justify-between items-center pt-2">
+                            <button
+                                onClick={handleBuyAgain}
+                                className="text-stone-900 text-sm font-bold border border-stone-200 px-4 py-2 rounded-full hover:bg-stone-900 hover:text-white transition-colors"
+                            >
+                                הזמן שוב
+                            </button>
+
                             <Link
                                 href={`/success?orderId=${order.id}`}
                                 className="text-david-green text-sm font-bold border border-david-green px-4 py-2 rounded-full"

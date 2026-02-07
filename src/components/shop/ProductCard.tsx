@@ -91,7 +91,7 @@ export default function ProductCard({
         return () => clearInterval(timer);
     }, [isOnSale, saleEndDate]);
 
-    const hasVariations = variations && Object.keys(variations).length > 0;
+    const hasVariations = isVariablePrice && variations && Object.keys(variations).length > 0;
 
     const handleQuickAdd = (e: React.MouseEvent) => {
         e.preventDefault();

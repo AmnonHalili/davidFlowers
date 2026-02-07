@@ -12,8 +12,9 @@ import { getUpsellProducts } from '@/app/actions/product-actions';
 import { getHolidayStatus } from '@/lib/holidays';
 
 // Store Hours Utility Functions
-function generateTimeSlots(dateString: string): string[] {
-    if (!dateString) return [];
+// Store Hours Utility Functions
+function generateTimeSlots(dateString: string): { slots: string[], reason?: string } {
+    if (!dateString) return { slots: [] };
 
     const date = new Date(dateString);
     const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
@@ -22,8 +23,12 @@ function generateTimeSlots(dateString: string): string[] {
     const holidayStatus = getHolidayStatus(date);
 
     // 1. Holiday (Chag) or Saturday -> Closed
-    if (holidayStatus === 'CLOSED' || dayOfWeek === 6) {
-        return [];
+    if (holidayStatus === 'CLOSED') {
+        return { slots: [], reason: 'החנות סגורה בחגים ומועדים.' };
+    }
+
+    if (dayOfWeek === 6) {
+        return { slots: [], reason: 'החנות סגורה בשבת.' };
     }
 
     // Define slots based on day
@@ -55,7 +60,7 @@ function generateTimeSlots(dateString: string): string[] {
         const cutoffHour = (holidayStatus === 'FRIDAY_LIKE' || dayOfWeek === 5) ? 12 : 18;
 
         if (currentHour >= cutoffHour) {
-            return []; // Too late for same day
+            return { slots: [], reason: 'תם הזמן למשלוחים להיום. נא לבחור ויום אחר.' };
         }
 
         slots = slots.filter(slot => {
@@ -66,9 +71,13 @@ function generateTimeSlots(dateString: string): string[] {
             // Allow selecting a slot if it hasn't ended yet
             return endHour > currentHour;
         });
+
+        if (slots.length === 0) {
+            return { slots: [], reason: 'אין חלונות זמן פנויים להיום.' };
+        }
     }
 
-    return slots;
+    return { slots };
 }
 
 
@@ -185,7 +194,7 @@ export default function CartDrawer() {
 
     // Reset time when date changes if selected time is no longer valid
     useEffect(() => {
-        if (date && time && !availableTimeSlots.includes(time)) {
+        if (date && time && !availableTimeSlots.slots.includes(time)) {
             setTime('');
         }
     }, [date, availableTimeSlots, time]);
@@ -671,19 +680,19 @@ export default function CartDrawer() {
                                                             <select
                                                                 value={time}
                                                                 onChange={(e) => setTime(e.target.value)}
-                                                                disabled={!date || availableTimeSlots.length === 0}
+                                                                disabled={!date || availableTimeSlots.slots.length === 0}
                                                                 className="w-full p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900 dir-rtl disabled:opacity-50 disabled:cursor-not-allowed"
                                                             >
                                                                 <option value="">בחירת שעה</option>
-                                                                {availableTimeSlots.map((slot) => (
+                                                                {availableTimeSlots.slots.map((slot) => (
                                                                     <option key={slot} value={slot}>
                                                                         {slot}
                                                                     </option>
                                                                 ))}
                                                             </select>
-                                                            {date && availableTimeSlots.length === 0 && (
-                                                                <p className="text-xs text-red-500 mt-1">
-                                                                    אין משלוחים זמינים למועד זה.
+                                                            {date && availableTimeSlots.slots.length === 0 && (
+                                                                <p className="text-xs text-red-500 mt-1 font-medium bg-red-50 p-2 rounded border border-red-100">
+                                                                    {availableTimeSlots.reason || 'אין משלוחים זמינים למועד זה.'}
                                                                 </p>
                                                             )}
                                                         </div>

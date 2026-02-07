@@ -73,14 +73,31 @@ export async function getOrder(id: string) {
     });
 }
 
+import { sendOrderStatusEmail } from '@/lib/email-service';
+
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     try {
-        await prisma.order.update({
+        const order = await prisma.order.update({
             where: { id: orderId },
-            data: { status }
+            data: { status },
+            include: {
+                user: true,
+                items: {
+                    include: {
+                        product: { include: { images: true } }
+                    }
+                }
+            }
         });
+
         revalidatePath('/admin/orders');
         revalidatePath(`/admin/orders/${orderId}`);
+
+        // Trigger Email Notification (Fire & Forgetish, but we await to log)
+        if (status === 'SHIPPED' || status === 'DELIVERED') {
+            await sendOrderStatusEmail(order as any, status);
+        }
+
         return { success: true };
     } catch (error) {
         console.error('Error updating order status:', error);

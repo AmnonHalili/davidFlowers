@@ -57,50 +57,7 @@ export default async function AccountPage() {
                 {/* Dashboard Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-                    {/* Active Subscription Card */}
-                    <div className="bg-white p-8 border border-stone-100 shadow-sm relative overflow-hidden group">
-                        <div className="relative z-10 w-full">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center text-stone-900">
-                                    <Calendar strokeWidth={1.5} />
-                                </div>
-                                {activeSubscription && (
-                                    <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-bold tracking-wide">
-                                        פעיל
-                                    </span>
-                                )}
-                            </div>
 
-                            <h2 className="font-serif text-2xl text-stone-900 mb-4">המנוי שלי</h2>
-
-                            {activeSubscription ? (
-                                <div className="space-y-4">
-                                    <div className="p-4 bg-stone-50 rounded-lg border border-stone-100">
-                                        <h3 className="font-medium text-stone-900 mb-1">{activeSubscription.product.name}</h3>
-                                        <div className="flex gap-4 text-sm text-stone-500">
-                                            <span>תדירות: {activeSubscription.frequency === 'WEEKLY' ? 'שבועי' : 'דו-שבועי'}</span>
-                                            <span>|</span>
-                                            <span>יום משלוח: {getDayName(activeSubscription.deliveryDay)}</span>
-                                        </div>
-                                        <div className="mt-4 pt-4 border-t border-stone-200/50 flex justify-between items-center bg-white p-3 rounded shadow-sm">
-                                            <span className="text-xs font-bold uppercase tracking-wider text-stone-400">משלוח קרוב</span>
-                                            <span className="text-stone-900 font-medium">{new Date(activeSubscription.nextDeliveryDate).toLocaleDateString('he-IL')}</span>
-                                        </div>
-                                    </div>
-                                    <button className="text-red-500 text-sm hover:underline">
-                                        ביטול מנוי / הקפאה
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <p className="text-stone-500 font-light">אין מנוי פעיל כרגע. הצטרפו למנוי הפרחים שלנו ותהנו מפרחים טריים בבית קבוע.</p>
-                                    <Link href="/subscriptions" className="inline-block text-stone-900 border-b border-stone-900 pb-0.5 text-sm hover:opacity-70 transition-opacity">
-                                        התחל מנוי חדש ←
-                                    </Link>
-                                </div>
-                            )}
-                        </div>
-                    </div>
 
                     {/* Profile Details Card */}
                     <div className="bg-white p-8 border border-stone-100 shadow-sm relative overflow-hidden group">
