@@ -163,14 +163,14 @@ export default function ProductCard({
             dir="rtl"
             onMouseEnter={handleMouseEnter}
         >
-            <div className="relative aspect-[4/5] w-full overflow-hidden bg-white rounded-sm">
+            <div className="relative aspect-[4/5] w-full overflow-hidden bg-transparent rounded-sm">
                 {/* Main Image */}
                 <Image
                     src={image}
                     alt={name}
                     fill
                     sizes="(max-width: 768px) 50vw, 33vw"
-                    className={`object-cover transition-all duration-700 ease-in-out group-hover:scale-105 ${hoverImage ? 'group-hover:opacity-0' : ''} ${isOutOfStock ? 'grayscale opacity-80' : ''}`}
+                    className={`object-cover mix-blend-multiply transition-all duration-700 ease-in-out group-hover:scale-105 ${hoverImage ? 'group-hover:opacity-0' : ''} ${isOutOfStock ? 'grayscale opacity-80' : ''}`}
                     loading="lazy"
                 />
 
@@ -181,7 +181,7 @@ export default function ProductCard({
                         alt={`${name} hover`}
                         fill
                         sizes="(max-width: 768px) 50vw, 33vw"
-                        className="absolute inset-0 object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-in-out scale-105"
+                        className="absolute inset-0 object-cover mix-blend-multiply opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-in-out scale-105"
                         loading="lazy"
                     />
                 )}
