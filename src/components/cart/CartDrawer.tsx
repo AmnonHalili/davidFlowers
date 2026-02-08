@@ -239,7 +239,7 @@ export default function CartDrawer() {
                 });
             });
         }
-    }, [isOpen, isSignedIn, clerkUser]);
+    }, [isOpen, isSignedIn, clerkUser, address, ordererEmail, ordererName, ordererPhone]);
 
     const FREE_SHIPPING_THRESHOLD = 350;
     // Calculate totals locally to include discount

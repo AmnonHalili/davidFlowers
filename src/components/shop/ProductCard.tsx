@@ -33,7 +33,7 @@ interface ProductCardProps {
 export default function ProductCard({
     id, name, price, image, slug, category, stock, hoverImage, isFavorited,
     salePrice, saleStartDate, saleEndDate, availableFrom, allowPreorder,
-    isVariablePrice, variations, ...props
+    isVariablePrice, variations, categories, ...props
 }: ProductCardProps) {
     const isOutOfStock = stock <= 0;
     const { addItem } = useCart();
@@ -43,8 +43,7 @@ export default function ProductCard({
         salePrice,
         saleStartDate,
         saleEndDate,
-        // @ts-ignore - passing categories dynamically if they exist
-        categories: (props as any).categories
+        categories: categories || (props as any).categories
     });
 
     // Scheduling Logic

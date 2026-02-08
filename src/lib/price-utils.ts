@@ -23,6 +23,7 @@ export function calculateProductPrice(product: {
     salePrice?: number | string | unknown | null;
     saleStartDate?: Date | string | null;
     saleEndDate?: Date | string | null;
+    categories?: any[];
 }) {
     const regularPrice = parsePrice(product.price);
     const now = new Date();

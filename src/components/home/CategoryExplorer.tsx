@@ -43,7 +43,7 @@ export default function CategoryExplorer() {
         };
 
         fetchProducts();
-    }, [selectedCategory]); // Removed cache dependency to avoid infinite loop implications if cache changes
+    }, [selectedCategory, cache]);
 
     return (
         <section className="py-16 md:py-24 bg-white border-t border-stone-100">

@@ -43,14 +43,13 @@ export default function TrackOrderPage() {
 
     // Redirect logged in users
     useEffect(() => {
+        let redirectTimer: NodeJS.Timeout;
         if (isLoaded && isSignedIn) {
             // Optional: Auto redirect or just show a banner. The plan said redirect.
             redirectTimer = setTimeout(() => router.push('/account'), 3000);
         }
         return () => clearTimeout(redirectTimer);
     }, [isLoaded, isSignedIn, router]);
-
-    let redirectTimer: NodeJS.Timeout;
 
     if (!isLoaded) return null;
 
