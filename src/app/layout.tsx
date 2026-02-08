@@ -105,7 +105,7 @@ export default async function RootLayout({
   const announcementConfig = await getSiteConfig('announcement_bar');
 
   // Fetch Categories for Navbar
-  let categories = [];
+  let categories: { name: string; slug: string }[] = [];
   try {
     categories = await prisma.category.findMany({
       orderBy: { name: 'asc' }, // Or specific order if you have an 'order' field
