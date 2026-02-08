@@ -271,8 +271,8 @@ export default function CartDrawer() {
                     items,
                     shippingMethod,
                     shippingAddress: shippingMethod === 'delivery' ? address : 'Self Pickup',
-                    recipientName,
-                    recipientPhone,
+                    recipientName: shippingMethod === 'delivery' ? recipientName : ordererName,
+                    recipientPhone: shippingMethod === 'delivery' ? recipientPhone : ordererPhone,
                     ordererName,
                     ordererPhone,
                     ordererEmail,
@@ -567,29 +567,40 @@ export default function CartDrawer() {
                                                         </div>
                                                     </div>
 
-                                                    {/* 2. Recipient Details */}
-                                                    <div className="space-y-3">
-                                                        <p className="text-sm font-bold text-stone-900 flex items-center gap-2">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-stone-900" />
-                                                            פרטי מקבל המשלוח
-                                                        </p>
-                                                        <div className="space-y-3">
-                                                            <input
-                                                                type="text"
-                                                                value={recipientName}
-                                                                onChange={(e) => setRecipientName(e.target.value)}
-                                                                placeholder="שם המקבל *"
-                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
-                                                            />
-                                                            <input
-                                                                type="tel"
-                                                                value={recipientPhone}
-                                                                onChange={(e) => setRecipientPhone(e.target.value)}
-                                                                placeholder="טלפון המקבל *"
-                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                    {/* 2. Recipient Details - Only for Delivery */}
+                                                    <AnimatePresence>
+                                                        {shippingMethod === 'delivery' && (
+                                                            <motion.div
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                className="overflow-hidden"
+                                                            >
+                                                                <div className="space-y-3 pt-3 border-t border-stone-100">
+                                                                    <p className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-stone-900" />
+                                                                        פרטי מקבל המשלוח
+                                                                    </p>
+                                                                    <div className="space-y-3">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={recipientName}
+                                                                            onChange={(e) => setRecipientName(e.target.value)}
+                                                                            placeholder="שם המקבל *"
+                                                                            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
+                                                                        />
+                                                                        <input
+                                                                            type="tel"
+                                                                            value={recipientPhone}
+                                                                            onChange={(e) => setRecipientPhone(e.target.value)}
+                                                                            placeholder="טלפון המקבל *"
+                                                                            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
                                                 </div>
 
                                                 {/* Address Input - Moved Up */}

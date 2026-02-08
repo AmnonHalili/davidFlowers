@@ -104,15 +104,17 @@ export default function Home() {
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
             className="space-y-8 max-w-4xl"
           >
-            <div className="overflow-hidden">
-              <motion.h2
+            <div className="overflow-hidden mb-2">
+              <motion.div
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 transition={{ delay: 0.2, duration: 0.8 }}
-                className="text-[11px] md:text-sm tracking-[0.4em] uppercase font-medium text-[#C5A572] mb-2"
+                className="inline-block px-4 py-1.5 md:px-6 md:py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-full shadow-lg"
               >
-                Garden Elegance • Est. 2024
-              </motion.h2>
+                <h2 className="text-[9px] md:text-xs tracking-[0.25em] uppercase font-light text-white/80 drop-shadow-sm">
+                  Garden Elegance • Est. 2024
+                </h2>
+              </motion.div>
             </div>
 
             <h1 className="font-bellefair text-[2.8rem] leading-[1.05] md:text-5xl lg:text-[5.5rem] tracking-wide text-white drop-shadow-xl shadow-black/50">
