@@ -905,13 +905,16 @@ export default function CartDrawer() {
                                             <button
                                                 onClick={handleCheckout}
                                                 disabled={
-                                                    recipientName.length < 2 ||
-                                                    recipientPhone.length < 9 ||
                                                     ordererName.length < 2 ||
                                                     ordererPhone.length < 9 ||
                                                     ordererEmail.length < 5 ||
                                                     !time ||
-                                                    (shippingMethod === 'delivery' && (!address || !selectedCity))
+                                                    (shippingMethod === 'delivery' && (
+                                                        !address ||
+                                                        !selectedCity ||
+                                                        recipientName.length < 2 ||
+                                                        recipientPhone.length < 9
+                                                    ))
                                                 }
                                                 className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
                                             >

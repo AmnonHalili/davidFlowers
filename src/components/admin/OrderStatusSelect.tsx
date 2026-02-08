@@ -1,69 +1,97 @@
 'use client';
 
-import { OrderStatus } from "@prisma/client";
-import { updateOrderStatus } from "@/app/actions/order-actions";
-import { Check, ChevronDown, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import { OrderStatus } from '@prisma/client';
+import { updateOrderStatus } from '@/app/actions/order-actions';
+import { Loader2, ChevronDown, CheckCircle2, XCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface OrderStatusSelectProps {
     orderId: string;
     currentStatus: OrderStatus;
 }
-
+/*
+    This component renders a sleek, badge-like select input for changing order status directly in the list.
+    It handles optimistic UI updates and shows loading/success/error states.
+*/
 export default function OrderStatusSelect({ orderId, currentStatus }: OrderStatusSelectProps) {
+    const [status, setStatus] = useState<OrderStatus>(currentStatus);
     const [isLoading, setIsLoading] = useState(false);
-    const [status, setStatus] = useState(currentStatus);
     const router = useRouter();
+
+    const styles: Record<OrderStatus, string> = {
+        PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100",
+        PAID: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+        SHIPPED: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
+        DELIVERED: "bg-green-50 text-green-700 border-green-200 hover:bg-green-100",
+        CANCELLED: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100",
+    };
+
+    const statusLabels: Record<OrderStatus, string> = {
+        PENDING: "ממתין לתשלום",
+        PAID: "שולם (להכנה)",
+        SHIPPED: "נשלח ללקוח",
+        DELIVERED: "נמסר בהצלחה",
+        CANCELLED: "בוטל",
+    };
 
     const handleStatusChange = async (newStatus: OrderStatus) => {
         if (newStatus === status) return;
 
+        const previousStatus = status;
         setIsLoading(true);
-        setStatus(newStatus); // Optimistic update
+        setStatus(newStatus); // Optimistic Update
 
-        const result = await updateOrderStatus(orderId, newStatus);
-
-        if (!result.success) {
-            // Revert on failure
-            setStatus(currentStatus);
-            alert('שגיאה בעדכון הסטטוס');
+        try {
+            const result = await updateOrderStatus(orderId, newStatus);
+            if (result.success) {
+                toast.success('הסטטוס עודכן בהצלחה');
+                router.refresh();
+            } else {
+                throw new Error(result.error || 'Failed to update');
+            }
+        } catch (error) {
+            console.error('Status update failed:', error);
+            toast.error('שגיאה בעדכון הסטטוס');
+            setStatus(previousStatus); // Revert on failure
+        } finally {
+            setIsLoading(false);
         }
-
-        setIsLoading(false);
-        router.refresh();
     };
 
-    const statusOptions: { value: OrderStatus; label: string; color: string }[] = [
-        { value: 'PENDING', label: 'ממתין לטיפול', color: 'bg-yellow-100 text-yellow-800' },
-        { value: 'PAID', label: 'שולם - מוכן לאריזה', color: 'bg-blue-100 text-blue-800' },
-        { value: 'SHIPPED', label: 'נשלח ללקוח', color: 'bg-purple-100 text-purple-800' },
-        { value: 'DELIVERED', label: 'נמסר בהצלחה', color: 'bg-green-100 text-green-800' },
-        { value: 'CANCELLED', label: 'בוטל', color: 'bg-red-100 text-red-800' },
-    ];
-
     return (
-        <div className="relative group">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-200 bg-white cursor-pointer hover:bg-stone-50 transition-colors ${isLoading ? 'opacity-50' : ''}`}>
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
-                <span className="font-medium text-sm text-stone-700">
-                    {statusOptions.find(o => o.value === status)?.label}
-                </span>
-            </div>
+        <div className="relative inline-block w-full max-w-[140px]">
+            <div className="relative">
+                <select
+                    value={status}
+                    onChange={(e) => handleStatusChange(e.target.value as OrderStatus)}
+                    disabled={isLoading}
+                    className={`
+                        appearance-none w-full
+                        pl-8 pr-3 py-1.5
+                        text-xs font-medium rounded-full border 
+                        cursor-pointer transition-all duration-200 ease-in-out
+                        focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-david-green/20
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        ${styles[status]}
+                    `}
+                >
+                    {Object.entries(statusLabels).map(([key, label]) => (
+                        <option key={key} value={key} className="bg-white text-stone-900 py-1">
+                            {label}
+                        </option>
+                    ))}
+                </select>
 
-            {/* Dropdown Menu */}
-            <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-stone-100 overflow-hidden hidden group-hover:block z-50">
-                {statusOptions.map((opt) => (
-                    <button
-                        key={opt.value}
-                        onClick={() => handleStatusChange(opt.value)}
-                        className={`w-full text-right px-4 py-3 text-sm hover:bg-stone-50 flex items-center justify-between ${status === opt.value ? 'bg-stone-50 font-medium' : 'text-stone-600'}`}
-                        disabled={isLoading}
-                    >
-                        <span>{opt.label}</span>
-                        {status === opt.value && <Check className="w-4 h-4 text-david-green" />}
-                    </button>
-                ))}
+                {/* Icon Overlay */}
+                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-current opacity-60">
+                    {isLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                        <ChevronDown className="w-3.5 h-3.5 transition-transform group-hover:rotate-180" />
+                    )}
+                </div>
             </div>
         </div>
     );
