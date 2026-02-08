@@ -106,10 +106,37 @@ export default async function RootLayout({
 
   // Fetch Categories for Navbar
   let categories: { name: string; slug: string }[] = [];
+  const CATEGORY_ORDER = [
+    'bouquets',  // זרי פרחים
+    'gifts',  // מתנות ומתוקים
+    'balloons',  // בלונים
+    'wedding',  // חתן וכלה
+    'plants',  // עציצים
+    'vases',   // כלים ואגרטלים
+    'chocolates' // שוקולדים
+  ];
+
   try {
     categories = await prisma.category.findMany({
-      orderBy: { name: 'asc' }, // Or specific order if you have an 'order' field
       select: { name: true, slug: true }
+    });
+
+    // Sort categories based on the predefined order
+    categories.sort((a, b) => {
+      const indexA = CATEGORY_ORDER.indexOf(a.slug);
+      const indexB = CATEGORY_ORDER.indexOf(b.slug);
+
+      // If both are in the list, sort by index
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+      // If only A is in list, move it up
+      if (indexA !== -1) return -1;
+
+      // If only B is in list, move it up
+      if (indexB !== -1) return 1;
+
+      // Otherwise sort alphabetically
+      return a.name.localeCompare(b.name);
     });
   } catch (error) {
     console.error("Layout: Failed to fetch categories", error);

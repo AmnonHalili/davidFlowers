@@ -9,6 +9,8 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
 import { getUpsellProducts } from '@/app/actions/product-actions';
+import { getUserProfile } from '@/app/actions/user-actions';
+import { validateCoupon } from '@/app/actions/coupon-actions';
 import { getHolidayStatus } from '@/lib/holidays';
 
 // Store Hours Utility Functions
@@ -135,8 +137,6 @@ export default function CartDrawer() {
     const handleApplyCoupon = async () => {
         if (!couponCode) return;
         setCouponLoading(true);
-        const { validateCoupon } = await import('@/app/actions/coupon-actions');
-
         // Calculate subtotal for coupon validation
         const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -227,16 +227,15 @@ export default function CartDrawer() {
             }
 
             // 2. DETAILED PRE-FILL FROM DATABASE (Address, Phone)
-            import('@/app/actions/user-actions').then(({ getUserProfile }) => {
-                getUserProfile().then(user => {
-                    if (user) {
-                        setIsLoggedIn(true);
-                        if (user.name && !ordererName) setOrdererName(user.name);
-                        if (user.phone && !ordererPhone) setOrdererPhone(user.phone);
-                        if (user.email && !ordererEmail) setOrdererEmail(user.email);
-                        if (user.address && !address) setAddress(user.address);
-                    }
-                });
+            // 2. DETAILED PRE-FILL FROM DATABASE (Address, Phone)
+            getUserProfile().then(user => {
+                if (user) {
+                    setIsLoggedIn(true);
+                    if (user.name && !ordererName) setOrdererName(user.name);
+                    if (user.phone && !ordererPhone) setOrdererPhone(user.phone);
+                    if (user.email && !ordererEmail) setOrdererEmail(user.email);
+                    if (user.address && !address) setAddress(user.address);
+                }
             });
         }
     }, [isOpen, isSignedIn, clerkUser, address, ordererEmail, ordererName, ordererPhone]);
@@ -414,6 +413,12 @@ export default function CartDrawer() {
                                                                     <span>{item.deliveryDay === 'THURSDAY' ? 'חמישי' : 'שישי'}</span>
                                                                 </div>
                                                             ) : null}
+                                                            {item.personalizationText && (
+                                                                <div className="mt-1 flex items-start gap-1 text-xs text-stone-500 bg-stone-50 p-1.5 rounded border border-stone-100">
+                                                                    <span className="font-medium text-stone-700 min-w-fit">כיתוב:</span>
+                                                                    <span className="italic break-words">"{item.personalizationText}"</span>
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <div className="flex justify-between items-center">

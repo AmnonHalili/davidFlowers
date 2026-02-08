@@ -27,13 +27,14 @@ interface ProductCardProps {
     allowPreorder?: boolean;
     isVariablePrice?: boolean;
     variations?: any;
+    isPersonalizationEnabled?: boolean;
     categories?: any[];
 }
 
 export default function ProductCard({
     id, name, price, image, slug, category, stock, hoverImage, isFavorited,
     salePrice, saleStartDate, saleEndDate, availableFrom, allowPreorder,
-    isVariablePrice, variations, categories, ...props
+    isVariablePrice, variations, isPersonalizationEnabled, categories, ...props
 }: ProductCardProps) {
     const isOutOfStock = stock <= 0;
     const { addItem } = useCart();
@@ -104,6 +105,12 @@ export default function ProductCard({
         // Logic for Variable Price Products (Open Modal)
         if (hasVariations) {
             setIsModalOpen(true);
+            return;
+        }
+
+        // Logic for Personalized Products (Redirect)
+        if (isPersonalizationEnabled) {
+            window.location.href = `/product/${slug}`;
             return;
         }
 

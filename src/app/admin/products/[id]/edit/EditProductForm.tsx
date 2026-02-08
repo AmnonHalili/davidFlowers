@@ -14,6 +14,7 @@ export default function EditProductForm({ product, availableCategories = [] }: {
 
     const [isVariablePrice, setIsVariablePrice] = useState(product.isVariablePrice || false);
     const [isSubscriptionEnabled, setIsSubscriptionEnabled] = useState(product.isSubscriptionEnabled ?? false);
+    const [isPersonalizationEnabled, setIsPersonalizationEnabled] = useState(product.isPersonalizationEnabled ?? false);
 
     // Default variations state or load from product
     const [variations, setVariations] = useState(product.variations || {
@@ -41,6 +42,7 @@ export default function EditProductForm({ product, availableCategories = [] }: {
             {/* Hidden input for variations JSON */}
             <input type="hidden" name="isVariablePrice" value={isVariablePrice.toString()} />
             <input type="hidden" name="isSubscriptionEnabled" value={isSubscriptionEnabled.toString()} />
+            <input type="hidden" name="isPersonalizationEnabled" value={isPersonalizationEnabled.toString()} />
             <input type="hidden" name="variations" value={JSON.stringify(variations)} />
 
             {/* Card 1: Basic Info */}
@@ -73,6 +75,39 @@ export default function EditProductForm({ product, availableCategories = [] }: {
                                 </label>
                             </div>
                         </div>
+
+                        {/* Personalization Option Toggle */}
+                        <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <label className="text-sm font-medium text-stone-900 block">התאמה אישית (כיתוב)</label>
+                                <p className="text-xs text-stone-500">האם לאפשר ללקוחות להוסיף כיתוב אישי?</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-stone-500">{isPersonalizationEnabled ? 'פעיל' : 'כבוי'}</span>
+                                <label className="relative inline-flex items-center cursor-pointer" dir="ltr">
+                                    <input
+                                        type="checkbox"
+                                        checked={isPersonalizationEnabled}
+                                        onChange={(e) => setIsPersonalizationEnabled(e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-david-green"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        {isPersonalizationEnabled && (
+                            <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 space-y-2 animate-in fade-in slide-in-from-top-1">
+                                <label className="text-sm font-medium text-stone-900 block">הגבלת תווים</label>
+                                <input
+                                    name="maxPersonalizationChars"
+                                    type="number"
+                                    defaultValue={product.maxPersonalizationChars || 50}
+                                    className="w-full text-right p-3 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                />
+                                <p className="text-xs text-stone-500">השאר 0 ללא הגבלה (ברירת מחדל: 50)</p>
+                            </div>
+                        )}
 
                         {/* Variable Price Toggle */}
                         <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 space-y-4">

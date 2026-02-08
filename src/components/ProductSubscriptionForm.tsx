@@ -23,6 +23,8 @@ interface ProductSubscriptionFormProps {
     isVariablePrice?: boolean;
     variations?: any; // JSON object
     isSubscriptionEnabled?: boolean;
+    isPersonalizationEnabled?: boolean;
+    maxPersonalizationChars?: number;
   }
 }
 
@@ -32,6 +34,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   const [frequency, setFrequency] = useState<Frequency>('WEEKLY');
   const [deliveryDay, setDeliveryDay] = useState<DayOfWeek>('FRIDAY');
   const [giftNote, setGiftNote] = useState('');
+  const [personalizationText, setPersonalizationText] = useState('');
 
   // Size Variation State
   const [selectedSize, setSelectedSize] = useState<'standard' | 'medium' | 'large'>('medium');
@@ -93,6 +96,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       deliveryDay: purchaseType === 'SUBSCRIPTION' ? deliveryDay : undefined,
       selectedSize: product.isVariablePrice ? selectedSize : undefined,
       sizeLabel: product.isVariablePrice && product.variations ? product.variations[selectedSize].label : undefined,
+      personalizationText: product.isPersonalizationEnabled ? personalizationText : undefined,
     };
 
     addItem(newItem);
@@ -110,7 +114,8 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
             price: finalPrice,
             quantity: 1,
             item_category: purchaseType === 'SUBSCRIPTION' ? 'Subscription' : 'One Time',
-            item_variant: product.isVariablePrice ? selectedSize : undefined
+            item_variant: product.isVariablePrice ? selectedSize : undefined,
+            item_personalization: product.isPersonalizationEnabled ? personalizationText : undefined
           }
         ]
       }
@@ -271,6 +276,28 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Personalization Input */}
+      {product.isPersonalizationEnabled && (
+        <div className="space-y-3">
+          <label className="text-xs uppercase tracking-wider font-medium text-stone-900">
+            הוספת כיתוב אישי <span className="text-stone-400 font-normal">(עד {product.maxPersonalizationChars || 50} תווים)</span>
+          </label>
+          <input
+            type="text"
+            value={personalizationText}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (!product.maxPersonalizationChars || val.length <= product.maxPersonalizationChars) {
+                setPersonalizationText(val);
+              }
+            }}
+            maxLength={product.maxPersonalizationChars || 50}
+            className="w-full border border-stone-200 bg-transparent p-3 text-sm focus:border-stone-900 focus:ring-0 transition-colors placeholder:text-stone-300"
+            placeholder="לדוגמה: יום הולדת שמח אהובה..."
+          />
+        </div>
+      )}
 
       {/* Gift Note */}
       <div className="space-y-3">

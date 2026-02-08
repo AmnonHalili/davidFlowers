@@ -19,6 +19,8 @@ export type CartItem = {
     // Size Variations
     selectedSize?: string;
     sizeLabel?: string;
+    // Personalization
+    personalizationText?: string;
 };
 
 type CartContextType = {
@@ -77,7 +79,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     i.type === newItem.type &&
                     i.frequency === newItem.frequency &&
                     i.availableFrom === newItem.availableFrom &&
-                    i.selectedSize === newItem.selectedSize // Critical Grouping Logic
+                    i.frequency === newItem.frequency &&
+                    i.availableFrom === newItem.availableFrom &&
+                    i.selectedSize === newItem.selectedSize && // Critical Grouping Logic
+                    i.personalizationText === newItem.personalizationText // Group by custom text
             );
 
             if (existing) {

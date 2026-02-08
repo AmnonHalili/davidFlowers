@@ -46,6 +46,8 @@ model Product {
   availableFrom DateTime?  // Scheduled launch date
   allowPreorder Boolean    @default(false) // If true, can buy before launch (delivery restricted)
   isSubscriptionEnabled Boolean @default(false) // New field: Allow subscription or enforce one-time only
+  isPersonalizationEnabled Boolean @default(false) // New field: Allow custom text
+  maxPersonalizationChars Int?     @default(0) // Limit for custom text
   images       ProductImage[] // Upgraded to model for better SEO/metadata
   categories   Category[] @relation("ProductToCategory")
   orders       OrderItem[]
@@ -162,6 +164,7 @@ model OrderItem {
   quantity  Int
   price     Decimal
   selectedSize String? // e.g. "Small", "Medium - Standard"
+  personalizationText String? // Custom text from user
 }
 
 model Subscription {

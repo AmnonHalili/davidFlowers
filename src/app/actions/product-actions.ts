@@ -38,6 +38,11 @@ export async function createProduct(formData: FormData) {
     // Subscription Logic
     const isSubscriptionEnabled = formData.get('isSubscriptionEnabled') === 'true';
 
+    // Personalization Logic
+    const isPersonalizationEnabled = formData.get('isPersonalizationEnabled') === 'true';
+    const maxPersonalizationCharsStr = formData.get('maxPersonalizationChars') as string;
+    const maxPersonalizationChars = maxPersonalizationCharsStr ? parseInt(maxPersonalizationCharsStr) : 0;
+
     // Variations Logic
     const isVariablePriceStr = formData.get('isVariablePrice') as string;
     const isVariablePrice = isVariablePriceStr === 'true';
@@ -79,6 +84,8 @@ export async function createProduct(formData: FormData) {
             availableFrom,
             allowPreorder,
             isSubscriptionEnabled,
+            isPersonalizationEnabled,
+            maxPersonalizationChars,
             isVariablePrice,
             variations,
             categories: {
@@ -131,6 +138,11 @@ export async function updateProduct(id: string, formData: FormData) {
     // Subscription Logic
     const isSubscriptionEnabled = formData.get('isSubscriptionEnabled') === 'true';
 
+    // Personalization Logic
+    const isPersonalizationEnabled = formData.get('isPersonalizationEnabled') === 'true';
+    const maxPersonalizationCharsStr = formData.get('maxPersonalizationChars') as string;
+    const maxPersonalizationChars = maxPersonalizationCharsStr ? parseInt(maxPersonalizationCharsStr) : 0;
+
     // Variations Logic
     const isVariablePriceStr = formData.get('isVariablePrice') as string;
     const isVariablePrice = isVariablePriceStr === 'true';
@@ -176,6 +188,8 @@ export async function updateProduct(id: string, formData: FormData) {
             availableFrom,
             allowPreorder,
             isSubscriptionEnabled,
+            isPersonalizationEnabled,
+            maxPersonalizationChars,
             isVariablePrice,
             variations,
             categories: {
@@ -255,6 +269,7 @@ export async function searchProducts(query: string) {
                 saleEndDate: true,
                 availableFrom: true,
                 allowPreorder: true,
+                isPersonalizationEnabled: true,
                 stock: true,
                 images: {
                     take: 1

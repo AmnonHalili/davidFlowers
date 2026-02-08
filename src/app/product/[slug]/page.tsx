@@ -240,7 +240,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                     availableFrom: product.availableFrom,
                                     allowPreorder: product.allowPreorder,
                                     isVariablePrice: product.isVariablePrice,
-                                    variations: product.variations
+                                    variations: product.variations,
+                                    isSubscriptionEnabled: product.isSubscriptionEnabled,
+                                    isPersonalizationEnabled: product.isPersonalizationEnabled,
+                                    maxPersonalizationChars: product.maxPersonalizationChars
                                 }} />
                             ) : (
                                 <div className="bg-stone-100 p-6 rounded-lg text-center space-y-2">
@@ -285,6 +288,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                 saleEndDate={related.saleEndDate}
                                 availableFrom={related.availableFrom}
                                 allowPreorder={related.allowPreorder}
+                                isPersonalizationEnabled={related.isPersonalizationEnabled}
                                 categories={related.categories}
                             />
                         ))}
