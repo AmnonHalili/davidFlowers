@@ -8,11 +8,12 @@ async function getStats() {
     // 1. Overall Stats
     const totalRevenue = await prisma.order.aggregate({
         _sum: { totalAmount: true },
-        where: { status: { not: 'CANCELLED' } }
+        where: { status: { notIn: ['PENDING', 'CANCELLED'] } }
     });
 
+    // "Orders to Prepare" should be PAID orders, not PENDING (which are unpaid/abandoned)
     const pendingOrders = await prisma.order.count({
-        where: { status: 'PENDING' }
+        where: { status: 'PAID' }
     });
 
     const totalProducts = await prisma.product.count();
@@ -28,7 +29,7 @@ async function getStats() {
     const ordersLast30Days = await prisma.order.findMany({
         where: {
             createdAt: { gte: thirtyDaysAgo },
-            status: { not: 'CANCELLED' }
+            status: { notIn: ['PENDING', 'CANCELLED'] }
         },
         select: {
             createdAt: true,
@@ -61,6 +62,7 @@ async function getStats() {
     // 3. Recent Orders
     const recentOrders = await prisma.order.findMany({
         take: 5,
+        where: { status: { not: 'PENDING' } },
         orderBy: { createdAt: 'desc' },
         include: {
             user: { select: { name: true, email: true } },

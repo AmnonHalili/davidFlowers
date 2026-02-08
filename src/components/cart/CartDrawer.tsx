@@ -14,15 +14,19 @@ import { validateCoupon } from '@/app/actions/coupon-actions';
 import { getHolidayStatus } from '@/lib/holidays';
 
 // Store Hours Utility Functions
+import { toZonedTime } from 'date-fns-tz';
+
 // Store Hours Utility Functions
 function generateTimeSlots(dateString: string): { slots: string[], reason?: string } {
     if (!dateString) return { slots: [] };
 
-    const date = new Date(dateString);
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    // Parse the selected date (input is YYYY-MM-DD from date input)
+    // We treat this string as a date in Israel Time
+    const selectedDate = new Date(dateString);
+    const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 6 = Saturday
 
     // Check holiday status
-    const holidayStatus = getHolidayStatus(date);
+    const holidayStatus = getHolidayStatus(selectedDate);
 
     // 1. Holiday (Chag) or Saturday -> Closed
     if (holidayStatus === 'CLOSED') {
@@ -51,12 +55,20 @@ function generateTimeSlots(dateString: string): { slots: string[], reason?: stri
         ];
     }
 
-    // Filter out past slots if today
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
+    // Filter out past slots if today (Using Israel Time)
+    const TIME_ZONE = 'Asia/Jerusalem';
+    const nowWorld = new Date();
+    const nowIsrael = toZonedTime(nowWorld, TIME_ZONE);
+
+    // Check if selected date is "Today" in Israel
+    const selectedDateStr = dateString; // YYYY-MM-DD
+
+    // Format nowIsrael to YYYY-MM-DD manually or using string slice
+    // toZonedTime returns a Date object representing the time in that zone
+    const isToday = selectedDateStr === nowIsrael.toISOString().split('T')[0];
 
     if (isToday) {
-        const currentHour = now.getHours();
+        const currentHour = nowIsrael.getHours();
 
         // Cutoff for same-day delivery: 18:00 on weekdays, 12:00 on Friday
         const cutoffHour = (holidayStatus === 'FRIDAY_LIKE' || dayOfWeek === 5) ? 12 : 18;
@@ -177,15 +189,21 @@ export default function CartDrawer() {
     }, [items]);
 
     const minDeliveryDate = useMemo(() => {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
+        const TIME_ZONE = 'Asia/Jerusalem';
+        const nowWorld = new Date();
+        const nowIsrael = toZonedTime(nowWorld, TIME_ZONE);
+
+        const year = nowIsrael.getFullYear();
+        const month = String(nowIsrael.getMonth() + 1).padStart(2, '0');
+        const day = String(nowIsrael.getDate()).padStart(2, '0');
         const todayStr = `${year}-${month}-${day}`;
 
         if (preOrderConstraintDate) {
-            // Compare timestamps to be safe
-            if (preOrderConstraintDate.getTime() > today.getTime()) {
+            // Check if constraint date is in the future relative to Israel Time logic
+            const constraintTime = preOrderConstraintDate.getTime();
+            const nowIsraelTime = nowIsrael.getTime();
+
+            if (constraintTime > nowIsraelTime) {
                 return preOrderConstraintDate.toISOString().split('T')[0];
             }
         }

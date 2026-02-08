@@ -15,7 +15,7 @@ export async function getMonthlyReport(year: number, month: number) {
                 gte: startDate,
                 lte: endDate
             },
-            status: { not: 'CANCELLED' }
+            status: { notIn: ['PENDING', 'CANCELLED'] }
         },
         include: {
             items: true,
@@ -65,7 +65,7 @@ export async function getMonthlyReport(year: number, month: number) {
                     gte: startDate,
                     lte: endDate
                 },
-                status: { not: 'CANCELLED' }
+                status: { notIn: ['PENDING', 'CANCELLED'] }
             }
         },
         _sum: {

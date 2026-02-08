@@ -264,6 +264,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                 <p className="text-xs text-stone-500 leading-relaxed">אנו מתחייבים ל-5 ימי טריות לפחות. אם הפרחים לא הגיעו מושלמים, נחליף אותם ללא שאלות.</p>
                             </div>
                         </div>
+
+                        {/* Disclaimer */}
+                        <div className="pt-4 text-[10px] text-stone-400 space-y-1">
+                            <p>* התמונה להמחשה בלבד</p>
+                            <p>* המוצר אינו מגיע עם כד אלא אם כן צוין אחרת</p>
+                        </div>
                     </div>
                 </div>
             </div>

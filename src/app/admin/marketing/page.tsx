@@ -8,9 +8,12 @@ export const metadata: Metadata = {
 };
 
 async function getSubscribers() {
-    // Get all orders with newsletter consent
+    // Get all orders with newsletter consent, excluding pending/cancelled
     const orders = await prisma.order.findMany({
-        where: { newsletterConsent: true },
+        where: {
+            newsletterConsent: true,
+            status: { notIn: ['PENDING', 'CANCELLED'] }
+        },
         select: {
             ordererEmail: true,
             ordererName: true,
