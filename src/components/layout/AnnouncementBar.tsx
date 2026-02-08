@@ -11,13 +11,18 @@ interface AnnouncementBarProps {
     };
 }
 
+import { usePathname } from 'next/navigation';
+
 export default function AnnouncementBar({ initialConfig }: AnnouncementBarProps) {
+    const pathname = usePathname();
     const [isVisible, setIsVisible] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
 
     // Use props if available, otherwise default to hidden/empty
     const isActive = initialConfig?.isActive ?? false;
     const text = initialConfig?.text ?? '';
+
+    const isAdmin = pathname?.startsWith('/admin');
 
     useEffect(() => {
         // Check if user previously dismissed the announcement in this session
@@ -31,6 +36,8 @@ export default function AnnouncementBar({ initialConfig }: AnnouncementBarProps)
         setIsVisible(false);
         sessionStorage.setItem('announcement-dismissed', 'true');
     };
+
+    if (isAdmin) return null; // Hide on admin pages
 
     if (!isMounted || !isActive || !text) return null;
 
