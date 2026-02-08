@@ -75,7 +75,7 @@ export default function Home() {
         {/* Background - Video */}
         <div className="absolute inset-0 bg-stone-900">
           {HERO_VIDEOS.length > 0 ? (
-            <SeamlessVideoPlayer videos={HERO_VIDEOS} />
+            <SeamlessVideoPlayer videos={HERO_VIDEOS} poster="/hero-bg.jpg" />
           ) : (
             <div className="w-full h-full bg-stone-900" />
           )}

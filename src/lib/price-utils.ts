@@ -25,26 +25,47 @@ export function calculateProductPrice(product: {
     saleEndDate?: Date | string | null;
 }) {
     const regularPrice = parsePrice(product.price);
-
-    // If no sale price exists or it's invalid/zero
-    const parsedSalePrice = parsePrice(product.salePrice);
-    if (!product.salePrice || parsedSalePrice <= 0) {
-        return { price: regularPrice, isOnSale: false, regularPrice };
-    }
-
     const now = new Date();
-    const startDate = product.saleStartDate ? new Date(product.saleStartDate) : null;
-    const endDate = product.saleEndDate ? new Date(product.saleEndDate) : null;
 
-    // Check start date
-    if (startDate && startDate > now) {
-        return { price: regularPrice, isOnSale: false, regularPrice };
+    // 1. Check Specific Product Sale (Priority)
+    const parsedSalePrice = parsePrice(product.salePrice);
+    if (product.salePrice && parsedSalePrice > 0) {
+        const startDate = product.saleStartDate ? new Date(product.saleStartDate) : null;
+        const endDate = product.saleEndDate ? new Date(product.saleEndDate) : null;
+
+        const isStarted = !startDate || startDate <= now;
+        const isEnded = endDate && endDate < now;
+
+        if (isStarted && !isEnded) {
+            return { price: parsedSalePrice, isOnSale: true, regularPrice, type: 'PRODUCT_SALE' };
+        }
     }
 
-    // Check end date
-    if (endDate && endDate < now) {
-        return { price: regularPrice, isOnSale: false, regularPrice };
+    // 2. Check Category Sale (Secondary)
+    // We assume the product object passed in MIGHT have categories loaded with their promotion data
+    // If not, this part will be skipped safely. 
+    // In a real app, ensure getProduct includes categories.
+    if ('categories' in product && Array.isArray((product as any).categories)) {
+        const categories = (product as any).categories;
+
+        for (const cat of categories) {
+            if (cat.isSaleActive) {
+                const endDate = cat.discountEndDate ? new Date(cat.discountEndDate) : null;
+                if (endDate && endDate < now) continue;
+
+                let salePrice = regularPrice;
+                if (cat.discountType === 'PERCENTAGE') {
+                    salePrice = regularPrice * (1 - (Number(cat.discountAmount) / 100));
+                } else if (cat.discountType === 'FIXED') {
+                    salePrice = Math.max(0, regularPrice - Number(cat.discountAmount));
+                }
+
+                if (salePrice < regularPrice) {
+                    return { price: salePrice, isOnSale: true, regularPrice, type: 'CATEGORY_SALE', discountLabel: cat.name };
+                }
+            }
+        }
     }
 
-    return { price: parsedSalePrice, isOnSale: true, regularPrice };
+    return { price: regularPrice, isOnSale: false, regularPrice };
 }

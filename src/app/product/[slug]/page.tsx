@@ -91,7 +91,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
         price: product.price,
         salePrice: product.salePrice,
         saleStartDate: product.saleStartDate,
-        saleEndDate: product.saleEndDate
+        saleEndDate: product.saleEndDate,
+        categories: product.categories
     });
 
     const jsonLd = {
@@ -284,6 +285,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                 saleEndDate={related.saleEndDate}
                                 availableFrom={related.availableFrom}
                                 allowPreorder={related.allowPreorder}
+                                categories={related.categories}
                             />
                         ))}
                     </div>

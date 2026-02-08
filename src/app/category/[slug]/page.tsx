@@ -96,7 +96,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             },
             orderBy,
             include: {
-                images: true
+                images: true,
+                categories: true
             }
         });
     } catch (error) {
@@ -158,6 +159,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                                 saleEndDate={product.saleEndDate}
                                 availableFrom={product.availableFrom}
                                 allowPreorder={product.allowPreorder}
+                                categories={product.categories}
                             />
                         ))}
                     </div>

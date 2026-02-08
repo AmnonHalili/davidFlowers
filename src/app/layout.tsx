@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Heebo, Frank_Ruhl_Libre, Bellefair } from 'next/font/google';
+import { Heebo, Frank_Ruhl_Libre, Bellefair, Assistant } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -18,6 +18,11 @@ const bellefair = Bellefair({
   weight: '400',
   subsets: ['hebrew', 'latin'],
   variable: '--font-bellefair'
+});
+
+const assistant = Assistant({
+  subsets: ['hebrew', 'latin'],
+  variable: '--font-assistant'
 });
 
 export const metadata: Metadata = {
@@ -52,10 +57,15 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 import AccessibilityWidget from '@/components/AccessibilityWidget';
 import CookieConsent from '@/components/ui/CookieConsent';
 import PromoPopup from '@/components/ui/PromoPopup';
+import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import { Toaster } from 'sonner';
 import GoogleTagManager from '@/components/analytics/GoogleTagManager';
 
 const prisma = new PrismaClient();
+
+import { getSiteConfig } from '@/app/actions/site-config-actions';
+
+// ... (existing imports)
 
 export default async function RootLayout({
   children,
@@ -68,12 +78,17 @@ export default async function RootLayout({
   try {
     user = await currentUser();
   } catch (error) {
-    console.error("Layout: Failed to fetch current user", error);
+    // Suppress Clerk middleware error that happens when static assets 404
+    // prompting RootLayout to render without middleware running.
+    if (!String(error).includes("clerkMiddleware")) {
+      console.error("Layout: Failed to fetch current user", error);
+    }
   }
 
   let isAdmin = false;
 
   if (user) {
+    // ... (existing admin check logic)
     try {
       const dbUser = await prisma.user.findUnique({
         where: { clerkId: user.id }
@@ -83,23 +98,37 @@ export default async function RootLayout({
       }
     } catch (error) {
       console.error("Layout: Failed to check admin status", error);
-      // Fallback or ignore, strictly don't crash the app
     }
+  }
 
-    // Failsafe for instant update if sync hasn't run yet but email matches
-    // REMOVED unsafe hardcoded dev bypass for production stability
-    // else if (true) { isAdmin = true; } 
+  // Fetch Announcement Bar Config
+  const announcementConfig = await getSiteConfig('announcement_bar');
+
+  // Fetch Categories for Navbar
+  let categories = [];
+  try {
+    categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' }, // Or specific order if you have an 'order' field
+      select: { name: true, slug: true }
+    });
+  } catch (error) {
+    console.error("Layout: Failed to fetch categories", error);
   }
 
   return (
     <ClerkProvider localization={heIL}>
       <html lang="he" dir="rtl">
-        <body className={`${heebo.variable} ${frankRuhl.variable} ${bellefair.variable} font-sans antialiased text-stone-900 bg-[#FAFAFA]`}>
+        <body className={`${heebo.variable} ${frankRuhl.variable} ${bellefair.variable} ${assistant.variable} font-sans antialiased text-stone-900 bg-[#FAFAFA]`}>
           <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
           <CartProvider>
-            <Navbar isAdmin={isAdmin} />
-            {children}
-            <Footer />
+            <div className="flex flex-col min-h-screen">
+              <AnnouncementBar initialConfig={announcementConfig} />
+              <Navbar isAdmin={isAdmin} categories={categories} />
+              <div className="flex-grow">
+                {children}
+              </div>
+              <Footer />
+            </div>
             <CartDrawer />
             <WhatsAppButton />
             <AccessibilityWidget />

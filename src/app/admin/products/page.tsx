@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { Plus } from 'lucide-react';
 import ProductRowActions from '@/components/admin/ProductRowActions';
 import ProductRow from '@/components/admin/ProductRow';
 import SearchInput from '@/components/admin/SearchInput';
+import CategoryFilter from '@/components/admin/CategoryFilter';
 
 const prisma = new PrismaClient();
 
@@ -12,23 +13,45 @@ export default async function ProductsPage({
 }: {
     searchParams?: {
         search?: string;
+        category?: string;
     };
 }) {
     const query = searchParams?.search || '';
+    const categorySlug = searchParams?.category;
 
-    const products = await prisma.product.findMany({
-        where: {
-            name: {
-                contains: query,
-                mode: 'insensitive',
+    // Build filter condition
+    const where: Prisma.ProductWhereInput = {
+        AND: [
+            query ? {
+                name: {
+                    contains: query,
+                    mode: 'insensitive',
+                }
+            } : {},
+            categorySlug ? {
+                categories: {
+                    some: {
+                        slug: categorySlug
+                    }
+                }
+            } : {}
+        ]
+    };
+
+    const [products, categories] = await Promise.all([
+        prisma.product.findMany({
+            where,
+            include: {
+                categories: true,
+                images: true,
             },
-        },
-        include: {
-            categories: true,
-            images: true,
-        },
-        orderBy: { createdAt: 'desc' }
-    });
+            orderBy: { createdAt: 'desc' }
+        }),
+        prisma.category.findMany({
+            orderBy: { name: 'asc' },
+            select: { id: true, name: true, slug: true }
+        })
+    ]);
 
     return (
         <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-6 md:space-y-8 pb-24 md:pb-0">
@@ -49,8 +72,9 @@ export default async function ProductsPage({
             </div>
 
             {/* Filter / Search Bar */}
-            <div className="bg-white p-4 rounded-lg border border-stone-200 shadow-sm">
+            <div className="bg-white p-4 rounded-lg border border-stone-200 shadow-sm flex flex-col md:flex-row gap-4">
                 <SearchInput />
+                <CategoryFilter categories={categories} />
             </div>
 
             {/* Desktop: Products Table */}

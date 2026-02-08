@@ -9,10 +9,16 @@ import EditProductForm from './EditProductForm';
 const prisma = new PrismaClient();
 
 export default async function EditProductPage({ params }: { params: { id: string } }) {
-    const product = await prisma.product.findUnique({
-        where: { id: params.id },
-        include: { images: true, categories: true }
-    });
+    const [product, categories] = await Promise.all([
+        prisma.product.findUnique({
+            where: { id: params.id },
+            include: { images: true, categories: true }
+        }),
+        prisma.category.findMany({
+            orderBy: { name: 'asc' },
+            select: { id: true, name: true, slug: true }
+        })
+    ]);
 
     if (!product) {
         notFound();
@@ -32,7 +38,7 @@ export default async function EditProductPage({ params }: { params: { id: string
                 <p className="text-stone-500 mt-2">עדכון פרטי מוצר: {product.name}</p>
             </div>
 
-            <EditProductForm product={product} />
+            <EditProductForm product={product} availableCategories={categories} />
         </div>
     );
 }

@@ -1,15 +1,23 @@
 'use client';
 
-import { CATEGORIES } from '@/lib/categories';
+import { CATEGORIES as HARDCODED_CATEGORIES } from '@/lib/categories';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 
 interface CategoryMultiSelectProps {
     defaultSelected?: string[];
+    availableCategories?: any[];
 }
 
-export default function CategoryMultiSelect({ defaultSelected = [] }: CategoryMultiSelectProps) {
+export default function CategoryMultiSelect({ defaultSelected = [], availableCategories = [] }: CategoryMultiSelectProps) {
     const [selected, setSelected] = useState<string[]>(defaultSelected);
+
+    // Combine hardcoded fallback if needed, or just use what's passed if populated.
+    // Logic: If availableCategories is passed and has items, use it. Else fall back to hardcoded.
+    // This allows gradual migration and failsafe.
+    const categoriesToDisplay = (availableCategories && availableCategories.length > 0)
+        ? availableCategories
+        : HARDCODED_CATEGORIES;
 
     const toggleCategory = (slug: string) => {
         setSelected(prev =>
@@ -22,7 +30,7 @@ export default function CategoryMultiSelect({ defaultSelected = [] }: CategoryMu
     return (
         <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => {
+                {categoriesToDisplay.map((cat) => {
                     const isSelected = selected.includes(cat.slug);
                     return (
                         <button

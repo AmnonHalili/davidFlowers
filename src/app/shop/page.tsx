@@ -66,6 +66,7 @@ export default async function ShopPage() {
                                 allowPreorder={product.allowPreorder}
                                 isVariablePrice={product.isVariablePrice}
                                 variations={product.variations}
+                                categories={product.categories}
                             />
                         );
                     })}

@@ -7,7 +7,7 @@ import CategoryMultiSelect from '@/components/admin/CategoryMultiSelect';
 import { useFormStatus } from 'react-dom';
 import { Loader2, Save } from 'lucide-react';
 
-export default function EditProductForm({ product }: { product: any }) {
+export default function EditProductForm({ product, availableCategories = [] }: { product: any, availableCategories?: any[] }) {
     const [imageUrl, setImageUrl] = useState(product.images[0]?.url || '');
     const [showScheduling, setShowScheduling] = useState(!!product.availableFrom);
     const [showSale, setShowSale] = useState(!!product.salePrice);
@@ -197,7 +197,10 @@ export default function EditProductForm({ product }: { product: any }) {
                 <h3 className="text-lg font-bold text-stone-900 border-b border-stone-100 pb-3 mb-4">קטגוריות</h3>
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-stone-900 mb-2 block">בחר קטגוריות מתאימות</label>
-                    <CategoryMultiSelect defaultSelected={product.categories.map((c: any) => c.slug)} />
+                    <CategoryMultiSelect
+                        defaultSelected={product.categories.map((c: any) => c.slug)}
+                        availableCategories={availableCategories} // Pass available categories
+                    />
                 </div>
             </div>
 

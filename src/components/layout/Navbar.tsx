@@ -11,7 +11,12 @@ import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import SearchOverlay from './SearchOverlay';
 import { Dock, DockLink } from '@/components/ui/Dock';
 
-export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
+type NavbarProps = {
+    isAdmin?: boolean;
+    categories?: { name: string; slug: string }[];
+};
+
+export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -28,16 +33,23 @@ export default function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
 
     if (pathname?.startsWith('/admin')) return null;
 
-    const navLinks = [
-        { label: 'זרי פרחים', href: '/category/bouquets' },
-        { label: 'מתנות ומתוקים', href: '/category/gifts' },
-        { label: 'בלונים', href: '/category/balloons' },
-        { label: 'חתן וכלה', href: '/category/wedding' },
-        { label: 'עציצים', href: '/category/plants' },
-        { label: 'כלים ואגרטלים', href: '/category/vases' },
-        { label: 'שוקולדים', href: '/category/chocolates' },
-        { label: 'אודות', href: '/about' },
-    ];
+    const navLinks = categories && categories.length > 0
+        ? categories.map(cat => ({ label: cat.name, href: `/category/${cat.slug}` }))
+        : [
+            { label: 'זרי פרחים', href: '/category/bouquets' },
+            { label: 'מתנות ומתוקים', href: '/category/gifts' },
+            { label: 'בלונים', href: '/category/balloons' },
+            { label: 'חתן וכלה', href: '/category/wedding' },
+            { label: 'עציצים', href: '/category/plants' },
+            { label: 'כלים ואגרטלים', href: '/category/vases' },
+            { label: 'שוקולדים', href: '/category/chocolates' },
+        ];
+
+    // Always add 'About' at the end or specific position if needed
+    // Assuming 'About' is static and not a product category
+    if (!navLinks.find(l => l.href === '/about')) {
+        navLinks.push({ label: 'אודות', href: '/about' });
+    }
 
     return (
         <header className="relative z-50 rtl" dir="rtl">

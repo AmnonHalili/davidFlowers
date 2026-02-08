@@ -27,21 +27,24 @@ interface ProductCardProps {
     allowPreorder?: boolean;
     isVariablePrice?: boolean;
     variations?: any;
+    categories?: any[];
 }
 
 export default function ProductCard({
     id, name, price, image, slug, category, stock, hoverImage, isFavorited,
     salePrice, saleStartDate, saleEndDate, availableFrom, allowPreorder,
-    isVariablePrice, variations
+    isVariablePrice, variations, ...props
 }: ProductCardProps) {
     const isOutOfStock = stock <= 0;
     const { addItem } = useCart();
 
-    const { price: displayPrice, isOnSale, regularPrice } = calculateProductPrice({
+    const { price: displayPrice, isOnSale, regularPrice, type, discountLabel } = calculateProductPrice({
         price,
         salePrice,
         saleStartDate,
-        saleEndDate
+        saleEndDate,
+        // @ts-ignore - passing categories dynamically if they exist
+        categories: (props as any).categories
     });
 
     // Scheduling Logic
@@ -188,9 +191,14 @@ export default function ProductCard({
 
                 {/* Badges Container */}
                 <div className="absolute top-0 left-0 right-0 p-2 md:p-3 flex flex-col items-start gap-1 md:gap-2 z-30 pointer-events-none">
-                    {isOnSale && !isOutOfStock && !isFuture && (
+                    {isOnSale && !isOutOfStock && !isFuture && type === 'PRODUCT_SALE' && (
                         <div className="bg-rose-600 text-white text-[10px] md:text-[11px] font-serif tracking-wide px-2 py-0.5 md:px-3 md:py-1 shadow-sm">
                             SALE
+                        </div>
+                    )}
+                    {isOnSale && !isOutOfStock && !isFuture && type === 'CATEGORY_SALE' && (
+                        <div className="bg-purple-600 text-white text-[10px] md:text-[11px] font-serif tracking-wide px-2 py-0.5 md:px-3 md:py-1 shadow-sm">
+                            {discountLabel ? `${discountLabel} SALE` : 'SALE'}
                         </div>
                     )}
                     {canPreorder && (

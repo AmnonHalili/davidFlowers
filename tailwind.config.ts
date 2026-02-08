@@ -18,6 +18,7 @@ const config: Config = {
         sans: ['var(--font-heebo)'],
         serif: ['var(--font-frank-ruhl)'],
         bellefair: ['var(--font-bellefair)'],
+        assistant: ['var(--font-assistant)'],
       },
     },
   },

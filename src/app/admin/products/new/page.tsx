@@ -1,11 +1,12 @@
 'use client';
 
 import { createProduct } from '@/app/actions/product-actions';
+import { getCategoriesWithPromotions } from '@/app/actions/category-actions';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
 import SubmitButton from '@/components/admin/SubmitButton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CategoryMultiSelect from '@/components/admin/CategoryMultiSelect';
 
 // Define helper components OUTSIDE properly
@@ -79,6 +80,18 @@ export default function NewProductPage() {
     const [imageUrl, setImageUrl] = useState('');
     const [isVariablePrice, setIsVariablePrice] = useState(false);
     const [isSubscriptionEnabled, setIsSubscriptionEnabled] = useState(false);
+    const [availableCategories, setAvailableCategories] = useState<any[]>([]); // State for categories
+
+    useEffect(() => {
+        // Fetch categories on mount
+        const fetchCategories = async () => {
+            const result = await getCategoriesWithPromotions();
+            if (result.success && result.categories) {
+                setAvailableCategories(result.categories);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     const [variations, setVariations] = useState<any>({
         standard: { label: 'Standard', price: 0, stock: 0 },
@@ -243,7 +256,9 @@ export default function NewProductPage() {
 
                         <div className="space-y-2 pt-4 border-t border-stone-100">
                             <label className="text-sm font-medium text-stone-900">קטגוריות</label>
-                            <CategoryMultiSelect />
+                            <CategoryMultiSelect
+                                availableCategories={availableCategories}
+                            />
                         </div>
                     </div>
 

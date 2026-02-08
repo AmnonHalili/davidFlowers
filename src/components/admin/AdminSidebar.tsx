@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Menu, X, Store, Ticket, TrendingUp, Mail } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Menu, X, Store, Ticket, TrendingUp, Mail, Tags } from 'lucide-react';
 import { UserButton, useClerk } from '@clerk/nextjs';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ export default function AdminSidebar() {
     const links = [
         { href: '/admin', label: 'לוח בקרה', icon: LayoutDashboard },
         { href: '/admin/products', label: 'ניהול מוצרים', icon: Package },
+        { href: '/admin/categories', label: 'קטגוריות ומבצעים', icon: Tags },
         { href: '/admin/orders', label: 'הזמנות', icon: ShoppingCart },
         { href: '/admin/reports', label: 'דוחות', icon: TrendingUp },
         { href: '/admin/marketing', label: 'שיווק ותפוצה', icon: Mail },
