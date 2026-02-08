@@ -11,7 +11,7 @@ import {
 } from '@/app/actions/category-actions';
 import { DiscountType } from '@prisma/client';
 import { toast } from 'sonner';
-import { Loader2, Calendar as CalendarIcon, Tag, Percent, DollarSign, Edit2, Check, X, Plus, Trash2, Pencil } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Tag, Percent, DollarSign, Edit2, Check, X, Plus, Trash2, Pencil, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,6 +22,7 @@ type CategoryWithCount = {
     discountAmount: any;
     discountEndDate: Date | null;
     isSaleActive: boolean;
+    isHidden: boolean;
     _count: { products: number };
 };
 
@@ -84,10 +85,17 @@ export default function CategoriesPage() {
         // 1. Update Promotion
         const promoPromise = updateCategoryPromotion(id, data);
 
-        // 2. Update Name if Changed
+        // 2. Update Name/Details if Changed
         let namePromise: Promise<{ success: boolean; error?: string }> = Promise.resolve({ success: true });
-        if (newName) {
-            namePromise = updateCategoryDetails(id, newName);
+        if (newName || data.isHidden !== undefined) {
+            // We need to cast or ensure updateCategoryDetails accepts isHidden
+            // Logic: If newName is provided, use it. If not, we might still need to update isHidden.
+            // But existing handleSave logic checks 'if (newName)'.
+            // We should change the signature of onSave/handleSave to be more robust.
+            // For now, let's assume we pass the current name if it hasn't changed but isHidden has?
+            // Actually, updateCategoryDetails(id, name, isHidden) takes name as required.
+
+            namePromise = updateCategoryDetails(id, newName || 'PLACEHOLDER_SHOULD_NOT_HAPPEN', data.isHidden);
         }
 
         const [promoResult, nameResult] = await Promise.all([promoPromise, namePromise]);
@@ -197,6 +205,7 @@ function CategoryCard({ category, isEditing, onEdit, onCancel, onSave, onDelete 
         discountAmount: Number(category.discountAmount) || 0,
         discountEndDate: category.discountEndDate ? new Date(category.discountEndDate) : null,
         isSaleActive: category.isSaleActive,
+        isHidden: category.isHidden // Add to local state
     });
     const [name, setName] = useState(category.name);
 
@@ -226,6 +235,12 @@ function CategoryCard({ category, isEditing, onEdit, onCancel, onSave, onDelete 
                     <p className="text-xs text-stone-500 mt-1 flex items-center gap-1">
                         <Tag className="w-3 h-3" />
                         {category._count?.products || 0} מוצרים
+                        {category.isHidden && (
+                            <span className="flex items-center gap-1 text-red-500 mr-2 bg-red-50 px-1.5 py-0.5 rounded text-[10px]">
+                                <EyeOff className="w-3 h-3" />
+                                מוסתר
+                            </span>
+                        )}
                     </p>
                 </div>
                 {!isEditing && (
@@ -299,6 +314,19 @@ function CategoryCard({ category, isEditing, onEdit, onCancel, onSave, onDelete 
                             </label>
                         </div>
 
+                        <div className="flex items-center gap-3 bg-stone-50 p-2 rounded-lg">
+                            <span className="text-sm font-medium ml-auto">הצג באתר (Navbar):</span>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={!data.isHidden}
+                                    onChange={(e) => setData({ ...data, isHidden: !e.target.checked })}
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-david-green/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-david-green"></div>
+                            </label>
+                        </div>
+
                         {data.isSaleActive && (
                             <div className="space-y-3">
                                 <div className="grid grid-cols-2 gap-3">
@@ -349,7 +377,7 @@ function CategoryCard({ category, isEditing, onEdit, onCancel, onSave, onDelete 
                                 ביטול
                             </button>
                             <button
-                                onClick={() => onSave(data, name !== category.name ? name : undefined)}
+                                onClick={() => onSave(data, name)} // Always pass name to ensure update
                                 className="flex-1 py-1.5 px-3 text-sm bg-david-green text-white rounded-lg hover:bg-david-green/90 transition-colors flex items-center justify-center gap-2"
                             >
                                 <Check className="w-3 h-3" />

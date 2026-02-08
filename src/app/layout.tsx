@@ -118,6 +118,7 @@ export default async function RootLayout({
 
   try {
     categories = await prisma.category.findMany({
+      where: { isHidden: false },
       select: { name: true, slug: true }
     });
 

@@ -90,6 +90,7 @@ model Category {
   discountAmount  Decimal?      @default(0)
   discountEndDate DateTime?
   isSaleActive    Boolean       @default(false)
+  isHidden        Boolean       @default(false) // Hide from Navbar
 
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt

@@ -26,6 +26,7 @@ export type CategoryPromotionData = {
     discountAmount: number;
     discountEndDate: Date | null;
     isSaleActive: boolean;
+    isHidden?: boolean;
 };
 
 export async function updateCategoryPromotion(id: string, data: CategoryPromotionData) {
@@ -75,11 +76,14 @@ export async function createCategory(name: string) {
     }
 }
 
-export async function updateCategoryDetails(id: string, name: string) {
+export async function updateCategoryDetails(id: string, name: string, isHidden?: boolean) {
     try {
         await prisma.category.update({
             where: { id },
-            data: { name }
+            data: {
+                name,
+                ...(isHidden !== undefined && { isHidden })
+            }
         });
 
         revalidatePath('/admin/categories');
