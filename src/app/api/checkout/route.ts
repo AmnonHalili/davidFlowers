@@ -135,29 +135,48 @@ export async function POST(req: Request) {
             }
         }
 
-        const totalAmount = calculatedSubtotal + finalShippingCost; // Using calculated subtotal
 
-        // 2.7 VALIDATE COUPON (First Order Only check)
+
+        // 2.7 VALIDATE AND APPLY COUPON
+        let discountAmount = 0;
         if (couponId) {
             const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
-            if (coupon?.isFirstOrderOnly) {
-                const existingOrder = await prisma.order.findFirst({
-                    where: {
-                        OR: [
-                            ...(userId ? [{ user: { clerkId: userId } }] : []),
-                            { ordererEmail: ordererEmail }
-                        ],
-                        status: { not: 'CANCELLED' }
-                    }
-                });
 
-                if (existingOrder) {
-                    return NextResponse.json({
-                        error: 'קופון זה תקף להזמנה ראשונה בלבד'
-                    }, { status: 400 });
+            if (coupon) {
+                // Validation: First Order Only
+                if (coupon.isFirstOrderOnly) {
+                    const existingOrder = await prisma.order.findFirst({
+                        where: {
+                            OR: [
+                                ...(userId ? [{ user: { clerkId: userId } }] : []),
+                                { ordererEmail: ordererEmail }
+                            ],
+                            status: { not: 'CANCELLED' }
+                        }
+                    });
+
+                    if (existingOrder) {
+                        return NextResponse.json({
+                            error: 'קופון זה תקף להזמנה ראשונה בלבד'
+                        }, { status: 400 });
+                    }
                 }
+
+                // Calculate Discount
+                if (coupon.discountType === 'PERCENTAGE') {
+                    discountAmount = (calculatedSubtotal * Number(coupon.discountAmount)) / 100;
+                } else {
+                    discountAmount = Number(coupon.discountAmount);
+                }
+
+                // Ensure discount doesn't exceed subtotal
+                discountAmount = Math.min(discountAmount, calculatedSubtotal);
             }
         }
+
+        // Final Calculation
+        // Discount applies to subtotal, shipping is added after
+        const totalAmount = Math.max(0, calculatedSubtotal - discountAmount + finalShippingCost);
 
         // 3. CREATE ORDER IN DATABASE (PENDING STATUS)
         const order = await prisma.order.create({
