@@ -16,7 +16,10 @@ export default async function AccountPage() {
 
     // Fetch Real Data
     const orders = await prisma.order.findMany({
-        where: { userId: user.id },
+        where: {
+            userId: user.id,
+            status: { not: 'PENDING' } // Hide abandoned checkouts
+        },
         include: {
             items: {
                 include: { product: true }

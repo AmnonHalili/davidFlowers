@@ -47,6 +47,7 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
 
 export async function getOrders() {
     return await prisma.order.findMany({
+        where: { status: { not: 'PENDING' } }, // Hide abandoned checkouts
         orderBy: { createdAt: 'desc' },
         include: {
             user: true,
