@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLogsPage() {
-    let logs = [];
+    let logs: any[] = [];
     let error = null;
 
     try {
