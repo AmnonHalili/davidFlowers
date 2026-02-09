@@ -37,8 +37,16 @@ export default async function AdminLogsPage() {
                         <tbody className="divide-y divide-stone-100">
                             {logs.map((log) => (
                                 <tr key={log.id} className="hover:bg-stone-50 transition-colors">
-                                    <td className="p-4 whitespace-nowrap text-stone-500" dir="ltr">
-                                        {format(new Date(log.createdAt), 'dd/MM/yyyy HH:mm:ss')}
+                                    <td className="p-3 text-stone-500 whitespace-nowrap" dir="ltr">
+                                        {new Date(log.createdAt).toLocaleString('he-IL', {
+                                            timeZone: 'Asia/Jerusalem',
+                                            year: '2-digit',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit'
+                                        })}
                                     </td>
                                     <td className="p-4 whitespace-nowrap">
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${log.level === 'ERROR' ? 'bg-red-100 text-red-700' :

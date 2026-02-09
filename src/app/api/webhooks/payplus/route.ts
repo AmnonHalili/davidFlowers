@@ -222,7 +222,7 @@ export async function POST(req: Request) {
 }
 
 async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId: string): Promise<boolean> {
-    const payPlusApiKey = process.env.PAY_PLUS_API_KEY || process.env.PAYPLUS_API_KEY; // Support both naming styles
+    const payPlusApiKey = process.env.PAY_PLUS_API_KEY || process.env.PAYPLUS_API_KEY;
     const payPlusSecretKey = process.env.PAY_PLUS_SECRET_KEY || process.env.PAYPLUS_SECRET_KEY;
 
     if (!payPlusApiKey || !payPlusSecretKey) {
@@ -233,7 +233,6 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
     try {
         console.log(`[PAYPLUS_VERIFY] Verifying transaction ${transactionUid} for order ${expectedOrderId}`);
 
-        // Use v1.0 and headers consistent with checkout/route.ts for reliability
         const response = await fetch(
             `https://restapi.payplus.co.il/api/v1.0/transactions/${transactionUid}`,
             {
@@ -252,6 +251,7 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`[PAYPLUS_VERIFY] API error: ${response.status} - ${errorText}`);
+            await logger.error('PayPlus Verification API Error', 'PayPlusVerify', { status: response.status, body: errorText });
             return false;
         }
 
@@ -259,28 +259,35 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
 
         if (result.status === 'error') {
             console.error(`[PAYPLUS_VERIFY] PayPlus returned error:`, result);
+            await logger.error('PayPlus Verification Returned Error', 'PayPlusVerify', { result });
             return false;
         }
 
         const transaction = result.data;
 
         // Verify transaction details
-        // status_code "000" means success
         if (transaction.status_code !== '000') {
             console.error(`[PAYPLUS_VERIFY] Transaction failed with status: ${transaction.status_code}`);
+            await logger.error('Verification Failed: Bad Status', 'PayPlusVerify', { statusCode: transaction.status_code, transaction });
             return false;
         }
 
         if (transaction.more_info !== expectedOrderId) {
             console.error(`[PAYPLUS_VERIFY] Order ID mismatch: ${transaction.more_info} !== ${expectedOrderId}`);
+            await logger.error('Verification Failed: Order ID Mismatch', 'PayPlusVerify', {
+                expected: expectedOrderId,
+                received: transaction.more_info,
+                note: 'Ensure more_info field in PayPlus contains the exact Order ID'
+            });
             return false;
         }
 
         console.log(`✅ Transaction ${transactionUid} verified successfully`);
         return true;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[PAYPLUS_VERIFY_ERROR]', error);
+        await logger.error('Verification Logic Exception', 'PayPlusVerify', { message: error.message });
         return false;
     }
 }
