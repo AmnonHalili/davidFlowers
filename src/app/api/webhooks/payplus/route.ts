@@ -9,7 +9,25 @@ export async function POST(req: Request) {
         console.log('[PAYPLUS_WEBHOOK] Received:', JSON.stringify(body, null, 2));
 
 
-        const { transaction_uid, more_info, status_code, amount } = body;
+        // Helper to extract data regardless of structure (flat vs nested)
+        const getField = (data: any, rootField: string, nestedField: string) => {
+            if (data[rootField] !== undefined) return data[rootField];
+            if (data.transaction && data.transaction[nestedField] !== undefined) return data.transaction[nestedField];
+            if (data.data && data.data[nestedField] !== undefined) return data.data[nestedField];
+            return undefined;
+        };
+
+        const rawTransactionUid = getField(body, 'transaction_uid', 'uid');
+        const rawMoreInfo = getField(body, 'more_info', 'more_info');
+        const rawStatusCode = getField(body, 'status_code', 'status_code');
+        const rawAmount = getField(body, 'amount', 'amount');
+        const transactionType = body.transaction_type || body.transaction?.type;
+
+        // Normalize
+        const transaction_uid = rawTransactionUid;
+        const more_info = rawMoreInfo;
+        const status_code = rawStatusCode;
+        const amount = rawAmount;
 
         // [LOG] Webhook Received
         await logger.info('Webhook Received', 'PayPlusWebhook', {
@@ -17,12 +35,20 @@ export async function POST(req: Request) {
             orderId: more_info,
             status_code,
             amount,
+            transaction_type: transactionType,
             rawBody: body
         });
 
+        // Handle Refunds / Cancellations (Log and Exit)
+        if (transactionType === 'Cancel' || transactionType === 'Refund') {
+            console.log(`[PAYPLUS_WEBHOOK] Received ${transactionType} event. Skipping order completion.`);
+            await logger.info(`Processed ${transactionType} event`, 'PayPlusWebhook', { transaction_uid, orderId: more_info });
+            return NextResponse.json({ received: true, type: transactionType });
+        }
+
         if (!transaction_uid || !more_info) {
-            console.error('[PAYPLUS_WEBHOOK] Missing required fields');
-            await logger.error('Missing required fields', 'PayPlusWebhook', body);
+            console.error('[PAYPLUS_WEBHOOK] Missing required fields after parsing');
+            await logger.error('Missing required fields', 'PayPlusWebhook', { body, parsed: { transaction_uid, more_info } });
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
         }
 
