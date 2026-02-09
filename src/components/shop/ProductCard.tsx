@@ -141,6 +141,11 @@ export default function ProductCard({
         if (!variations || !variations[selectedSize]) return;
         const variation = variations[selectedSize];
 
+        if (variation.stock !== undefined && variation.stock <= 0) {
+            alert('מצטערים, גודל זה אזל מהמלאי');
+            return;
+        }
+
         if (isPersonalizationEnabled) {
             // Save variation data and open inscription modal
             setTempVariationData({

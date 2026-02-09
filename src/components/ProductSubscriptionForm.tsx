@@ -350,15 +350,18 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       <button
         ref={mainButtonRef}
         onClick={handleAddToCart}
+        disabled={product.isVariablePrice && product.variations && product.variations[selectedSize] && product.variations[selectedSize].stock !== undefined && product.variations[selectedSize].stock <= 0}
         className={`w-full text-white py-4 font-medium tracking-wide transition-colors flex items-center justify-center gap-2 group ${canPreorder
           ? 'bg-david-green hover:bg-david-green/90'
           : 'bg-stone-900 hover:bg-stone-800'
-          }`}
+          } ${(product.isVariablePrice && product.variations && product.variations[selectedSize] && product.variations[selectedSize].stock !== undefined && product.variations[selectedSize].stock <= 0) ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
       >
         <span>
-          {canPreorder
-            ? 'בצע הזמנה מוקדמת'
-            : purchaseType === 'SUBSCRIPTION' ? 'הוספה למנוי' : `הוספה לסל - ₪${currentPrice.toFixed(2)}`
+          {product.isVariablePrice && product.variations && product.variations[selectedSize] && product.variations[selectedSize].stock !== undefined && product.variations[selectedSize].stock <= 0
+            ? 'אזל מהמלאי'
+            : canPreorder
+              ? 'בצע הזמנה מוקדמת'
+              : purchaseType === 'SUBSCRIPTION' ? 'הוספה למנוי' : `הוספה לסל - ₪${currentPrice.toFixed(2)}`
           }
         </span>
         <span className="group-hover:-translate-x-1 transition-transform">←</span>

@@ -158,7 +158,7 @@ export default async function SuccessPage({
                                     Let's keep it simple for now or try to be more accurate if possible. 
                                     Let's stick to the previous hardcoded logic for now as requested fix was for Pickup.
                                 */}
-                                <span>{Number(order.totalAmount) > 350 ? 'חינם' : '₪30.00'}</span>
+                                <span>{Number(order.totalAmount) - order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0) <= 0 ? 'חינם' : `₪${(Number(order.totalAmount) - order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0)).toFixed(2)}`}</span>
                             </div>
                         )}
 

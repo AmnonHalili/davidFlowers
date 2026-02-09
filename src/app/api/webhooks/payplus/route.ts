@@ -191,7 +191,7 @@ export async function POST(req: Request) {
                         price: Number(item.price)
                     })),
                     totalAmount: Number(updatedOrder.totalAmount),
-                    shippingAddress: updatedOrder.shippingAddress,
+                    shippingAddress: updatedOrder.shippingAddress === 'Self Pickup' ? 'איסוף עצמי' : updatedOrder.shippingAddress,
                     deliveryDate: updatedOrder.desiredDeliveryDate
                         ? new Date(updatedOrder.desiredDeliveryDate).toLocaleDateString('he-IL', {
                             year: 'numeric',

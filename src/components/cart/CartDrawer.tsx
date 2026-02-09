@@ -2,7 +2,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Plus, Trash2, Lock, ShoppingBag, Loader2, Tag, Check } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Lock, ShoppingBag, Loader2, Tag, Check, User, MapPin, Truck, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -108,6 +108,17 @@ const SHIPPING_COSTS: Record<string, number> = {
     'כפר סילבר': 45
 };
 
+interface UpsellItem {
+    id: string;
+    productId: string;
+    name: string;
+    price: number;
+    image: string;
+    type: 'ONETIME' | 'SUBSCRIPTION';
+    quantity: number;
+    originalPrice?: number;
+}
+
 export default function CartDrawer() {
     const { isOpen, closeCart, items, removeItem, addItem, updateQuantity, cartTotal } = useCart();
     const { user: clerkUser, isSignedIn } = useUser();
@@ -127,18 +138,9 @@ export default function CartDrawer() {
     const [selectedCity, setSelectedCity] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState(''); // 🆕 הערות למשלוח
     const [newsletterConsent, setNewsletterConsent] = useState(true); // 🆕 הסכמה לדיוור
-    interface UpsellItem {
-        id: string;
-        productId: string;
-        name: string;
-        price: number;
-        image: string;
-        type: 'ONETIME' | 'SUBSCRIPTION';
-        quantity: number;
-        originalPrice?: number;
-    }
+
     const [upsellItems, setUpsellItems] = useState<UpsellItem[]>([]);
-    const [checkoutStep, setCheckoutStep] = useState<'cart' | 'details'>('cart');
+    const [checkoutStep, setCheckoutStep] = useState<'cart' | 'contact' | 'delivery'>('cart');
 
     // Coupon State
     const [couponCode, setCouponCode] = useState('');
@@ -244,7 +246,6 @@ export default function CartDrawer() {
                 }
             }
 
-            // 2. DETAILED PRE-FILL FROM DATABASE (Address, Phone)
             // 2. DETAILED PRE-FILL FROM DATABASE (Address, Phone)
             getUserProfile().then(user => {
                 if (user) {
@@ -384,11 +385,45 @@ export default function CartDrawer() {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 bottom-0 w-full max-w-[500px] bg-white z-[70] flex flex-col shadow-2xl"
+                        className="fixed top-0 right-0 bottom-0 w-full md:max-w-[500px] h-[100dvh] bg-stone-50 md:bg-white z-[70] flex flex-col shadow-2xl overflow-hidden"
                     >
+                        {/* Mobile Step Header */}
+                        <div className="md:hidden pt-4 pb-2 px-6 bg-white border-b border-stone-100">
+                            <div className="flex justify-between items-center gap-2 mb-2">
+                                {[
+                                    { step: 'cart', label: 'עגלה' },
+                                    { step: 'contact', label: 'פרטים' },
+                                    { step: 'delivery', label: shippingMethod === 'delivery' ? 'משלוח' : 'איסוף' }
+                                ].map((item, idx) => (
+                                    <div key={item.step} className="flex-1 flex flex-col items-center gap-1.5">
+                                        <div className={`h-1 w-full rounded-full transition-all duration-300 ${(checkoutStep === 'cart' && idx === 0) ||
+                                            (checkoutStep === 'contact' && idx <= 1) ||
+                                            (checkoutStep === 'delivery' && idx <= 2)
+                                            ? 'bg-david-green' : 'bg-stone-100'
+                                            }`} />
+                                        <span className={`text-[10px] font-bold ${checkoutStep === item.step ? 'text-david-green' : 'text-stone-400'
+                                            }`}>{item.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Header */}
-                        <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-white z-10">
-                            <h2 className="font-serif text-2xl text-stone-900">העגלה שלך</h2>
+                        <div className="p-5 md:p-6 border-b border-stone-100 flex justify-between items-center bg-white z-10 shrink-0">
+                            <div className="flex items-center gap-3">
+                                {checkoutStep !== 'cart' && (
+                                    <button
+                                        onClick={() => setCheckoutStep(checkoutStep === 'delivery' ? 'contact' : 'cart')}
+                                        className="p-1 -ml-1 text-stone-400 hover:text-stone-900 transition-colors"
+                                    >
+                                        <ChevronRight className="w-6 h-6 rotate-180" />
+                                    </button>
+                                )}
+                                <h2 className="font-serif text-xl md:text-2xl text-stone-900">
+                                    {checkoutStep === 'cart' ? 'העגלה שלך' :
+                                        checkoutStep === 'contact' ? 'פרטי המזמין' : (shippingMethod === 'delivery' ? 'פרטי משלוח' : 'פרטי איסוף')}
+                                </h2>
+                            </div>
                             <button
                                 onClick={closeCart}
                                 className="p-2 -mr-2 text-stone-400 hover:text-stone-900 transition-colors rounded-full hover:bg-stone-50"
@@ -438,7 +473,7 @@ export default function CartDrawer() {
                                 </div>
                             ) : (
                                 <AnimatePresence mode="wait">
-                                    {/* Step 1: Product List */}
+                                    {/* Step 1: Product List (Review) */}
                                     {checkoutStep === 'cart' && (
                                         <motion.div
                                             key="cart-step"
@@ -446,357 +481,338 @@ export default function CartDrawer() {
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: 20 }}
                                             transition={{ duration: 0.2 }}
-                                            className="space-y-6"
+                                            className="space-y-6 pb-6"
                                         >
-                                            {items.map((item) => (
-                                                <div key={item.id} className="flex gap-5 group">
-                                                    {/* Image */}
-                                                    <div className="relative w-24 h-32 bg-stone-100 shrink-0 overflow-hidden rounded-sm">
-                                                        <img
-                                                            src={item.image}
-                                                            alt={item.name}
-                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                        />
-                                                    </div>
+                                            {/* Shipping Type Toggle */}
+                                            <div className="grid grid-cols-2 gap-4 p-1.5 bg-stone-100 rounded-2xl">
+                                                <button
+                                                    onClick={() => setShippingMethod('pickup')}
+                                                    className={`py-3.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${shippingMethod === 'pickup' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                                                        }`}
+                                                >
+                                                    <MapPin className="w-4 h-4" />
+                                                    איסוף עצמי
+                                                </button>
+                                                <button
+                                                    onClick={() => setShippingMethod('delivery')}
+                                                    className={`py-3.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${shippingMethod === 'delivery' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                                                        }`}
+                                                >
+                                                    <Truck className="w-4 h-4" />
+                                                    משלוח
+                                                </button>
+                                            </div>
 
-                                                    {/* Details */}
-                                                    <div className="flex-1 flex flex-col justify-between py-1">
-                                                        <div className="space-y-1">
-                                                            <div className="flex justify-between items-start">
-                                                                <h3 className="font-serif text-lg text-stone-900 leading-tight">{item.name}</h3>
-                                                                <button
-                                                                    onClick={() => removeItem(item.id)}
-                                                                    className="text-stone-300 hover:text-red-400 transition-colors p-1"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                            {item.type === 'SUBSCRIPTION' ? (
-                                                                <div className="inline-flex items-center gap-2 bg-stone-100 px-2 py-1 rounded text-[10px] font-medium text-stone-600">
-                                                                    <span>מנוי {item.frequency === 'WEEKLY' ? 'שבועי' : 'דו-שבועי'}</span>
-                                                                    <span className="w-1 h-1 bg-stone-400 rounded-full" />
-                                                                    <span>{item.deliveryDay === 'THURSDAY' ? 'חמישי' : 'שישי'}</span>
-                                                                </div>
-                                                            ) : null}
-                                                            {item.personalizationText && (
-                                                                <div className="mt-1 flex items-start gap-1 text-xs text-stone-500 bg-stone-50 p-1.5 rounded border border-stone-100">
-                                                                    <span className="font-medium text-stone-700 min-w-fit">כיתוב:</span>
-                                                                    <span className="italic break-words">"{item.personalizationText}"</span>
-                                                                </div>
-                                                            )}
+                                            <div className="space-y-4">
+                                                {items.map((item) => (
+                                                    <div key={item.id} className="flex gap-4 p-3 bg-white md:bg-transparent rounded-2xl md:rounded-none border border-stone-100 md:border-0 shadow-sm md:shadow-none group">
+                                                        {/* Image */}
+                                                        <div className="relative w-20 h-24 md:w-24 md:h-32 bg-stone-100 shrink-0 overflow-hidden rounded-xl md:rounded-sm">
+                                                            <img
+                                                                src={item.image}
+                                                                alt={item.name}
+                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                            />
                                                         </div>
 
-                                                        <div className="flex justify-between items-center">
-                                                            <div className="flex items-center border border-stone-200 rounded-sm">
-                                                                <button
-                                                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                                    className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
-                                                                >
-                                                                    <Minus className="w-3 h-3" />
-                                                                </button>
-                                                                <span className="w-8 text-center text-sm font-medium text-stone-900">{item.quantity}</span>
-                                                                <button
-                                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                                    className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
-                                                                >
-                                                                    <Plus className="w-3 h-3" />
-                                                                </button>
-                                                            </div>
-                                                            <div className="flex flex-col items-end">
-                                                                <span className={`text-lg font-medium ${item.originalPrice && item.originalPrice > item.price ? 'text-rose-600' : 'text-stone-900'}`}>
-                                                                    ₪{(Number(item.price) || 0).toFixed(0)}
-                                                                </span>
-                                                                {item.originalPrice && item.originalPrice > item.price && (
-                                                                    <div className="flex items-center gap-1.5 opacity-60">
-                                                                        <span className="text-xs bg-rose-100 text-rose-700 px-1 rounded font-bold">SALE</span>
-                                                                        <span className="text-sm text-stone-400 line-through decoration-stone-300">₪{item.originalPrice.toFixed(0)}</span>
+                                                        {/* Details */}
+                                                        <div className="flex-1 flex flex-col justify-between py-0.5">
+                                                            <div className="space-y-1">
+                                                                <div className="flex justify-between items-start">
+                                                                    <h3 className="font-serif text-base md:text-lg text-stone-900 leading-tight">{item.name}</h3>
+                                                                    <button
+                                                                        onClick={() => removeItem(item.id)}
+                                                                        className="text-stone-300 hover:text-red-400 transition-colors p-1"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                                {item.type === 'SUBSCRIPTION' ? (
+                                                                    <div className="inline-flex items-center gap-1.5 bg-stone-100 px-2 py-0.5 rounded text-[9px] font-bold text-stone-600">
+                                                                        <span>מנוי {item.frequency === 'WEEKLY' ? 'שבועי' : 'דו-שבועי'}</span>
+                                                                        <span className="w-1 h-1 bg-stone-400 rounded-full" />
+                                                                        <span>{item.deliveryDay === 'THURSDAY' ? 'חמישי' : 'שישי'}</span>
+                                                                    </div>
+                                                                ) : null}
+                                                                {item.personalizationText && (
+                                                                    <div className="mt-1 flex items-start gap-1 text-[10px] md:text-xs text-stone-500 bg-stone-50 p-1.5 rounded border border-stone-100">
+                                                                        <span className="font-medium text-stone-700 min-w-fit">כיתוב:</span>
+                                                                        <span className="italic break-words">"{item.personalizationText}"</span>
                                                                     </div>
                                                                 )}
                                                             </div>
+
+                                                            <div className="flex justify-between items-center mt-2">
+                                                                <div className="flex items-center bg-stone-50 md:bg-white border border-stone-200 rounded-lg md:rounded-sm overflow-hidden">
+                                                                    <button
+                                                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                                        className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                                                                    >
+                                                                        <Minus className="w-3 h-3" />
+                                                                    </button>
+                                                                    <span className="w-8 text-center text-xs font-bold text-stone-900">{item.quantity}</span>
+                                                                    <button
+                                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                                        className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                                                                    >
+                                                                        <Plus className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                                <div className="flex flex-col items-end">
+                                                                    <span className={`text-base font-bold ${item.originalPrice && item.originalPrice > item.price ? 'text-rose-600' : 'text-stone-900'}`}>
+                                                                        ₪{(Number(item.price) || 0).toFixed(0)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </motion.div>
                                     )}
 
-                                    {/* Step 2: Checkout Form */}
-                                    {checkoutStep === 'details' && (
+                                    {/* Step 2: Contact Details */}
+                                    {checkoutStep === 'contact' && (
                                         <motion.div
-                                            key="details-step"
+                                            key="contact-step"
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: -20 }}
                                             transition={{ duration: 0.2 }}
-                                            className="space-y-6"
+                                            className="space-y-8"
                                         >
-                                            <button
-                                                onClick={() => setCheckoutStep('cart')}
-                                                className="flex items-center text-sm text-stone-500 hover:text-stone-900 transition-colors"
-                                            >
-                                                <span className="ml-1">→</span> חזרה לעגלה
-                                            </button>
-
-
-                                            {/* Sleek Shipping Selector */}
-                                            <div className="space-y-3">
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <button
-                                                        onClick={() => setShippingMethod('pickup')}
-                                                        className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'pickup'
-                                                            ? 'border-stone-900 bg-stone-900 text-white shadow-md'
-                                                            : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
-                                                            }`}
-                                                    >
-                                                        <span className="block text-sm font-bold mb-0.5">איסוף עצמי</span>
-                                                        <span className={`text-[10px] ${shippingMethod === 'pickup' ? 'text-white/60' : 'text-stone-400'}`}>מהחנות באשקלון</span>
-                                                        <span className="absolute top-4 left-4 text-xs font-bold">חינם</span>
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => setShippingMethod('delivery')}
-                                                        className={`p-4 rounded-lg border text-right transition-all duration-200 relative ${shippingMethod === 'delivery'
-                                                            ? 'border-stone-900 bg-stone-900 text-white shadow-md'
-                                                            : 'border-stone-200 text-stone-500 hover:border-stone-300 bg-white'
-                                                            }`}
-                                                    >
-                                                        <span className="block text-sm font-bold mb-0.5">משלוח</span>
-                                                        <span className={`text-[10px] ${shippingMethod === 'delivery' ? 'text-white/60' : 'text-stone-400'}`}>אשקלון והסביבה</span>
-                                                        <span className="absolute top-4 left-4 text-xs font-bold">
-                                                            {subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : selectedCity ? `₪${SHIPPING_COSTS[selectedCity] || 45}` : 'מ-₪25'}
-                                                        </span>
-                                                    </button>
+                                            {/* Orderer Section */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className="w-8 h-8 bg-david-green/10 text-david-green rounded-full flex items-center justify-center">
+                                                        <User className="w-4 h-4" />
+                                                    </div>
+                                                    <h3 className="text-lg font-bold text-stone-900">פרטי המזמין</h3>
                                                 </div>
 
-                                                {/* Contact Details Split */}
-                                                <div className="space-y-6 pt-2 border-t border-stone-100">
+                                                <div className="grid grid-cols-1 gap-4">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[11px] font-bold text-stone-500 mr-1 italic">שם מלא *</label>
+                                                        <input
+                                                            type="text"
+                                                            value={ordererName}
+                                                            onChange={(e) => setOrdererName(e.target.value)}
+                                                            placeholder="מי המזמין?"
+                                                            className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all placeholder:text-stone-300"
+                                                        />
+                                                    </div>
 
-                                                    {/* 1. Orderer Details */}
-                                                    <div className="space-y-3">
-                                                        <p className="text-sm font-bold text-stone-900 flex items-center gap-2">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-stone-900" />
-                                                            פרטי המזמין
-                                                        </p>
-                                                        <div className="space-y-3">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-stone-500 mr-1 italic">טלפון נייד *</label>
+                                                            <input
+                                                                type="tel"
+                                                                value={ordererPhone}
+                                                                onChange={(e) => setOrdererPhone(e.target.value)}
+                                                                placeholder="לעדכונים על המשלוח"
+                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all placeholder:text-stone-300 text-right"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-stone-500 mr-1 italic">אימייל *</label>
+                                                            <input
+                                                                type="email"
+                                                                value={ordererEmail}
+                                                                onChange={(e) => setOrdererEmail(e.target.value)}
+                                                                placeholder="לקבלת קבלה ואישור"
+                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all placeholder:text-stone-300 text-right"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-stone-100 shadow-sm mt-4">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="newsletter"
+                                                        checked={newsletterConsent}
+                                                        onChange={(e) => setNewsletterConsent(e.target.checked)}
+                                                        className="w-5 h-5 mt-0.5 rounded-full border-stone-300 text-david-green focus:ring-david-green cursor-pointer"
+                                                    />
+                                                    <label htmlFor="newsletter" className="text-sm text-stone-600 cursor-pointer select-none leading-relaxed">
+                                                        אשמח לקבל עדכונים על מבצעים, הנחות ומוצרים חדשים (ניוזלטר) 💐
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            {/* Recipient Section (Only for Delivery) */}
+                                            {shippingMethod === 'delivery' && (
+                                                <div className="space-y-4 pt-4 border-t border-stone-100">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className="w-8 h-8 bg-david-green/10 text-david-green rounded-full flex items-center justify-center">
+                                                            <Tag className="w-4 h-4" />
+                                                        </div>
+                                                        <h3 className="text-lg font-bold text-stone-900">פרטי מקבל המשלוח</h3>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-stone-500 mr-1 italic">שם המקבל *</label>
                                                             <input
                                                                 type="text"
-                                                                value={ordererName}
-                                                                onChange={(e) => setOrdererName(e.target.value)}
-                                                                placeholder="שם מלא *"
-                                                                className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
+                                                                value={recipientName}
+                                                                onChange={(e) => setRecipientName(e.target.value)}
+                                                                placeholder="מי מקבל את הפרחים?"
+                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all placeholder:text-stone-300"
                                                             />
-                                                            <div className="grid grid-cols-2 gap-3">
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-stone-500 mr-1 italic">טלפון המקבל *</label>
+                                                            <input
+                                                                type="tel"
+                                                                value={recipientPhone}
+                                                                onChange={(e) => setRecipientPhone(e.target.value)}
+                                                                placeholder="לתיאום המסירה"
+                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all placeholder:text-stone-300 text-right"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    )}
+
+                                    {/* Step 3: Delivery Logistics */}
+                                    {checkoutStep === 'delivery' && (
+                                        <motion.div
+                                            key="delivery-step"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="space-y-8"
+                                        >
+
+                                            {/* Delivery Logistics Content */}
+                                            {shippingMethod === 'delivery' ? (
+                                                <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
+                                                    {/* Location Section */}
+                                                    <div className="space-y-4">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[11px] font-bold text-stone-500 mr-1 italic">עיר / יישוב *</label>
+                                                                <select
+                                                                    value={selectedCity}
+                                                                    onChange={(e) => setSelectedCity(e.target.value)}
+                                                                    className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl"
+                                                                >
+                                                                    <option value="">בחירת עיר...</option>
+                                                                    {Object.keys(SHIPPING_COSTS).sort().map(city => (
+                                                                        <option key={city} value={city}>
+                                                                            {city} ({subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : `₪${SHIPPING_COSTS[city]}`})
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[11px] font-bold text-stone-500 mr-1 italic">כתובת למשלוח *</label>
                                                                 <input
-                                                                    type="tel"
-                                                                    value={ordererPhone}
-                                                                    onChange={(e) => setOrdererPhone(e.target.value)}
-                                                                    placeholder="טלפון נייד *"
-                                                                    className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
-                                                                />
-                                                                <input
-                                                                    type="email"
-                                                                    value={ordererEmail}
-                                                                    onChange={(e) => setOrdererEmail(e.target.value)}
-                                                                    placeholder="אימייל *"
-                                                                    className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
+                                                                    type="text"
+                                                                    value={address}
+                                                                    onChange={(e) => setAddress(e.target.value)}
+                                                                    placeholder="רחוב ומספר בית"
+                                                                    className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all"
                                                                 />
                                                             </div>
+                                                        </div>
 
-                                                            {/* Create Account Checkbox - HIDDEN PER REQUEST */}
-                                                            {false && !isSignedIn && (
-                                                                <div className="flex items-center gap-2 pt-1">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        id="create-account"
-                                                                        className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                                                    />
-                                                                    <label htmlFor="create-account" className="text-xs text-stone-600 cursor-pointer select-none">
-                                                                        פתח חשבון לשמירת הפרטים לפעם הבאה (אופציונלי)
-                                                                    </label>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Newsletter Opt-in (NEW) */}
-                                                            <div className="flex items-start gap-2 pt-2 pb-1">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    id="newsletter"
-                                                                    checked={newsletterConsent}
-                                                                    onChange={(e) => setNewsletterConsent(e.target.checked)}
-                                                                    className="w-4 h-4 mt-0.5 rounded border-stone-300 text-david-green focus:ring-david-green cursor-pointer"
-                                                                />
-                                                                <label htmlFor="newsletter" className="text-xs text-stone-600 cursor-pointer select-none leading-relaxed">
-                                                                    אשמח לקבל עדכונים על מבצעים, הנחות ומוצרים חדשים (ניוזלטר) 💐
-                                                                </label>
-                                                            </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[11px] font-bold text-stone-500 mr-1 italic">הערות למשלוח (קומה, קוד וכו')</label>
+                                                            <textarea
+                                                                value={deliveryNotes}
+                                                                onChange={(e) => setDeliveryNotes(e.target.value)}
+                                                                placeholder="למשל: בבניין עם קוד 1234, להשאיר ליד הדלת..."
+                                                                rows={2}
+                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all resize-none"
+                                                            />
                                                         </div>
                                                     </div>
 
-                                                    {/* 2. Recipient Details - Only for Delivery */}
-                                                    <AnimatePresence>
-                                                        {shippingMethod === 'delivery' && (
-                                                            <motion.div
-                                                                initial={{ height: 0, opacity: 0 }}
-                                                                animate={{ height: 'auto', opacity: 1 }}
-                                                                exit={{ height: 0, opacity: 0 }}
-                                                                className="overflow-hidden"
-                                                            >
-                                                                <div className="space-y-3 pt-3 border-t border-stone-100">
-                                                                    <p className="text-sm font-bold text-stone-900 flex items-center gap-2">
-                                                                        <span className="w-1.5 h-1.5 rounded-full bg-stone-900" />
-                                                                        פרטי מקבל המשלוח
-                                                                    </p>
-                                                                    <div className="space-y-3">
-                                                                        <input
-                                                                            type="text"
-                                                                            value={recipientName}
-                                                                            onChange={(e) => setRecipientName(e.target.value)}
-                                                                            placeholder="שם המקבל *"
-                                                                            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
-                                                                        />
-                                                                        <input
-                                                                            type="tel"
-                                                                            value={recipientPhone}
-                                                                            onChange={(e) => setRecipientPhone(e.target.value)}
-                                                                            placeholder="טלפון המקבל *"
-                                                                            className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 text-right"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-                                                </div>
-
-                                                {/* Address Input - Moved Up */}
-                                                <AnimatePresence>
-                                                    {shippingMethod === 'delivery' && (
-                                                        <motion.div
-                                                            initial={{ height: 0, opacity: 0 }}
-                                                            animate={{ height: 'auto', opacity: 1 }}
-                                                            exit={{ height: 0, opacity: 0 }}
-                                                            className="overflow-hidden border-b border-stone-100 pb-3"
-                                                        >
-                                                            <div className="space-y-3">
-                                                                <div className="space-y-1">
-                                                                    <label className="text-xs text-stone-500">עיר / יישוב *</label>
-                                                                    <select
-                                                                        value={selectedCity}
-                                                                        onChange={(e) => setSelectedCity(e.target.value)}
-                                                                        className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900 dir-rtl"
-                                                                    >
-                                                                        <option value="">בחירת עיר...</option>
-                                                                        {Object.keys(SHIPPING_COSTS).sort().map(city => (
-                                                                            <option key={city} value={city}>
-                                                                                {city} ({subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : `₪${SHIPPING_COSTS[city]}`})
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-                                                                <div className="space-y-1">
-                                                                    <label className="text-xs text-stone-500">כתובת (רחוב ומספר בית) *</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={address}
-                                                                        onChange={(e) => setAddress(e.target.value)}
-                                                                        placeholder="לדוגמה: הרצל 10"
-                                                                        className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-
-                                                {/* Delivery Notes - Shows only for delivery */}
-                                                <AnimatePresence>
-                                                    {shippingMethod === 'delivery' && (
-                                                        <motion.div
-                                                            initial={{ height: 0, opacity: 0 }}
-                                                            animate={{ height: 'auto', opacity: 1 }}
-                                                            exit={{ height: 0, opacity: 0 }}
-                                                            transition={{ duration: 0.2 }}
-                                                            className="overflow-hidden"
-                                                        >
-                                                            <div className="space-y-1 pt-3">
-                                                                <label className="text-xs text-stone-500">
-                                                                    הערות למשלוח (אופציונלי)
-                                                                </label>
-                                                                <textarea
-                                                                    value={deliveryNotes}
-                                                                    onChange={(e) => setDeliveryNotes(e.target.value)}
-                                                                    placeholder="למשל: קוד כניסה לבניין, להשאיר ליד הדלת, לא לצלצל בפעמון..."
-                                                                    maxLength={200}
-                                                                    rows={3}
-                                                                    className="w-full p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all placeholder:text-stone-400 resize-none"
+                                                    {/* Date/Time Section */}
+                                                    <div className="space-y-4 pt-4 border-t border-stone-100">
+                                                        <p className="text-sm font-bold text-stone-900">מועד משלוח מבוקש</p>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[11px] font-bold text-stone-500 mr-1 italic">תאריך הגעה</label>
+                                                                <input
+                                                                    type="date"
+                                                                    value={date}
+                                                                    min={minDeliveryDate}
+                                                                    onChange={(e) => setDate(e.target.value)}
+                                                                    className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900"
                                                                 />
-                                                                <p className="text-xs text-stone-400 text-left">
-                                                                    {deliveryNotes.length}/200 תווים
-                                                                </p>
                                                             </div>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-
-                                                {/* Delivery Date & Time Selection */}
-                                                <div className="space-y-3 pt-2 border-t border-stone-100">
-                                                    <p className="text-sm font-bold text-stone-900">מועד {shippingMethod === 'delivery' ? 'משלוח' : 'איסוף'} רצוי</p>
-                                                    <div className="grid grid-cols-2 gap-3">
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[11px] font-bold text-stone-500 mr-1 italic">חלון זמן</label>
+                                                                <select
+                                                                    value={time}
+                                                                    onChange={(e) => setTime(e.target.value)}
+                                                                    disabled={!date || availableTimeSlots.slots.length === 0}
+                                                                    className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl disabled:opacity-50"
+                                                                >
+                                                                    <option value="">בחירת שעה</option>
+                                                                    {availableTimeSlots.slots.map((slot) => (
+                                                                        <option key={slot} value={slot}>{slot}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        {!availableTimeSlots.slots.length && date && (
+                                                            <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm border border-red-100 font-medium tracking-tight">
+                                                                {availableTimeSlots.reason || 'אין משלוחים זמינים למועד זה.'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
+                                                    <div className="p-6 bg-stone-100 rounded-3xl border border-stone-200 text-center space-y-3">
+                                                        <MapPin className="w-8 h-8 text-stone-400 mx-auto" />
                                                         <div className="space-y-1">
-                                                            <label className="text-xs text-stone-500">תאריך</label>
+                                                            <p className="font-bold text-stone-900 text-lg">איסוף עצמי מהחנות</p>
+                                                            <p className="text-sm text-stone-500">העצמאות 58, אשקלון (פרחי דוד)</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        <p className="text-sm font-bold text-stone-900">מתי תרצו לבוא לאסוף?</p>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <input
                                                                 type="date"
                                                                 value={date}
-                                                                min={(() => {
-                                                                    return minDeliveryDate;
-                                                                })()}
+                                                                min={minDeliveryDate}
                                                                 onChange={(e) => setDate(e.target.value)}
-                                                                className="w-full p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900"
+                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900"
                                                             />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-xs text-stone-500">
-                                                                שעה
-                                                            </label>
                                                             <select
                                                                 value={time}
                                                                 onChange={(e) => setTime(e.target.value)}
                                                                 disabled={!date || availableTimeSlots.slots.length === 0}
-                                                                className="w-full p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 transition-all text-stone-900 dir-rtl disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl disabled:opacity-50"
                                                             >
-                                                                <option value="">בחירת שעה</option>
+                                                                <option value="">בחירת שעת איסוף</option>
                                                                 {availableTimeSlots.slots.map((slot) => (
-                                                                    <option key={slot} value={slot}>
-                                                                        {slot}
-                                                                    </option>
+                                                                    <option key={slot} value={slot}>{slot}</option>
                                                                 ))}
                                                             </select>
-                                                            {date && availableTimeSlots.slots.length === 0 && (
-                                                                <p className="text-xs text-red-500 mt-1 font-medium bg-red-50 p-2 rounded border border-red-100">
-                                                                    {availableTimeSlots.reason || 'אין משלוחים זמינים למועד זה.'}
-                                                                </p>
-                                                            )}
                                                         </div>
                                                     </div>
-                                                    {preOrderConstraintDate && (
-                                                        <div className="bg-david-green/5 border border-david-green/10 p-3 rounded-lg flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
-                                                            <div className="bg-david-green text-white text-[8px] font-bold px-1.5 py-0.5 rounded mt-0.5">INFO</div>
-                                                            <p className="text-[11px] text-david-green/80 leading-relaxed">
-                                                                מועד המשלוח הוגבל ל-{preOrderConstraintDate.toLocaleDateString('he-IL')} ומעלה עקב מוצרים בהזמנה מוקדמת הנמצאים בסל.
-                                                            </p>
-                                                        </div>
-                                                    )}
                                                 </div>
+                                            )}
 
-                                                {/* Payment Info Notice */}
-                                                <div className="pt-2 border-t border-stone-100">
-                                                    <div className="bg-stone-50 p-4 rounded-lg border border-stone-200">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <Lock className="w-4 h-4 text-stone-600" />
-                                                            <p className="text-sm font-bold text-stone-900">תשלום מאובטח</p>
-                                                        </div>
-                                                        <p className="text-xs text-stone-500">התשלום יתבצע בכרטיס אשראי בסביבה מוצפנת ומאובטחת</p>
-                                                    </div>
+                                            {/* Security Badge */}
+                                            <div className="p-4 bg-stone-100 rounded-3xl flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                                    <Lock className="w-5 h-5 text-stone-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-stone-900">תשלום מאובטח PCI</p>
+                                                    <p className="text-[10px] text-stone-500">המידע שלך מוצפן ומאובטח ברמה הגבוהה ביותר</p>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -805,88 +821,78 @@ export default function CartDrawer() {
                             )}
                         </div>
 
-                        {/* Footer - Fixed at bottom with Glassmorphism */}
+                        {/* Footer - Optimized for Mobile Steps */}
                         {items.length > 0 && (
-                            <div className="p-8 border-t border-white/50 bg-white/85 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-20 space-y-6">
-                                {/* Coupon Input (Always Visible) */}
-                                {!appliedCoupon ? (
-                                    <div className="flex gap-2">
-                                        <div className="relative flex-1">
-                                            <Tag className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                                            <input
-                                                type="text"
-                                                value={couponCode}
-                                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                                                placeholder="יש לך קוד קופון?"
-                                                className="w-full bg-stone-50 border border-stone-200 rounded-lg py-2 pr-10 pl-3 text-sm focus:outline-none focus:border-david-green uppercase"
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={handleApplyCoupon}
-                                            disabled={!couponCode || couponLoading}
-                                            className="bg-stone-900 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-                                        >
-                                            {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'החל'}
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-between bg-green-50 border border-green-100 p-3 rounded-lg animate-in fade-in zoom-in-95">
-                                        <div className="flex items-center gap-2 text-green-700">
-                                            <Tag className="w-4 h-4" />
-                                            <span className="font-bold text-sm tracking-wide">{appliedCoupon.code}</span>
-                                            <span className="text-xs bg-white px-1.5 py-0.5 rounded shadow-sm">
-                                                -{appliedCoupon.type === 'PERCENTAGE' ? '' : '₪'}{appliedCoupon.amount}{appliedCoupon.type === 'PERCENTAGE' ? '%' : ''}
-                                            </span>
-                                        </div>
-                                        <button
-                                            onClick={handleRemoveCoupon}
-                                            className="text-green-700 hover:bg-green-100 p-1.5 rounded-full transition-colors"
-                                            title="הסר קופון"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
+                            <div className="p-6 md:p-8 border-t border-white/50 bg-white/85 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-20 space-y-4 shrink-0">
+                                {/* Coupon Input - Only on first step */}
+                                {checkoutStep === 'cart' && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        {!appliedCoupon ? (
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <Tag className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                                                    <input
+                                                        type="text"
+                                                        value={couponCode}
+                                                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                                                        placeholder="יש לך קוד קופון?"
+                                                        className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 pr-10 pl-3 text-sm focus:outline-none focus:border-david-green uppercase"
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={handleApplyCoupon}
+                                                    disabled={!couponCode || couponLoading}
+                                                    className="bg-stone-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50 transition-all hover:bg-black active:scale-[0.97]"
+                                                >
+                                                    {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'החל'}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-between bg-green-50 border border-green-100 p-3 rounded-xl animate-in fade-in zoom-in-95">
+                                                <div className="flex items-center gap-2 text-green-700">
+                                                    <Tag className="w-4 h-4" />
+                                                    <span className="font-bold text-sm tracking-wide">{appliedCoupon.code}</span>
+                                                    <span className="text-xs bg-white px-1.5 py-0.5 rounded shadow-sm font-mono">
+                                                        -{appliedCoupon.type === 'PERCENTAGE' ? '' : '₪'}{appliedCoupon.amount}{appliedCoupon.type === 'PERCENTAGE' ? '%' : ''}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={handleRemoveCoupon}
+                                                    className="text-green-700 hover:bg-green-100 p-1.5 rounded-full transition-colors"
+                                                    title="הסר קופון"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
                                 <AnimatePresence mode="wait">
-                                    {/* Totals Box for Cart View */}
+                                    {/* Step 1 Footer */}
                                     {checkoutStep === 'cart' && (
                                         <motion.div
                                             key="cart-footer"
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 20 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="space-y-6"
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.98 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="space-y-4"
                                         >
-                                            {/* Upsell Section - Horizontal Scroll */}
+                                            {/* Upsell Preview on Step 1 */}
                                             {upsellItems.length > 0 && (
-                                                <div className="space-y-3 border-b border-stone-100/50 pb-5">
-                                                    <div className="flex items-center justify-between px-1">
-                                                        <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest opacity-80">שדרוגים מומלצים</h3>
-                                                        <span className="text-[9px] text-stone-400">גלול למטה</span>
-                                                    </div>
-                                                    <div className="flex gap-2.5 overflow-x-auto scrollbar-hide py-1 -mx-2 px-2 snap-x mask-linear-fade">
-                                                        {upsellItems.map((item) => (
-                                                            <div key={item.id} className="snap-start shrink-0 w-16 flex flex-col gap-1 group cursor-pointer" onClick={() => handleAddUpsell(item)}>
-                                                                <div className={`relative aspect-square rounded-md overflow-hidden bg-stone-50 border transition-all duration-300 ${addedUpsellId === item.id ? 'border-david-green ring-1 ring-david-green' : 'border-stone-200 group-hover:border-stone-400'}`}>
+                                                <div className="px-1 -mt-2">
+                                                    <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -mx-2 px-2 mask-linear-fade">
+                                                        {upsellItems.slice(0, 4).map((item) => (
+                                                            <div key={item.id} className="shrink-0 w-14 group cursor-pointer" onClick={() => handleAddUpsell(item)}>
+                                                                <div className={`relative aspect-square rounded-lg overflow-hidden bg-white border transition-all duration-300 ${addedUpsellId === item.id ? 'border-david-green ring-1 ring-david-green' : 'border-stone-100'}`}>
                                                                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-
-                                                                    {/* Add Button / Success State */}
-                                                                    <div className={`absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300 ${addedUpsellId === item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                                                        <div className={`rounded-full p-1 shadow-sm transition-all duration-300 ${addedUpsellId === item.id ? 'bg-david-green text-white scale-110' : 'bg-white text-stone-900 scale-90'}`}>
-                                                                            {addedUpsellId === item.id ? (
-                                                                                <Check className="w-3 h-3" strokeWidth={3} />
-                                                                            ) : (
-                                                                                <Plus className="w-3 h-3" strokeWidth={2} />
-                                                                            )}
+                                                                    {addedUpsellId === item.id && (
+                                                                        <div className="absolute inset-0 bg-david-green/20 flex items-center justify-center">
+                                                                            <Check className="w-4 h-4 text-david-green bg-white rounded-full p-0.5" strokeWidth={4} />
                                                                         </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="text-center space-y-0.5 px-0.5">
-                                                                    <p className="text-[9px] leading-tight font-medium text-stone-900 line-clamp-1">{item.name}</p>
-                                                                    <p className="text-[9px] text-stone-500 font-mono">₪{item.price}</p>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -894,80 +900,92 @@ export default function CartDrawer() {
                                                 </div>
                                             )}
 
-
-                                            <div className="space-y-1">
-                                                <div className="flex justify-between items-center text-sm text-stone-600">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center text-sm font-medium text-stone-500">
                                                     <span>סכום ביניים</span>
-                                                    <span>₪{subtotal.toFixed(2)}</span>
+                                                    <span>₪{subtotal.toFixed(0)}</span>
                                                 </div>
-                                                {appliedCoupon && (
-                                                    <div className="flex justify-between items-center text-sm text-green-600 font-medium">
-                                                        <span>הנחה</span>
-                                                        <span>-₪{appliedCoupon.amount.toFixed(2)}</span>
+                                                <div className="flex justify-between items-end">
+                                                    <div>
+                                                        <span className="text-xl md:text-2xl font-serif font-bold text-stone-900 italic tracking-tight">₪{finalTotal.toFixed(0)}</span>
+                                                        <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">סה"כ בעגלה</p>
                                                     </div>
-                                                )}
-                                                <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900 pt-2 border-t border-stone-100">
-                                                    <span>{'סה"כ לתשלום'}</span>
-                                                    <span>₪{finalTotal.toFixed(2)}</span>
+                                                    <button
+                                                        onClick={() => setCheckoutStep('contact')}
+                                                        className="bg-david-green text-david-beige px-8 py-3.5 rounded-2xl text-sm font-bold tracking-widest hover:bg-david-green/90 transition-all shadow-xl shadow-david-green/20 active:scale-[0.98] flex items-center gap-2"
+                                                    >
+                                                        המשך לפרטים
+                                                        <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                    </button>
                                                 </div>
-                                                <p className="text-xs text-stone-500">לא כולל משלוח (יחושב בשלב הבא)</p>
                                             </div>
-
-
-                                            <button
-                                                onClick={() => setCheckoutStep('details')}
-                                                className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
-                                            >
-                                                <span>המשך לפרטי משלוח</span>
-                                                <span className="text-lg">→</span>
-                                            </button>
                                         </motion.div>
                                     )}
 
-                                    {/* Totals & Checkout Button for Details View */}
-                                    {checkoutStep === 'details' && (
+                                    {/* Step 2 Footer */}
+                                    {checkoutStep === 'contact' && (
                                         <motion.div
-                                            key="details-footer"
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 20 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="space-y-6"
+                                            key="contact-footer"
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.98 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="space-y-4"
                                         >
-                                            <div className="space-y-2 pt-2">
-                                                <div className="flex justify-between text-stone-500 text-sm">
-                                                    <span>סכום ביניים</span>
-                                                    <span>₪{cartTotal.toFixed(2)}</span>
+                                            <div className="flex justify-between items-end">
+                                                <div>
+                                                    <span className="text-xl md:text-2xl font-serif font-bold text-stone-900 italic tracking-tight">₪{finalTotal.toFixed(0)}</span>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">סכום לתשלום</p>
                                                 </div>
-                                                <div className="flex justify-between text-stone-500 text-sm">
-                                                    <span>משלוח</span>
-                                                    <span>{currentShippingCost > 0 ? `₪${currentShippingCost.toFixed(2)}` : 'חינם'}</span>
+                                                <button
+                                                    onClick={() => setCheckoutStep('delivery')}
+                                                    disabled={ordererName.length < 2 || ordererPhone.length < 9 || (shippingMethod === 'delivery' && (recipientName.length < 2 || recipientPhone.length < 9))}
+                                                    className="bg-david-green text-david-beige px-8 py-3.5 rounded-2xl text-sm font-bold tracking-widest hover:bg-david-green/90 transition-all shadow-xl shadow-david-green/20 active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:grayscale"
+                                                >
+                                                    {shippingMethod === 'delivery' ? 'המשך למשלוח' : 'המשך לאיסוף'}
+                                                    <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Step 3 Footer */}
+                                    {checkoutStep === 'delivery' && (
+                                        <motion.div
+                                            key="delivery-footer"
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.98 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="space-y-4"
+                                        >
+                                            <div className="space-y-2 pt-1 border-t border-stone-100">
+                                                <div className="flex justify-between text-stone-500 text-xs font-bold">
+                                                    <span>סה"כ מוצרים</span>
+                                                    <span>₪{finalTotal.toFixed(0)}</span>
                                                 </div>
-                                                <div className="flex justify-between items-center text-xl font-serif font-bold text-stone-900 pt-3 border-t border-stone-100">
-                                                    <span>{'סה"כ'}</span>
-                                                    <span>₪{(finalTotal + currentShippingCost).toFixed(2)}</span>
+                                                <div className="flex justify-between text-stone-500 text-xs font-bold">
+                                                    <span>דמי משלוח</span>
+                                                    <span>{currentShippingCost > 0 ? `₪${currentShippingCost.toFixed(0)}` : 'חינם'}</span>
                                                 </div>
                                             </div>
 
-                                            <button
-                                                onClick={handleCheckout}
-                                                disabled={
-                                                    ordererName.length < 2 ||
-                                                    ordererPhone.length < 9 ||
-                                                    ordererEmail.length < 5 ||
-                                                    !time ||
-                                                    (shippingMethod === 'delivery' && (
-                                                        !address ||
-                                                        !selectedCity ||
-                                                        recipientName.length < 2 ||
-                                                        recipientPhone.length < 9
-                                                    ))
-                                                }
-                                                className="w-full bg-david-green text-david-beige py-4 text-sm font-bold tracking-widest uppercase hover:bg-david-green/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
-                                            >
-                                                <Lock className="w-4 h-4" />
-                                                <span>מעבר לתשלום מאובטח</span>
-                                            </button>
+                                            <div className="flex justify-between items-center gap-4">
+                                                <div>
+                                                    <span className="text-2xl md:text-3xl font-serif font-bold text-stone-900 italic tracking-tight">₪{(finalTotal + currentShippingCost).toFixed(0)}</span>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">סה"כ לתשלום</p>
+                                                </div>
+                                                <button
+                                                    onClick={handleCheckout}
+                                                    disabled={
+                                                        !time || !date || (shippingMethod === 'delivery' && (!address || !selectedCity))
+                                                    }
+                                                    className="flex-1 bg-stone-900 text-david-beige py-4 rounded-2xl text-sm font-bold tracking-widest hover:bg-stone-800 transition-all shadow-xl shadow-stone-900/20 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+                                                >
+                                                    <Lock className="w-4 h-4" />
+                                                    מעבר לתשלום
+                                                </button>
+                                            </div>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -975,9 +993,8 @@ export default function CartDrawer() {
                         )}
                     </motion.div>
                 </>
-            )
-            }
-        </AnimatePresence >
+            )}
+        </AnimatePresence>
     );
 }
 

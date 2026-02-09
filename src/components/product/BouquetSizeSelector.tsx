@@ -43,12 +43,14 @@ export default function BouquetSizeSelector({
                     const variation = variations[size];
                     if (!variation) return null;
 
+                    const isStocked = variation.stock === undefined || variation.stock > 0;
                     const isActive = selectedSize === size;
                     const { image, alt } = SIZE_MAPPING[size];
 
                     return (
                         <button
                             key={size}
+                            disabled={!isStocked}
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -59,10 +61,18 @@ export default function BouquetSizeSelector({
                                 border border-[#C5A572] h-full group
                                 ${isActive
                                     ? 'bg-[#1B3322] text-white shadow-md scale-[1.02]'
-                                    : 'bg-white text-stone-900 hover:shadow-sm'
+                                    : isStocked
+                                        ? 'bg-white text-stone-900 hover:shadow-sm'
+                                        : 'bg-stone-50 text-stone-400 grayscale border-stone-200 cursor-not-allowed'
                                 }
                             `}
                         >
+                            {/* Out of Stock Label */}
+                            {!isStocked && (
+                                <div className="absolute top-2 right-2 bg-stone-900 text-white text-[8px] font-bold px-1 py-0.5 z-10">
+                                    אזל
+                                </div>
+                            )}
                             {/* Illustration */}
                             <div className="relative w-28 h-28 md:w-48 md:h-48 mb-2 mt-1 transition-all duration-300">
                                 <Image
