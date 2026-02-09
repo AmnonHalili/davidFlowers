@@ -237,6 +237,7 @@ export async function POST(req: Request) {
 async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId: string): Promise<boolean> {
     const payPlusApiKey = process.env.PAYPLUS_API_KEY || process.env.PAY_PLUS_API_KEY;
     const payPlusSecretKey = process.env.PAYPLUS_SECRET_KEY || process.env.PAY_PLUS_SECRET_KEY;
+    const payPlusTerminalId = process.env.PAYPLUS_TERMINAL_ID;
 
     if (!payPlusApiKey || !payPlusSecretKey) {
         console.warn('[PAYPLUS_WEBHOOK] Missing API keys - skipping verification in dev/mock mode');
@@ -246,7 +247,7 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
     try {
         console.log(`[PAYPLUS_VERIFY] Verifying transaction ${transactionUid} for order ${expectedOrderId}`);
 
-        // Using PascalCase endpoint and ensuring headers are identical to checkout flow
+        // Try Transactions/GetStatus with terminal_uid
         const response = await fetch(
             `https://restapi.payplus.co.il/api/v1.0/Transactions/GetStatus`,
             {
@@ -261,24 +262,30 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    transaction_uid: transactionUid
+                    transaction_uid: transactionUid,
+                    terminal_uid: payPlusTerminalId // Some endpoints require identifying the terminal
                 })
             }
         );
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`[PAYPLUS_VERIFY] API error: ${response.status} - ${errorText}`);
 
-            // SPECIAL CASE: If 403 happens, we log it but might need a fallback if the webhook is clearly valid
-            await logger.error('PayPlus Verification API Error', 'PayPlusVerify', {
-                status: response.status,
-                body: errorText,
-                endpoint: '/api/v1.0/Transactions/GetStatus'
-            });
-
-            // If we get a 403, it's likely an IP or permission issue with the 'GetStatus' API specifically.
-            // We return false here, but the main loop will handle the decision to proceed.
+            // If it's a 403, it's likely IP restriction on PayPlus side (common with Vercel)
+            // We downgrade this to WARN because the system handles it via payload verification
+            if (response.status === 403) {
+                console.warn(`[PAYPLUS_VERIFY] 403 Forbidden: API restricted (likely IP). Falling back to payload verification.`);
+                await logger.warn('PayPlus Verification API Restricted (403)', 'PayPlusVerify', {
+                    note: 'PayPlus GetStatus API returned 403. This is often an IP whitelist requirement. Falling back to secure payload check.',
+                    transactionUid
+                });
+            } else {
+                console.error(`[PAYPLUS_VERIFY] API error: ${response.status} - ${errorText}`);
+                await logger.error('PayPlus Verification API Error', 'PayPlusVerify', {
+                    status: response.status,
+                    body: errorText
+                });
+            }
             return false;
         }
 
@@ -290,9 +297,7 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
             return false;
         }
 
-        // Handle case where result.data or result.data.transaction might be different
         const transaction = result.data;
-
         if (!transaction) {
             await logger.error('Verification Failed: No Transaction Data', 'PayPlusVerify', { result });
             return false;
