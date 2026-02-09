@@ -4,10 +4,18 @@ import { format } from 'date-fns';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLogsPage() {
-    const logs = await prisma.systemLog.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 100
-    });
+    let logs = [];
+    let error = null;
+
+    try {
+        logs = await prisma.systemLog.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 100
+        });
+    } catch (e: any) {
+        console.error('Failed to fetch logs:', e);
+        error = e.message;
+    }
 
     return (
         <div className="p-8 max-w-7xl mx-auto" dir="rtl">
@@ -34,8 +42,8 @@ export default async function AdminLogsPage() {
                                     </td>
                                     <td className="p-4 whitespace-nowrap">
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${log.level === 'ERROR' ? 'bg-red-100 text-red-700' :
-                                                log.level === 'WARN' ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-blue-50 text-blue-700'
+                                            log.level === 'WARN' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-blue-50 text-blue-700'
                                             }`}>
                                             {log.level}
                                         </span>
@@ -58,7 +66,16 @@ export default async function AdminLogsPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {logs.length === 0 && (
+                            {error && (
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-red-500 bg-red-50">
+                                        שגיאה בטעינת הלוגים: {error}
+                                        <br />
+                                        <span className="text-xs text-stone-500">נסה לרענן את העמוד או לבצע Deploy מחדש</span>
+                                    </td>
+                                </tr>
+                            )}
+                            {!error && logs.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="p-8 text-center text-stone-400">
                                         אין עדיין לוגים במערכת.
