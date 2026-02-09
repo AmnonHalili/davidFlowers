@@ -22,6 +22,7 @@ export async function POST(req: Request) {
             ordererEmail, // New
             desiredDeliveryDate,
             deliveryNotes,
+            cardMessage,
             couponId,
             selectedCity,
             shippingCost: clientShippingCost = 0,
@@ -194,6 +195,7 @@ export async function POST(req: Request) {
                 ordererEmail,
                 desiredDeliveryDate: desiredDeliveryDate ? new Date(desiredDeliveryDate) : null,
                 deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null,
+                cardMessage: cardMessage || null,
                 ...(couponId && { coupon: { connect: { id: couponId } } }),
                 newsletterConsent: newsletterConsent || false, // Added newsletterConsent
                 items: {

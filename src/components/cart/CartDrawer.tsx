@@ -137,6 +137,8 @@ export default function CartDrawer() {
     const [time, setTime] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState(''); // 🆕 הערות למשלוח
+    const [cardMessage, setCardMessage] = useState(''); // ✉️ כרטיס ברכה
+    const [isAnonymous, setIsAnonymous] = useState(false); // 🕵️‍♂️ הזמנה אנונימית
     const [newsletterConsent, setNewsletterConsent] = useState(true); // 🆕 הסכמה לדיוור
 
     const [upsellItems, setUpsellItems] = useState<UpsellItem[]>([]);
@@ -344,6 +346,7 @@ export default function CartDrawer() {
                     ordererEmail,
                     desiredDeliveryDate: date && time ? new Date(`${date}T${time.split(' - ')[0]}`).toISOString() : null,
                     deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null, // 🆕
+                    cardMessage: isAnonymous ? `${cardMessage}\n(נשלח באופן אנונימי)` : cardMessage, // ✉️
                     couponId: appliedCoupon?.id,
                     selectedCity: shippingMethod === 'delivery' ? selectedCity : null,
                     shippingCost: currentShippingCost,
@@ -813,6 +816,67 @@ export default function CartDrawer() {
                                                 <div>
                                                     <p className="text-sm font-bold text-stone-900">תשלום מאובטח PCI</p>
                                                     <p className="text-[10px] text-stone-500">המידע שלך מוצפן ומאובטח ברמה הגבוהה ביותר</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Greeting Card Section */}
+                                            <div className="space-y-4 pt-6 mt-6 border-t border-stone-100">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                                        </div>
+                                                        <h3 className="text-lg font-bold text-stone-900">כרטיס ברכה חגיגי</h3>
+                                                    </div>
+                                                    <span className={`text-[10px] font-mono ${cardMessage.length > 300 ? 'text-red-500' : 'text-stone-400'}`}>
+                                                        {cardMessage.length}/350
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                        {[
+                                                            { label: 'מזל טוב! 🎂', text: 'מזל טוב! מאחל/ת לך המון בריאות, אושר ושמחה.' },
+                                                            { label: 'יום הולדת שמח 🎉', text: 'יום הולדת שמח! שכל משאלות לבך יתגשמו.' },
+                                                            { label: 'אוהב/ת אותך ❤️', text: 'רציתי רק להגיד כמה אני אוהב/ת אותך.' },
+                                                            { label: 'תודה רבה 🙏', text: 'תודה רבה על הכל, מעריך/ה מאוד!' }
+                                                        ].map((template) => (
+                                                            <button
+                                                                key={template.label}
+                                                                type="button"
+                                                                onClick={() => setCardMessage(template.text)}
+                                                                className="py-1.5 px-2 bg-stone-50 border border-stone-100 rounded-lg text-[10px] text-stone-600 hover:border-david-green hover:bg-white transition-all text-center"
+                                                            >
+                                                                {template.label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    <textarea
+                                                        value={cardMessage}
+                                                        onChange={(e) => setCardMessage(e.target.value.slice(0, 350))}
+                                                        placeholder="כתבו כאן את הברכה שלכם (אופציונלי)..."
+                                                        rows={4}
+                                                        className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all resize-none placeholder:text-stone-300"
+                                                    />
+
+                                                    <label className="flex items-center gap-3 p-4 bg-amber-50/30 rounded-2xl border border-amber-100/50 cursor-pointer group hover:bg-amber-50/50 transition-colors">
+                                                        <div className="relative flex items-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isAnonymous}
+                                                                onChange={(e) => setIsAnonymous(e.target.checked)}
+                                                                className="sr-only"
+                                                            />
+                                                            <div className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${isAnonymous ? 'bg-david-green' : 'bg-stone-300'}`}>
+                                                                <div className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-300 ${isAnonymous ? '-translate-x-4' : 'translate-x-0'}`} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-bold text-stone-900 group-hover:text-david-green transition-colors">שליחת כרטיס אנונימי</p>
+                                                            <p className="text-[10px] text-stone-500">בחירה זו לא תחשוף את שמכם על גבי כרטיס הברכה</p>
+                                                        </div>
+                                                    </label>
                                                 </div>
                                             </div>
                                         </motion.div>

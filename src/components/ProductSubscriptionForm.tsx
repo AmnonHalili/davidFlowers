@@ -19,6 +19,7 @@ interface ProductSubscriptionFormProps {
     name: string;
     price: number;
     image: string;
+    stock: number;
     availableFrom?: Date | string | null;
     allowPreorder?: boolean;
     isVariablePrice?: boolean;
@@ -34,7 +35,6 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   const [purchaseType, setPurchaseType] = useState<PurchaseType>('ONETIME');
   const [frequency, setFrequency] = useState<Frequency>('WEEKLY');
   const [deliveryDay, setDeliveryDay] = useState<DayOfWeek>('FRIDAY');
-  const [giftNote, setGiftNote] = useState('');
   const [isInscriptionModalOpen, setIsInscriptionModalOpen] = useState(false);
 
   // Size Variation State
@@ -76,6 +76,14 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   const isFuture = launchDate && launchDate > now;
   const canPreorder = isFuture && product.allowPreorder;
   const isLocked = isFuture && !product.allowPreorder;
+
+  // Internal out of stock calculation for safety/consistency
+  const variations = product.variations as Record<string, any> | null;
+  const totalVariationStock = product.isVariablePrice && variations
+    ? Object.values(variations).reduce((sum: number, v: any) => sum + (parseInt(v.stock) || 0), 0)
+    : Number(product.stock);
+
+  const isOutOfStock = totalVariationStock <= 0;
 
   const handleAddToCart = () => {
     if (isLocked) return;
@@ -335,17 +343,6 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
         maxChars={product.maxPersonalizationChars || 50}
       />
 
-      {/* Gift Note */}
-      <div className="space-y-3">
-        <label className="text-xs uppercase tracking-wider font-medium text-stone-900">כרטיס ברכה (אופציונלי)</label>
-        <textarea
-          value={giftNote}
-          onChange={(e) => setGiftNote(e.target.value)}
-          rows={3}
-          className="w-full border border-stone-200 bg-transparent p-3 text-sm focus:border-stone-900 focus:ring-0 transition-colors placeholder:text-stone-300 resize-none"
-          placeholder="כתבו כאן את הברכה שלכם..."
-        />
-      </div>
 
       <button
         ref={mainButtonRef}

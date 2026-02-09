@@ -38,7 +38,16 @@ export default async function EditProductPage({ params }: { params: { id: string
                 <p className="text-stone-500 mt-2">עדכון פרטי מוצר: {product.name}</p>
             </div>
 
-            <EditProductForm product={product} availableCategories={categories} />
+            {/* Normalize product to handle Decimal serialization */}
+            <EditProductForm
+                product={{
+                    ...product,
+                    price: Number(product.price),
+                    salePrice: product.salePrice ? Number(product.salePrice) : null,
+                    stock: Number(product.stock)
+                }}
+                availableCategories={categories}
+            />
         </div>
     );
 }

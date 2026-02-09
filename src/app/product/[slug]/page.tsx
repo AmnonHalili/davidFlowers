@@ -86,6 +86,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
     const mainImage = product.images.find((img: any) => img.isMain)?.url || product.images[0]?.url || '';
     const galleryImages = product.images.filter((img: any) => !img.isMain);
 
+    const variations = product.variations as Record<string, any> | null;
+    const totalVariationStock = product.isVariablePrice && variations
+        ? Object.values(variations).reduce((sum: number, v: any) => sum + (parseInt(v.stock) || 0), 0)
+        : Number(product.stock);
+
+    const isOutOfStock = totalVariationStock <= 0;
+
 
     const { price: displayPrice, isOnSale, regularPrice } = calculateProductPrice({
         price: product.price,
@@ -231,12 +238,31 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
                         {/* Purchase Logic */}
                         <div id="purchase-form" className="border-t border-stone-100 pt-8 md:pt-10">
-                            {product.stock > 0 ? (
+                            {isOutOfStock ? (
+                                <div className="bg-stone-50 border border-stone-100 p-8 rounded-sm text-center space-y-3 relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-[0.03] bg-[url('/pattern-grid.svg')] pointer-events-none" />
+                                    <div className="relative z-10">
+                                        <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-red-500 bg-red-50 px-2 py-1 mb-2">
+                                            SOLD OUT
+                                        </span>
+                                        <h3 className="font-serif text-2xl text-stone-900">המוצר אזל מהמלאי זמנית</h3>
+                                        <p className="text-sm text-stone-500 max-w-xs mx-auto mt-2">
+                                            מצטערים, כל הגדלים של מוצר זה נגמרו. אנחנו עובדים על חידוש המלאי - חזרו להתעדכן בקרוב!
+                                        </p>
+                                    </div>
+                                    <div className="pt-4">
+                                        <button disabled className="w-full bg-stone-100 text-stone-400 py-4 font-medium tracking-wide cursor-not-allowed flex items-center justify-center gap-2">
+                                            <span>אזל מהמלאי</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
                                 <ProductSubscriptionForm product={{
                                     id: product.id,
                                     name: product.name,
                                     price: Number(displayPrice), // Use calculated price
                                     image: mainImage,
+                                    stock: product.stock, // Pass stock
                                     availableFrom: product.availableFrom,
                                     allowPreorder: product.allowPreorder,
                                     isVariablePrice: product.isVariablePrice,
@@ -245,11 +271,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                     isPersonalizationEnabled: product.isPersonalizationEnabled,
                                     maxPersonalizationChars: product.maxPersonalizationChars
                                 }} />
-                            ) : (
-                                <div className="bg-stone-100 p-6 rounded-lg text-center space-y-2">
-                                    <span className="block text-stone-900 font-medium">המוצר אזל מהמלאי זמנית</span>
-                                    <p className="text-sm text-stone-500">אנחנו עובדים על חידוש המלאי. חזור להתעדכן בקרוב!</p>
-                                </div>
                             )}
                         </div>
 

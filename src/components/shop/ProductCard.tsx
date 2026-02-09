@@ -39,7 +39,13 @@ export default function ProductCard({
     isVariablePrice, variations, isPersonalizationEnabled, maxPersonalizationChars,
     categories, ...props
 }: ProductCardProps) {
-    const isOutOfStock = stock <= 0;
+    // For variable products, we sum all variations to see if any are in stock.
+    // This provides a safety net if the aggregate 'stock' field is not yet updated.
+    const totalVariationStock = isVariablePrice && variations
+        ? Object.values(variations).reduce((sum: number, v: any) => sum + (parseInt(v.stock) || 0), 0)
+        : stock;
+
+    const isOutOfStock = totalVariationStock <= 0;
     const { addItem } = useCart();
 
     const { price: displayPrice, isOnSale, regularPrice, type, discountLabel } = calculateProductPrice({
