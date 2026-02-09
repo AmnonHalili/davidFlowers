@@ -146,13 +146,19 @@ export async function POST(req: Request) {
                             stock: newVariantStock
                         };
 
+                        // RECALCULATE AGGREGATE STOCK
+                        // We sum all variations to ensure the product's main 'stock' field is accurate.
+                        // If all variation stocks are 0, the aggregate stock will be 0, marking the product as Out of Stock.
+                        const newTotalStock = Object.values(variations).reduce((sum: number, v: any) => sum + (parseInt(v.stock) || 0), 0);
+
                         await prisma.product.update({
                             where: { id: product.id },
                             data: {
-                                variations: variations
+                                variations: variations,
+                                stock: newTotalStock // Aggregated stock across all sizes
                             }
                         });
-                        console.log(`[STOCK_REDUCTION] Updated variation ${variantKeyToUpdate} for product ${product.name}. New stock: ${newVariantStock}`);
+                        console.log(`[STOCK_REDUCTION] Updated variation ${variantKeyToUpdate} for product ${product.name}. New total stock: ${newTotalStock}`);
 
                     } else {
                         console.warn(`[STOCK_REDUCTION] Could not match variation for product ${product.name} with size "${item.selectedSize}"`);
