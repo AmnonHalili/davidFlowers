@@ -258,6 +258,53 @@ export default function CartDrawer() {
         }
     }, [isOpen, isSignedIn, clerkUser, address, ordererEmail, ordererName, ordererPhone]);
 
+    // -------------------------------------------------------------------------
+    // 💾 AUTO-FILL FEATURE (Professional Implementation)
+    // -------------------------------------------------------------------------
+
+    // 1. Load from Storage on Mount (only if fields are empty and user is not fully logged in with conflicting data)
+    useEffect(() => {
+        if (isOpen && !isSignedIn) {
+            try {
+                const savedData = localStorage.getItem('davidFlowers_customerInfo');
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    // Only fill if state is currently empty to avoid overwriting user input
+                    if (parsed.name && !ordererName) setOrdererName(parsed.name);
+                    if (parsed.phone && !ordererPhone) setOrdererPhone(parsed.phone);
+                    if (parsed.email && !ordererEmail) setOrdererEmail(parsed.email);
+                    if (parsed.city && !selectedCity) setSelectedCity(parsed.city);
+                    if (parsed.address && !address) setAddress(parsed.address);
+                }
+            } catch (error) {
+                console.error('Failed to load saved customer info', error);
+            }
+        }
+    }, [isOpen, isSignedIn]); // Run once when drawer opens
+
+    // 2. Save to Storage on Change (Debounced for performance)
+    useEffect(() => {
+        // Don't save empty states if they haven't been touched, but here we just save what we have.
+        // We only save if there is at least some data to avoid wiping storage on initial render
+        if (!isOpen) return;
+
+        const timer = setTimeout(() => {
+            if (ordererName || ordererPhone || ordererEmail || address || selectedCity) {
+                const infoToSave = {
+                    name: ordererName,
+                    phone: ordererPhone,
+                    email: ordererEmail,
+                    city: selectedCity,
+                    address: address,
+                    lastUpdated: new Date().toISOString()
+                };
+                localStorage.setItem('davidFlowers_customerInfo', JSON.stringify(infoToSave));
+            }
+        }, 1000); // 1 second debounce
+
+        return () => clearTimeout(timer);
+    }, [ordererName, ordererPhone, ordererEmail, address, selectedCity, isOpen]);
+
     const FREE_SHIPPING_THRESHOLD = 350;
     // Calculate totals locally to include discount
     const subtotal = items.reduce((sum, item) => sum + (Number(item.price) || 0) * item.quantity, 0);
@@ -555,8 +602,8 @@ export default function CartDrawer() {
                                                                 />
                                                             </div>
 
-                                                            {/* Create Account Checkbox - Only for Guests */}
-                                                            {!isSignedIn && (
+                                                            {/* Create Account Checkbox - HIDDEN PER REQUEST */}
+                                                            {false && !isSignedIn && (
                                                                 <div className="flex items-center gap-2 pt-1">
                                                                     <input
                                                                         type="checkbox"
