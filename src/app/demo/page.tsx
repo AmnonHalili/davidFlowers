@@ -34,6 +34,7 @@ export default function DemoPage() {
                         name: 'The Noble Peony',
                         price: 350,
                         image: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9',
+                        stock: 99,
                         allowPreorder: true
                     }} />
                 </div>

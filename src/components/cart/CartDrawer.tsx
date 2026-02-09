@@ -242,24 +242,22 @@ export default function CartDrawer() {
             // 1. FAST PRE-FILL FROM CLERK (Immediate)
             if (isSignedIn && clerkUser) {
                 setIsLoggedIn(true);
-                if (!ordererName && clerkUser.fullName) setOrdererName(clerkUser.fullName);
-                if (!ordererEmail && clerkUser.primaryEmailAddress?.emailAddress) {
-                    setOrdererEmail(clerkUser.primaryEmailAddress.emailAddress);
-                }
+                setOrdererName(prev => prev || clerkUser.fullName || '');
+                setOrdererEmail(prev => prev || clerkUser.primaryEmailAddress?.emailAddress || '');
             }
 
             // 2. DETAILED PRE-FILL FROM DATABASE (Address, Phone)
             getUserProfile().then(user => {
                 if (user) {
                     setIsLoggedIn(true);
-                    if (user.name && !ordererName) setOrdererName(user.name);
-                    if (user.phone && !ordererPhone) setOrdererPhone(user.phone);
-                    if (user.email && !ordererEmail) setOrdererEmail(user.email);
-                    if (user.address && !address) setAddress(user.address);
+                    setOrdererName(prev => prev || user.name || '');
+                    setOrdererPhone(prev => prev || user.phone || '');
+                    setOrdererEmail(prev => prev || user.email || '');
+                    setAddress(prev => prev || user.address || '');
                 }
             });
         }
-    }, [isOpen, isSignedIn, clerkUser, address, ordererEmail, ordererName, ordererPhone]);
+    }, [isOpen, isSignedIn, clerkUser]);
 
     // -------------------------------------------------------------------------
     // 💾 AUTO-FILL FEATURE (Professional Implementation)
@@ -273,11 +271,11 @@ export default function CartDrawer() {
                 if (savedData) {
                     const parsed = JSON.parse(savedData);
                     // Only fill if state is currently empty to avoid overwriting user input
-                    if (parsed.name && !ordererName) setOrdererName(parsed.name);
-                    if (parsed.phone && !ordererPhone) setOrdererPhone(parsed.phone);
-                    if (parsed.email && !ordererEmail) setOrdererEmail(parsed.email);
-                    if (parsed.city && !selectedCity) setSelectedCity(parsed.city);
-                    if (parsed.address && !address) setAddress(parsed.address);
+                    if (parsed.name) setOrdererName(prev => prev || parsed.name || '');
+                    if (parsed.phone) setOrdererPhone(prev => prev || parsed.phone || '');
+                    if (parsed.email) setOrdererEmail(prev => prev || parsed.email || '');
+                    if (parsed.city) setSelectedCity(prev => prev || parsed.city || '');
+                    if (parsed.address) setAddress(prev => prev || parsed.address || '');
                 }
             } catch (error) {
                 console.error('Failed to load saved customer info', error);
