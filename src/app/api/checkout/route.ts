@@ -299,7 +299,9 @@ async function createPayPlusPayment(data: {
                 refURL_failure: `${process.env.NEXT_PUBLIC_APP_URL}/cancel?orderId=${orderId}`,
                 sendEmailApproval: true, // Enable PayPlus receipt email
                 sendEmailFailure: true,  // Enable PayPlus failure email
-                charge_method: 1 // Regular Charge
+                charge_method: 1, // Regular Charge
+                initial_invoice: true,  // Request PayPlus to generate a tax invoice/receipt
+                create_invoice: true    // Ensure Invoice+ action is triggered
             })
         });
 
