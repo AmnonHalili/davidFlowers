@@ -233,9 +233,11 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
     try {
         console.log(`[PAYPLUS_VERIFY] Verifying transaction ${transactionUid} for order ${expectedOrderId}`);
 
+        // Switching to POST /transactions/get-status to avoid 403 issues on GET
         const response = await fetch(
-            `https://restapi.payplus.co.il/api/v1.0/transactions/${transactionUid}`,
+            `https://restapi.payplus.co.il/api/v1.0/transactions/get-status`,
             {
+                method: 'POST',
                 headers: {
                     'Authorization': JSON.stringify({
                         'api_key': payPlusApiKey,
@@ -244,14 +246,21 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
                     'api-key': payPlusApiKey,
                     'secret-key': payPlusSecretKey,
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({
+                    transaction_uid: transactionUid
+                })
             }
         );
 
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`[PAYPLUS_VERIFY] API error: ${response.status} - ${errorText}`);
-            await logger.error('PayPlus Verification API Error', 'PayPlusVerify', { status: response.status, body: errorText });
+            await logger.error('PayPlus Verification API Error', 'PayPlusVerify', {
+                status: response.status,
+                body: errorText,
+                endpoint: '/api/v1.0/transactions/get-status'
+            });
             return false;
         }
 
@@ -272,12 +281,13 @@ async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId:
             return false;
         }
 
+        // more_info field in PayPlus contains the exact Order ID (passed during checkout)
         if (transaction.more_info !== expectedOrderId) {
             console.error(`[PAYPLUS_VERIFY] Order ID mismatch: ${transaction.more_info} !== ${expectedOrderId}`);
             await logger.error('Verification Failed: Order ID Mismatch', 'PayPlusVerify', {
                 expected: expectedOrderId,
                 received: transaction.more_info,
-                note: 'Ensure more_info field in PayPlus contains the exact Order ID'
+                full_transaction: transaction
             });
             return false;
         }
