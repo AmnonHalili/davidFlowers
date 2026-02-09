@@ -239,3 +239,12 @@ model SiteConfig {
   value     Json     // Stores { isActive: boolean, text: string }
   updatedAt DateTime @updatedAt
 }
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     String   // INFO, WARN, ERROR
+  message   String
+  metadata  Json?    // Store full error objects or webhook payloads
+  source    String   // e.g., "PayPlusWebhook", "EmailService"
+  createdAt DateTime @default(now())
+}

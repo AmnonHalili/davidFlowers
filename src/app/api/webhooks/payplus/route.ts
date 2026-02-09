@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export async function POST(req: Request) {
     try {
@@ -7,10 +8,21 @@ export async function POST(req: Request) {
 
         console.log('[PAYPLUS_WEBHOOK] Received:', JSON.stringify(body, null, 2));
 
+
         const { transaction_uid, more_info, status_code, amount } = body;
+
+        // [LOG] Webhook Received
+        await logger.info('Webhook Received', 'PayPlusWebhook', {
+            transaction_uid,
+            orderId: more_info,
+            status_code,
+            amount,
+            rawBody: body
+        });
 
         if (!transaction_uid || !more_info) {
             console.error('[PAYPLUS_WEBHOOK] Missing required fields');
+            await logger.error('Missing required fields', 'PayPlusWebhook', body);
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
         }
 
@@ -21,8 +33,12 @@ export async function POST(req: Request) {
 
         if (!isVerified) {
             console.error(`[PAYPLUS_WEBHOOK] Transaction ${transaction_uid} verification failed`);
+            await logger.error('Transaction verification failed', 'PayPlusWebhook', { transaction_uid, orderId });
             return NextResponse.json({ error: 'Verification failed' }, { status: 400 });
         }
+
+        // [LOG] Verification Success
+        await logger.info('Transaction Verified', 'PayPlusWebhook', { transaction_uid, orderId });
 
         // Update order status to PAID and include related data for email
         const updatedOrder = await prisma.order.update({
@@ -42,6 +58,7 @@ export async function POST(req: Request) {
         });
 
         console.log(`✅ Order ${orderId} marked as PAID (transaction: ${transaction_uid})`);
+        await logger.info('Order marked as PAID', 'PayPlusWebhook', { orderId, transaction_uid });
 
         // STOCK REDUCTION LOGIC
         try {
@@ -155,9 +172,11 @@ export async function POST(req: Request) {
 
             } catch (error) {
                 console.error('[WEBHOOK_EMAIL_ERROR]', error);
+                await logger.error('Failed to send emails', 'PayPlusWebhook', { error, orderId });
             }
         } else {
             console.warn(`⚠️  No email found for order ${orderId}`);
+            await logger.warn('No customer email found', 'PayPlusWebhook', { orderId });
         }
 
         return NextResponse.json({
@@ -168,6 +187,7 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('[PAYPLUS_WEBHOOK_ERROR]', error);
+        await logger.error('Webhook Fatal Error', 'PayPlusWebhook', { error });
         return NextResponse.json({
             error: 'Webhook processing failed',
             message: error.message
