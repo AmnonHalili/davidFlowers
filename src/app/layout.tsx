@@ -56,7 +56,7 @@ import { PrismaClient } from '@prisma/client';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import AccessibilityWidget from '@/components/AccessibilityWidget';
 import CookieConsent from '@/components/ui/CookieConsent';
-import PromoPopup from '@/components/ui/PromoPopup';
+
 import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import { Toaster } from 'sonner';
 import GoogleTagManager from '@/components/analytics/GoogleTagManager';
@@ -161,7 +161,7 @@ export default async function RootLayout({
             <WhatsAppButton />
             <AccessibilityWidget />
             <CookieConsent />
-            <PromoPopup />
+
             <Toaster position="top-center" richColors />
           </CartProvider>
         </body>
