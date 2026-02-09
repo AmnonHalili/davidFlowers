@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { sendGTMEvent } from "@/lib/gtm";
+import { useCart } from "@/context/CartContext";
 
 interface PurchaseEventProps {
     orderId: string;
@@ -18,6 +19,7 @@ interface PurchaseEventProps {
 export default function PurchaseEvent({ orderId, total, currency = "ILS", items }: PurchaseEventProps) {
     // Use a ref to ensure the event fires only once per mount (though React 18 strict mode may fire twice in dev, which is expected)
     const sentRef = useRef(false);
+    const { clearCart } = useCart();
 
     useEffect(() => {
         if (sentRef.current) return;
@@ -33,11 +35,14 @@ export default function PurchaseEvent({ orderId, total, currency = "ILS", items 
             },
         });
 
+        // Clear the cart on successful purchase
+        clearCart();
+
         // Optional: Log in dev for visibility
         if (process.env.NODE_ENV === 'development') {
-            console.debug('🛒 GTM Purchase Event Fired:', { orderId, total });
+            console.debug('🛒 GTM Purchase Event Fired & Cart Cleared:', { orderId, total });
         }
-    }, [orderId, total, currency, items]);
+    }, [orderId, total, currency, items, clearCart]);
 
     return null;
 }
