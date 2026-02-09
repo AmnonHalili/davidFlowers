@@ -37,7 +37,11 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                     </p>
                 </div>
 
-                <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+                <OrderStatusSelect
+                    orderId={order.id}
+                    currentStatus={order.status}
+                    isPickup={order.shippingAddress === 'Self Pickup'}
+                />
             </div>
 
             {/* Quick Actions Toolbar */}

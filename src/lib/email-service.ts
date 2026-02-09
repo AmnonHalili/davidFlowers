@@ -22,17 +22,23 @@ export async function sendOrderStatusEmail(order: OrderWithItems, status: 'SHIPP
         return { success: false, error: 'No email address' };
     }
 
+    const isPickup = order.shippingAddress === 'Self Pickup';
+
     const subject = status === 'SHIPPED'
-        ? `הזמנה #${order.id.slice(-8)} בדרך אלייך! 🚚`
-        : `הזמנה #${order.id.slice(-8)} נמסרה בהצלחה! 🌸`;
+        ? (isPickup ? `ההזמנה שלך #${order.id.slice(-8)} מוכנה לאיסוף! 🛍️` : `הזמנה #${order.id.slice(-8)} בדרך אלייך! 🚚`)
+        : (isPickup ? `ההזמנה שלך #${order.id.slice(-8)} נאספה! 🌸` : `הזמנה #${order.id.slice(-8)} נמסרה בהצלחה! 🌸`);
 
     const heading = status === 'SHIPPED'
-        ? 'המשלוח שלך יצא לדרך'
-        : 'המשלוח נמסר ליעדו';
+        ? (isPickup ? 'ההזמנה מחכה לך בחנות' : 'המשלוח שלך יצא לדרך')
+        : (isPickup ? 'ההזמנה נאספה בהצלחה' : 'המשלוח נמסר ליעדו');
 
     const message = status === 'SHIPPED'
-        ? `איזה כיף! ההזמנה שלך נאספה על ידי השליח והיא עושה את דרכה לכתובת: <strong>${order.shippingAddress}</strong>.`
-        : `שמחים לעדכן שההזמנה שלך נמסרה בהצלחה ל-<strong>${order.recipientName}</strong>. תודה שבחרת ב-David Flowers!`;
+        ? (isPickup
+            ? `איזה כיף! סיימנו להכין את ההזמנה שלך והיא מחכה לך כעת לאיסוף בכתובת: <strong>העבודה 47, אשקלון</strong>. נשמח לראותך!`
+            : `איזה כיף! ההזמנה שלך נאספה על ידי השליח והיא עושה את דרכה לכתובת: <strong>${order.shippingAddress}</strong>.`)
+        : (isPickup
+            ? `שמחים לעדכן שההזמנה שלך נאספה בהצלחה על ידי <strong>${order.recipientName}</strong>. תודה שבחרת ב-David Flowers!`
+            : `שמחים לעדכן שההזמנה שלך נמסרה בהצלחה ל-<strong>${order.recipientName}</strong>. תודה שבחרת ב-David Flowers!`);
 
     const itemsHtml = order.items.map(item => `
         <div style="display: flex; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">

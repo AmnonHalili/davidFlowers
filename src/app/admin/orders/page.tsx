@@ -84,7 +84,7 @@ export default async function AdminOrdersPage() {
 
                                         <div className="flex items-center gap-3 pt-4 border-t border-stone-100">
                                             <div className="flex-1">
-                                                <OrderStatusSelect orderId={order.id} currentStatus={order.status} fullWidth />
+                                                <OrderStatusSelect orderId={order.id} currentStatus={order.status} isPickup={isPickup} fullWidth />
                                             </div>
                                             <Link
                                                 href={`/admin/orders/${order.id}`}
@@ -151,7 +151,7 @@ export default async function AdminOrdersPage() {
                                                 </span>
                                             </td>
                                             <td className="px-8 py-5">
-                                                <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+                                                <OrderStatusSelect orderId={order.id} currentStatus={order.status} isPickup={isPickup} />
                                             </td>
                                             <td className="px-8 py-5 text-left">
                                                 <Link

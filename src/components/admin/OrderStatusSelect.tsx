@@ -11,47 +11,48 @@ interface OrderStatusSelectProps {
     orderId: string;
     currentStatus: OrderStatus;
     fullWidth?: boolean;
+    isPickup?: boolean;
 }
 
-const statusConfig: Record<OrderStatus, {
-    label: string,
-    styles: string,
-    icon: any,
-    description: string
-}> = {
-    PENDING: {
-        label: "ממתין לתשלום",
-        styles: "bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500/20",
-        icon: Clock,
-        description: "הזמנה חדשה שטרם שולמה"
-    },
-    PAID: {
-        label: "שולם (להכנה)",
-        styles: "bg-sky-50 text-sky-700 border-sky-200 focus:ring-sky-500/20",
-        icon: Package,
-        description: "התשלום התקבל, אפשר להתחיל להכין"
-    },
-    SHIPPED: {
-        label: "נשלח ללקוח",
-        styles: "bg-indigo-50 text-indigo-700 border-indigo-200 focus:ring-indigo-500/20",
-        icon: Truck,
-        description: "ההזמנה יצאה עם השליח"
-    },
-    DELIVERED: {
-        label: "נמסר בהצלחה",
-        styles: "bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-emerald-500/20",
-        icon: CheckCircle2,
-        description: "הלקוח קיבל את הפרחים"
-    },
-    CANCELLED: {
-        label: "בוטל",
-        styles: "bg-rose-50 text-rose-700 border-rose-200 focus:ring-rose-500/20",
-        icon: XCircle,
-        description: "ההזמנה בוטלה ולא תבוצע"
-    },
-};
+export default function OrderStatusSelect({ orderId, currentStatus, fullWidth = false, isPickup = false }: OrderStatusSelectProps) {
+    const statusConfig: Record<OrderStatus, {
+        label: string,
+        styles: string,
+        icon: any,
+        description: string
+    }> = {
+        PENDING: {
+            label: "ממתין לתשלום",
+            styles: "bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500/20",
+            icon: Clock,
+            description: "הזמנה חדשה שטרם שולמה"
+        },
+        PAID: {
+            label: "שולם (להכנה)",
+            styles: "bg-sky-50 text-sky-700 border-sky-200 focus:ring-sky-500/20",
+            icon: Package,
+            description: "התשלום התקבל, אפשר להתחיל להכין"
+        },
+        SHIPPED: {
+            label: isPickup ? "מוכן לאיסוף" : "נשלח ללקוח",
+            styles: "bg-indigo-50 text-indigo-700 border-indigo-200 focus:ring-indigo-500/20",
+            icon: Truck,
+            description: isPickup ? "ההזמנה מוכנה ומחכה ללקוח" : "ההזמנה יצאה עם השליח"
+        },
+        DELIVERED: {
+            label: isPickup ? "נאסף בהצלחה" : "נמסר בהצלחה",
+            styles: "bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-emerald-500/20",
+            icon: CheckCircle2,
+            description: isPickup ? "הלקוח אסף את ההזמנה" : "הלקוח קיבל את הפרחים"
+        },
+        CANCELLED: {
+            label: "בוטל",
+            styles: "bg-rose-50 text-rose-700 border-rose-200 focus:ring-rose-500/20",
+            icon: XCircle,
+            description: "ההזמנה בוטלה ולא תבוצע"
+        },
+    };
 
-export default function OrderStatusSelect({ orderId, currentStatus, fullWidth = false }: OrderStatusSelectProps) {
     const [status, setStatus] = useState<OrderStatus>(currentStatus);
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
