@@ -96,8 +96,14 @@ export async function POST(req: Request) {
             }
         });
 
+        const invoiceUrl = body.invoice?.original_url;
+
         console.log(`✅ Order ${orderId} marked as PAID (transaction: ${transaction_uid})`);
-        await logger.info('Order marked as PAID', 'PayPlusWebhook', { orderId, transaction_uid });
+        await logger.info('Order marked as PAID', 'PayPlusWebhook', {
+            orderId,
+            transaction_uid,
+            invoiceUrl: invoiceUrl || 'Not generated yet'
+        });
 
         // STOCK REDUCTION LOGIC
         try {
