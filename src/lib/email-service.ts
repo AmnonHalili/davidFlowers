@@ -90,8 +90,10 @@ export async function sendOrderStatusEmail(order: OrderWithItems, status: 'SHIPP
     `;
 
     try {
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'David Flowers <orders@davidflowers.co.il>';
+
         const data = await resend.emails.send({
-            from: 'David Flowers <orders@davidflowers.co.il>', // Ensure this domain is verified in Resend
+            from: fromEmail,
             to: [email],
             subject: subject,
             html: html,

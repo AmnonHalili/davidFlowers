@@ -30,16 +30,23 @@ export interface SendAdminNotificationData {
 
 export async function sendOrderConfirmation(data: SendOrderConfirmationData) {
     try {
+        console.log(`[EMAIL_SERVICE] Attempting to send order confirmation for #${data.orderNumber} to ${data.to}`);
+
         // Check if Resend is configured
         if (!process.env.RESEND_API_KEY) {
-            console.warn('⚠️  RESEND_API_KEY not configured - email not sent');
+            console.error('DavidFlowers: RESEND_API_KEY is missing. Environment check failed.');
             return { success: false, error: 'Email service not configured' };
         }
 
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+        const fromEmail = process.env.RESEND_FROM_EMAIL;
+        if (!fromEmail) {
+            console.warn('[EMAIL_SERVICE] RESEND_FROM_EMAIL is missing. Falling back to default.');
+        }
+
+        const finalFromEmail = fromEmail || 'onboarding@resend.dev';
 
         const { data: emailData, error } = await resend.emails.send({
-            from: fromEmail,
+            from: finalFromEmail,
             to: data.to,
             subject: `אישור הזמנה ${data.orderNumber} - דוד פרחים`,
             react: OrderConfirmationEmail(data),

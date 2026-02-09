@@ -59,6 +59,10 @@ export default async function WishlistPage() {
                                 saleEndDate={product.saleEndDate}
                                 availableFrom={product.availableFrom}
                                 allowPreorder={product.allowPreorder}
+                                isVariablePrice={product.isVariablePrice}
+                                variations={product.variations}
+                                isPersonalizationEnabled={product.isPersonalizationEnabled}
+                                maxPersonalizationChars={product.maxPersonalizationChars}
                             />
                         ))}
                     </div>

@@ -9,6 +9,7 @@ import { calculateProductPrice } from '@/lib/price-utils';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import BouquetSizeSelector from '../product/BouquetSizeSelector';
+import InscriptionModal from '../product/InscriptionModal';
 
 interface ProductCardProps {
     id: string;
@@ -28,13 +29,15 @@ interface ProductCardProps {
     isVariablePrice?: boolean;
     variations?: any;
     isPersonalizationEnabled?: boolean;
+    maxPersonalizationChars?: number;
     categories?: any[];
 }
 
 export default function ProductCard({
     id, name, price, image, slug, category, stock, hoverImage, isFavorited,
     salePrice, saleStartDate, saleEndDate, availableFrom, allowPreorder,
-    isVariablePrice, variations, isPersonalizationEnabled, categories, ...props
+    isVariablePrice, variations, isPersonalizationEnabled, maxPersonalizationChars,
+    categories, ...props
 }: ProductCardProps) {
     const isOutOfStock = stock <= 0;
     const { addItem } = useCart();
@@ -56,7 +59,9 @@ export default function ProductCard({
 
     const [isAdded, setIsAdded] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isInscriptionModalOpen, setIsInscriptionModalOpen] = useState(false);
     const [selectedSize, setSelectedSize] = useState<'standard' | 'medium' | 'large'>('medium');
+    const [tempVariationData, setTempVariationData] = useState<any>(null);
 
     // Countdown Timer Logic
     const [timeLeft, setTimeLeft] = useState('');
@@ -102,15 +107,15 @@ export default function ProductCard({
 
         if (isOutOfStock || isLocked) return;
 
-        // Logic for Variable Price Products (Open Modal)
+        // Logic for Variable Price Products (Open Size Modal)
         if (hasVariations) {
             setIsModalOpen(true);
             return;
         }
 
-        // Logic for Personalized Products (Redirect)
+        // Logic for Personalized Products (Open Inscription Modal)
         if (isPersonalizationEnabled) {
-            window.location.href = `/product/${slug}`;
+            setIsInscriptionModalOpen(true);
             return;
         }
 
@@ -136,12 +141,24 @@ export default function ProductCard({
         if (!variations || !variations[selectedSize]) return;
         const variation = variations[selectedSize];
 
+        if (isPersonalizationEnabled) {
+            // Save variation data and open inscription modal
+            setTempVariationData({
+                selectedSize: selectedSize,
+                sizeLabel: variation.label,
+                price: variation.price
+            });
+            setIsModalOpen(false);
+            setTimeout(() => setIsInscriptionModalOpen(true), 100);
+            return;
+        }
+
         addItem({
-            id: id, // Keep main product ID as base
+            id: `${id}-${selectedSize}`,
             productId: id,
             name: `${name} - ${variation.label}`,
-            selectedSize: selectedSize, // New cart field
-            sizeLabel: variation.label, // New cart field
+            selectedSize: selectedSize,
+            sizeLabel: variation.label,
             price: variation.price,
             image: image,
             quantity: 1,
@@ -150,6 +167,43 @@ export default function ProductCard({
         });
 
         setIsModalOpen(false);
+        setIsAdded(true);
+        setTimeout(() => setIsAdded(false), 2000);
+    };
+
+    const handleInscriptionConfirm = (text: string) => {
+        // If it was a variation add
+        if (tempVariationData) {
+            addItem({
+                id: `${id}-${tempVariationData.selectedSize}-${text}`,
+                productId: id,
+                name: `${name} - ${tempVariationData.sizeLabel}`,
+                selectedSize: tempVariationData.selectedSize,
+                sizeLabel: tempVariationData.sizeLabel,
+                price: tempVariationData.price,
+                personalizationText: text,
+                image: image,
+                quantity: 1,
+                type: 'ONETIME',
+                availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
+            });
+            setTempVariationData(null);
+        } else {
+            // Simple product with personalization
+            addItem({
+                id: `${id}-${text}`,
+                productId: id,
+                name: name,
+                price: displayPrice,
+                originalPrice: isOnSale ? regularPrice : undefined,
+                personalizationText: text,
+                image: image,
+                quantity: 1,
+                type: 'ONETIME',
+                availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
+            });
+        }
+
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000);
     };
@@ -365,6 +419,17 @@ export default function ProductCard({
                     </div>
                 </Modal>
             )}
+            {/* Inscription Modal */}
+            <InscriptionModal
+                isOpen={isInscriptionModalOpen}
+                onClose={() => {
+                    setIsInscriptionModalOpen(false);
+                    setTempVariationData(null);
+                }}
+                onConfirm={handleInscriptionConfirm}
+                productName={name}
+                maxChars={maxPersonalizationChars || 20}
+            />
         </Link>
     );
 }

@@ -55,19 +55,18 @@ export async function POST(req: Request) {
                     const variations = product.variations as Record<string, any>;
                     let variantKeyToUpdate: string | null = null;
 
-                    // Try to find the matching variation key based on selectedSize
-                    // selectedSize usually comes like "Small" or "Medium - Standard"
-                    // The variation keys might be "small", "medium", etc.
-
                     if (item.selectedSize) {
-                        // Strategy: Try to find a variation where the label matches the selectedSize
-                        // or where the key matches a normalized version of selectedSize
-                        const normalizedSize = item.selectedSize.toLowerCase();
+                        const normalizedSize = item.selectedSize.toLowerCase().trim();
 
                         for (const [key, details] of Object.entries(variations)) {
+                            const detailLabel = ((details as any).label || '').toLowerCase().trim();
+                            const detailKey = key.toLowerCase().trim();
+
                             if (
-                                (details as any).label === item.selectedSize ||
-                                key.toLowerCase() === normalizedSize
+                                detailLabel === normalizedSize ||
+                                detailKey === normalizedSize ||
+                                normalizedSize.includes(detailKey) ||
+                                detailKey.includes(normalizedSize)
                             ) {
                                 variantKeyToUpdate = key;
                                 break;
@@ -85,20 +84,6 @@ export async function POST(req: Request) {
                             stock: newVariantStock
                         };
 
-                        // Also decrement main stock for aggregate tracking if needed, 
-                        // but primarily we update the JSON. 
-                        // Note: Some systems keep main stock as sum of variations. 
-                        // adhering to "decrement main stock field" for simple, but for variable taking care of JSON.
-                        // We will also decrement the main stock as a fallback/aggregate if logic dictates, 
-                        // but usually variable products depend on the JSON. 
-                        // Let's just update the JSON and the main stock count to keep them in sync if logical.
-                        // checking schema: stock Int @default(0). 
-                        // Let's update main stock as well to reflect total available? 
-                        // Or is main stock irrelevant for variable?
-                        // The prompt says "If a product is simple, decrement the main stock field."
-                        // "If a product is variable, update the specific size stock within the variations JSON field."
-                        // So I will STRICTLY follow that.
-
                         await prisma.product.update({
                             where: { id: product.id },
                             data: {
@@ -108,7 +93,7 @@ export async function POST(req: Request) {
                         console.log(`[STOCK_REDUCTION] Updated variation ${variantKeyToUpdate} for product ${product.name}. New stock: ${newVariantStock}`);
 
                     } else {
-                        console.warn(`[STOCK_REDUCTION] Could not match variation for product ${product.name} with size ${item.selectedSize}`);
+                        console.warn(`[STOCK_REDUCTION] Could not match variation for product ${product.name} with size "${item.selectedSize}"`);
                     }
 
                 } else {
@@ -123,8 +108,6 @@ export async function POST(req: Request) {
             }
         } catch (stockError) {
             console.error('[STOCK_REDUCTION_ERROR] Failed to reduce stock', stockError);
-            // We do NOT fail the webhook response because the payment was successful.
-            // Admin should be notified if possible (logging is a good start)
         }
 
         // Send email confirmation to customer
@@ -132,46 +115,47 @@ export async function POST(req: Request) {
 
         if (customerEmail) {
             // Import email service
-            const { sendOrderConfirmation } = await import('@/lib/email');
+            const { sendOrderConfirmation, sendAdminNotification } = await import('@/lib/email');
 
-            // Send email (don't await - fire and forget)
-            sendOrderConfirmation({
-                to: customerEmail,
-                orderNumber: updatedOrder.id,
-                customerName: updatedOrder.ordererName || updatedOrder.recipientName,
-                items: updatedOrder.items.map(item => ({
-                    name: item.product.name,
-                    quantity: item.quantity,
-                    price: Number(item.price)
-                })),
-                totalAmount: Number(updatedOrder.totalAmount),
-                shippingAddress: updatedOrder.shippingAddress,
-                deliveryDate: updatedOrder.desiredDeliveryDate
-                    ? new Date(updatedOrder.desiredDeliveryDate).toLocaleDateString('he-IL', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    })
-                    : undefined,
-                deliveryNotes: (updatedOrder as any).deliveryNotes || undefined
-            }).catch(error => {
-                // Log email errors but don't fail the webhook
-                console.error('[EMAIL_SEND_FAILED]', error);
-            });
+            try {
+                // AWAIT email confirmation to ensure it finishes or logs properly
+                await sendOrderConfirmation({
+                    to: customerEmail,
+                    orderNumber: updatedOrder.id,
+                    customerName: updatedOrder.ordererName || updatedOrder.recipientName,
+                    items: updatedOrder.items.map(item => ({
+                        name: item.product.name,
+                        quantity: item.quantity,
+                        price: Number(item.price)
+                    })),
+                    totalAmount: Number(updatedOrder.totalAmount),
+                    shippingAddress: updatedOrder.shippingAddress,
+                    deliveryDate: updatedOrder.desiredDeliveryDate
+                        ? new Date(updatedOrder.desiredDeliveryDate).toLocaleDateString('he-IL', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })
+                        : undefined,
+                    deliveryNotes: (updatedOrder as any).deliveryNotes || undefined
+                });
+                console.log(`📧 Confirmation email sent to ${customerEmail}`);
 
-            // ALSO Send Admin Notification
-            const { sendAdminNotification } = await import('@/lib/email');
-            sendAdminNotification({
-                orderNumber: updatedOrder.id,
-                customerName: updatedOrder.ordererName || updatedOrder.recipientName,
-                totalAmount: Number(updatedOrder.totalAmount),
-                items: updatedOrder.items.map(item => ({
-                    name: item.product.name,
-                    quantity: item.quantity
-                }))
-            }).catch(err => console.error('[ADMIN_NOTIF_FAILED]', err));
+                // ALSO Send Admin Notification
+                await sendAdminNotification({
+                    orderNumber: updatedOrder.id,
+                    customerName: updatedOrder.ordererName || updatedOrder.recipientName,
+                    totalAmount: Number(updatedOrder.totalAmount),
+                    items: updatedOrder.items.map(item => ({
+                        name: item.product.name,
+                        quantity: item.quantity
+                    }))
+                });
+                console.log(`📧 Admin notification sent`);
 
-            console.log(`📧 Email queued for ${customerEmail} and Admin`);
+            } catch (error) {
+                console.error('[WEBHOOK_EMAIL_ERROR]', error);
+            }
         } else {
             console.warn(`⚠️  No email found for order ${orderId}`);
         }
@@ -192,35 +176,52 @@ export async function POST(req: Request) {
 }
 
 async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId: string): Promise<boolean> {
-    const payPlusSecretKey = process.env.PAYPLUS_SECRET_KEY;
+    const payPlusApiKey = process.env.PAY_PLUS_API_KEY || process.env.PAYPLUS_API_KEY; // Support both naming styles
+    const payPlusSecretKey = process.env.PAY_PLUS_SECRET_KEY || process.env.PAYPLUS_SECRET_KEY;
 
-    if (!payPlusSecretKey) {
-        console.warn('[PAYPLUS_WEBHOOK] No API key - skipping verification (development mode)');
-        return true; // In development without keys, trust the webhook
+    if (!payPlusApiKey || !payPlusSecretKey) {
+        console.warn('[PAYPLUS_WEBHOOK] Missing API keys - skipping verification in dev/mock mode');
+        return true;
     }
 
     try {
+        console.log(`[PAYPLUS_VERIFY] Verifying transaction ${transactionUid} for order ${expectedOrderId}`);
+
+        // Use v1.0 and headers consistent with checkout/route.ts for reliability
         const response = await fetch(
-            `https://restapi.payplus.co.il/api/v1/transactions/${transactionUid}`,
+            `https://restapi.payplus.co.il/api/v1.0/transactions/${transactionUid}`,
             {
                 headers: {
-                    'Authorization': `Bearer ${payPlusSecretKey}`,
+                    'Authorization': JSON.stringify({
+                        'api_key': payPlusApiKey,
+                        'secret_key': payPlusSecretKey
+                    }),
+                    'api-key': payPlusApiKey,
+                    'secret-key': payPlusSecretKey,
                     'Content-Type': 'application/json'
                 }
             }
         );
 
         if (!response.ok) {
-            console.error(`[PAYPLUS_VERIFY] API error: ${response.status}`);
+            const errorText = await response.text();
+            console.error(`[PAYPLUS_VERIFY] API error: ${response.status} - ${errorText}`);
             return false;
         }
 
         const result = await response.json();
+
+        if (result.status === 'error') {
+            console.error(`[PAYPLUS_VERIFY] PayPlus returned error:`, result);
+            return false;
+        }
+
         const transaction = result.data;
 
         // Verify transaction details
+        // status_code "000" means success
         if (transaction.status_code !== '000') {
-            console.error(`[PAYPLUS_VERIFY] Transaction failed: ${transaction.status_code}`);
+            console.error(`[PAYPLUS_VERIFY] Transaction failed with status: ${transaction.status_code}`);
             return false;
         }
 

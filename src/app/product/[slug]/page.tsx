@@ -295,6 +295,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
                                 availableFrom={related.availableFrom}
                                 allowPreorder={related.allowPreorder}
                                 isPersonalizationEnabled={related.isPersonalizationEnabled}
+                                maxPersonalizationChars={related.maxPersonalizationChars}
+                                isVariablePrice={related.isVariablePrice}
+                                variations={related.variations}
                                 categories={related.categories}
                             />
                         ))}

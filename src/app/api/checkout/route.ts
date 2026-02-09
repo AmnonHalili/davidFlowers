@@ -200,7 +200,9 @@ export async function POST(req: Request) {
                     create: validItems.map((item: any) => ({
                         product: { connect: { id: item.productId } },
                         quantity: item.quantity,
-                        price: item.price
+                        price: item.price,
+                        selectedSize: item.selectedSize,
+                        personalizationText: item.personalizationText
                     }))
                 }
             }

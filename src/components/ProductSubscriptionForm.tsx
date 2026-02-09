@@ -6,6 +6,7 @@ import { ChevronDown, RefreshCw, ShoppingBag } from 'lucide-react';
 import { useCart, CartItem } from '@/context/CartContext';
 import { useParams } from 'next/navigation';
 import BouquetSizeSelector from './product/BouquetSizeSelector';
+import InscriptionModal from './product/InscriptionModal';
 import { sendGTMEvent } from '@/lib/gtm';
 
 type PurchaseType = 'SUBSCRIPTION' | 'ONETIME';
@@ -34,7 +35,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   const [frequency, setFrequency] = useState<Frequency>('WEEKLY');
   const [deliveryDay, setDeliveryDay] = useState<DayOfWeek>('FRIDAY');
   const [giftNote, setGiftNote] = useState('');
-  const [personalizationText, setPersonalizationText] = useState('');
+  const [isInscriptionModalOpen, setIsInscriptionModalOpen] = useState(false);
 
   // Size Variation State
   const [selectedSize, setSelectedSize] = useState<'standard' | 'medium' | 'large'>('medium');
@@ -96,7 +97,55 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       deliveryDay: purchaseType === 'SUBSCRIPTION' ? deliveryDay : undefined,
       selectedSize: product.isVariablePrice ? selectedSize : undefined,
       sizeLabel: product.isVariablePrice && product.variations ? product.variations[selectedSize].label : undefined,
-      personalizationText: product.isPersonalizationEnabled ? personalizationText : undefined,
+    };
+
+    if (product.isPersonalizationEnabled) {
+      setIsInscriptionModalOpen(true);
+      return;
+    }
+
+    addItem(newItem);
+
+    // Track Add to Cart
+    sendGTMEvent({
+      event: 'add_to_cart',
+      ecommerce: {
+        currency: 'ILS',
+        value: finalPrice,
+        items: [
+          {
+            item_id: product.id,
+            item_name: product.name,
+            price: finalPrice,
+            quantity: 1,
+            item_category: purchaseType === 'SUBSCRIPTION' ? 'Subscription' : 'One Time',
+            item_variant: product.isVariablePrice ? selectedSize : undefined
+          }
+        ]
+      }
+    });
+  };
+
+  const handleInscriptionConfirm = (text: string) => {
+    const basePrice = currentPrice;
+    const finalPrice = purchaseType === 'SUBSCRIPTION' ? basePrice * 0.85 : basePrice;
+
+    const newItem: CartItem = {
+      id: `${product.id}-${Date.now()}-${text}`,
+      productId: product.id,
+      name: product.name,
+      price: finalPrice,
+      originalPrice: purchaseType === 'SUBSCRIPTION' ? basePrice : undefined,
+      image: product.image,
+      quantity: 1,
+      type: purchaseType,
+      availableFrom: product.availableFrom ? new Date(product.availableFrom).toISOString() : undefined,
+      frequency: purchaseType === 'SUBSCRIPTION' ? frequency : undefined,
+      deliveryDay: purchaseType === 'SUBSCRIPTION' ? deliveryDay : undefined,
+      selectedSize: product.isVariablePrice ? selectedSize : undefined,
+      sizeLabel: product.isVariablePrice && product.variations ? product.variations[selectedSize].label : undefined,
+      personalizationText: text,
+
     };
 
     addItem(newItem);
@@ -115,7 +164,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
             quantity: 1,
             item_category: purchaseType === 'SUBSCRIPTION' ? 'Subscription' : 'One Time',
             item_variant: product.isVariablePrice ? selectedSize : undefined,
-            item_personalization: product.isPersonalizationEnabled ? personalizationText : undefined
+            item_personalization: text
           }
         ]
       }
@@ -277,27 +326,14 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
         )}
       </AnimatePresence>
 
-      {/* Personalization Input */}
-      {product.isPersonalizationEnabled && (
-        <div className="space-y-3">
-          <label className="text-xs uppercase tracking-wider font-medium text-stone-900">
-            הוספת כיתוב אישי <span className="text-stone-400 font-normal">(עד {product.maxPersonalizationChars || 50} תווים)</span>
-          </label>
-          <input
-            type="text"
-            value={personalizationText}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (!product.maxPersonalizationChars || val.length <= product.maxPersonalizationChars) {
-                setPersonalizationText(val);
-              }
-            }}
-            maxLength={product.maxPersonalizationChars || 50}
-            className="w-full border border-stone-200 bg-transparent p-3 text-sm focus:border-stone-900 focus:ring-0 transition-colors placeholder:text-stone-300"
-            placeholder="לדוגמה: יום הולדת שמח אהובה..."
-          />
-        </div>
-      )}
+      {/* Personalization Modal */}
+      <InscriptionModal
+        isOpen={isInscriptionModalOpen}
+        onClose={() => setIsInscriptionModalOpen(false)}
+        onConfirm={handleInscriptionConfirm}
+        productName={product.name}
+        maxChars={product.maxPersonalizationChars || 50}
+      />
 
       {/* Gift Note */}
       <div className="space-y-3">

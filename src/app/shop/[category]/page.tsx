@@ -67,6 +67,10 @@ export default async function CategoryPage({ params }: { params: { category: str
                                 saleEndDate={product.saleEndDate}
                                 availableFrom={product.availableFrom}
                                 allowPreorder={product.allowPreorder}
+                                isVariablePrice={product.isVariablePrice}
+                                variations={product.variations}
+                                isPersonalizationEnabled={product.isPersonalizationEnabled}
+                                maxPersonalizationChars={product.maxPersonalizationChars}
                             />
                         );
                     })}

@@ -53,6 +53,8 @@ export default async function SuccessPage({
         );
     }
 
+    const isPickup = order.shippingAddress === 'Self Pickup';
+
     return (
         <div className="min-h-screen bg-stone-50 pt-32 pb-20 px-4 rtl" dir="rtl">
             <div className="max-w-2xl mx-auto">
@@ -78,17 +80,29 @@ export default async function SuccessPage({
                     </p>
                 </div>
 
-                {/* Delivery Estimate */}
+                {/* Delivery/Pickup Info */}
                 <div className="bg-david-green/5 border border-david-green/10 rounded-xl p-6 mb-6 flex items-start gap-4">
                     <div className="p-2 bg-white rounded-full shrink-0">
-                        <Package className="w-5 h-5 text-david-green" />
+                        {isPickup ? <MapPin className="w-5 h-5 text-david-green" /> : <Package className="w-5 h-5 text-david-green" />}
                     </div>
                     <div>
-                        <h3 className="font-bold text-david-green mb-1">מתי זה מגיע?</h3>
+                        <h3 className="font-bold text-david-green mb-1">
+                            {isPickup ? 'מתי לאסוף?' : 'מתי זה מגיע?'}
+                        </h3>
                         <p className="text-sm text-david-green/80 leading-relaxed">
-                            ההזמנה שלך התקבלה ותטופל בהקדם.
-                            <br />
-                            משלוחים לאשקלון מגיעים בדרך כלל תוך 2-4 שעות מרגע האישור (בשעות הפעילות).
+                            {isPickup ? (
+                                <>
+                                    ההזמנה שלך התקבלה ותטופל בהקדם.
+                                    <br />
+                                    ניצור איתך קשר כשההזמנה תהיה מוכנה לאיסוף מהחנות.
+                                </>
+                            ) : (
+                                <>
+                                    ההזמנה שלך התקבלה ותטופל בהקדם.
+                                    <br />
+                                    משלוחים לאשקלון מגיעים בדרך כלל תוך 2-4 שעות מרגע האישור (בשעות הפעילות).
+                                </>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -128,12 +142,26 @@ export default async function SuccessPage({
                     <div className="p-6 bg-stone-50/50 space-y-3">
                         <div className="flex justify-between text-sm text-stone-600">
                             <span>סכום ביניים</span>
-                            <span>₪{Number(order.totalAmount).toFixed(2)}</span>
+                            {/* We need to re-calc subtotal to show it, or assume total - shipping? 
+                                Actually, checking order.items sum is safer if we don't have subtotal field. 
+                            */}
+                            <span>₪{order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0).toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-sm text-stone-600">
-                            <span>משלוח</span>
-                            <span>{Number(order.totalAmount) > 350 ? 'חינם' : '₪30.00'}</span> {/* Logic should ideally come from DB cost field */}
-                        </div>
+
+                        {!isPickup && (
+                            <div className="flex justify-between text-sm text-stone-600">
+                                <span>משלוח</span>
+                                {/* Try to deduce shipping cost: Total - Subtotal - Discount? 
+                                    Or just use the logic: if > 350 Free, else 30? 
+                                    The user wanted to NOT show it for pickup. 
+                                    For delivery, the previous logic was simple ternary. 
+                                    Let's keep it simple for now or try to be more accurate if possible. 
+                                    Let's stick to the previous hardcoded logic for now as requested fix was for Pickup.
+                                */}
+                                <span>{Number(order.totalAmount) > 350 ? 'חינם' : '₪30.00'}</span>
+                            </div>
+                        )}
+
                         <div className="flex justify-between text-lg font-bold text-stone-900 pt-3 border-t border-stone-200">
                             <span>סה"כ לתשלום</span>
                             <span>₪{Number(order.totalAmount).toFixed(2)}</span>

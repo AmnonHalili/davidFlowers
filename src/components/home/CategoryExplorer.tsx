@@ -130,6 +130,8 @@ export default function CategoryExplorer() {
                                                 allowPreorder={product.allowPreorder}
                                                 isVariablePrice={product.isVariablePrice}
                                                 variations={product.variations}
+                                                isPersonalizationEnabled={product.isPersonalizationEnabled}
+                                                maxPersonalizationChars={product.maxPersonalizationChars}
                                             />
                                         ))}
                                     </div>

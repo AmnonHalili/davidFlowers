@@ -66,6 +66,8 @@ export default async function ShopPage() {
                                 allowPreorder={product.allowPreorder}
                                 isVariablePrice={product.isVariablePrice}
                                 variations={product.variations}
+                                isPersonalizationEnabled={product.isPersonalizationEnabled}
+                                maxPersonalizationChars={product.maxPersonalizationChars}
                                 categories={product.categories}
                             />
                         );
