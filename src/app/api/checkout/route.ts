@@ -297,8 +297,8 @@ async function createPayPlusPayment(data: {
                 more_info: orderId,
                 refURL_success: `${process.env.NEXT_PUBLIC_APP_URL}/success?orderId=${orderId}`,
                 refURL_failure: `${process.env.NEXT_PUBLIC_APP_URL}/cancel?orderId=${orderId}`,
-                sendEmailApproval: false,
-                sendEmailFailure: false,
+                sendEmailApproval: true, // Enable PayPlus receipt email
+                sendEmailFailure: true,  // Enable PayPlus failure email
                 charge_method: 1 // Regular Charge
             })
         });
