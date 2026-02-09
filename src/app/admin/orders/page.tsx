@@ -1,7 +1,7 @@
 import { getOrders } from "@/app/actions/order-actions";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import Link from "next/link";
-import { Eye, Calendar, User, Package, ChevronRight, Phone, Mail } from "lucide-react";
+import { Eye, Calendar, User, Package, ChevronRight, Phone, Mail, Truck, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 
@@ -38,6 +38,8 @@ export default async function AdminOrdersPage() {
                     <div className="grid grid-cols-1 gap-4 md:hidden">
                         {orders.map((order) => {
                             const dateIsrael = toZonedTime(new Date(order.createdAt), TIME_ZONE);
+                            const isPickup = order.shippingAddress === 'Self Pickup';
+
                             return (
                                 <div key={order.id} className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden active:scale-[0.98] transition-all">
                                     <div className="p-5">
@@ -55,15 +57,23 @@ export default async function AdminOrdersPage() {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-2.5 mb-5">
+                                        <div className="grid grid-cols-2 gap-3 mb-5">
                                             <div className="flex items-center gap-2.5 text-stone-500">
                                                 <div className="p-1.5 bg-stone-50 rounded-lg">
                                                     <Calendar className="w-3.5 h-3.5" />
                                                 </div>
                                                 <span className="text-sm font-medium">{format(dateIsrael, 'dd/MM/yyyy')}</span>
                                             </div>
+
+                                            <div className={`flex items-center gap-2.5 ${isPickup ? 'text-amber-600' : 'text-david-green'}`}>
+                                                <div className={`p-1.5 rounded-lg ${isPickup ? 'bg-amber-50' : 'bg-green-50'}`}>
+                                                    {isPickup ? <MapPin className="w-3.5 h-3.5" /> : <Truck className="w-3.5 h-3.5" />}
+                                                </div>
+                                                <span className="text-sm font-bold">{isPickup ? 'איסוף עצמי' : 'משלוח'}</span>
+                                            </div>
+
                                             {order.ordererPhone && (
-                                                <div className="flex items-center gap-2.5 text-stone-500">
+                                                <div className="flex items-center gap-2.5 text-stone-500 col-span-2">
                                                     <div className="p-1.5 bg-stone-50 rounded-lg">
                                                         <Phone className="w-3.5 h-3.5" />
                                                     </div>
@@ -90,21 +100,24 @@ export default async function AdminOrdersPage() {
                     </div>
 
                     {/* DESKTOP TABLE VIEW (Visible only on medium screens and above) */}
-                    <div className="hidden md:block bg-white border border-stone-200 rounded-[2rem] shadow-sm overflow-hidden">
-                        <table className="w-full text-sm text-right">
+                    <div className="hidden md:block bg-white border border-stone-200 rounded-[2rem] shadow-sm overflow-hidden text-right">
+                        <table className="w-full text-sm">
                             <thead className="bg-stone-50/80 text-stone-500 font-bold uppercase tracking-wider text-[11px] border-b border-stone-100">
                                 <tr>
-                                    <th className="px-8 py-5">מספר הזמנה</th>
-                                    <th className="px-8 py-5">לקוח</th>
-                                    <th className="px-8 py-5 text-center">תאריך ושעה</th>
-                                    <th className="px-8 py-5 text-center">סה"כ</th>
-                                    <th className="px-8 py-5">סטטוס</th>
-                                    <th className="px-8 py-5 text-left">פעולות</th>
+                                    <th className="px-8 py-5 text-right font-bold">מספר הזמנה</th>
+                                    <th className="px-8 py-5 text-right font-bold">לקוח</th>
+                                    <th className="px-8 py-5 text-center font-bold">סוג</th>
+                                    <th className="px-8 py-5 text-center font-bold">תאריך ושעה</th>
+                                    <th className="px-8 py-5 text-center font-bold">סה"כ</th>
+                                    <th className="px-8 py-5 text-right font-bold">סטטוס</th>
+                                    <th className="px-8 py-5 text-left font-bold">פעולות</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-stone-100">
                                 {orders.map((order) => {
                                     const dateIsrael = toZonedTime(new Date(order.createdAt), TIME_ZONE);
+                                    const isPickup = order.shippingAddress === 'Self Pickup';
+
                                     return (
                                         <tr key={order.id} className="group hover:bg-stone-50/50 transition-all">
                                             <td className="px-8 py-5 font-mono text-[11px] text-stone-400 group-hover:text-stone-900 transition-colors">
@@ -119,6 +132,13 @@ export default async function AdminOrdersPage() {
                                                         <div className="font-bold text-stone-900">{order.recipientName}</div>
                                                         <div className="text-xs text-stone-400 font-medium">{order.user?.email || order.ordererEmail}</div>
                                                     </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5 text-center">
+                                                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${isPickup ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-david-green'
+                                                    }`}>
+                                                    {isPickup ? <MapPin className="w-3 h-3" /> : <Truck className="w-3 h-3" />}
+                                                    {isPickup ? 'איסוף' : 'משלוח'}
                                                 </div>
                                             </td>
                                             <td className="px-8 py-5 text-center">
@@ -153,4 +173,5 @@ export default async function AdminOrdersPage() {
         </div>
     );
 }
+
 
