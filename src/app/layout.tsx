@@ -60,6 +60,7 @@ import CookieConsent from '@/components/ui/CookieConsent';
 import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import { Toaster } from 'sonner';
 import GoogleTagManager from '@/components/analytics/GoogleTagManager';
+import GoogleTag from '@/components/analytics/GoogleTag';
 
 const prisma = new PrismaClient();
 
@@ -148,6 +149,7 @@ export default async function RootLayout({
       <html lang="he" dir="rtl">
         <body className={`${heebo.variable} ${frankRuhl.variable} ${bellefair.variable} ${assistant.variable} font-sans antialiased text-stone-900 bg-[#FAFAFA]`}>
           <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
+          <GoogleTag tagId={process.env.NEXT_PUBLIC_GOOGLE_TAG_ID || ''} />
           <CartProvider>
             <div className="flex flex-col min-h-screen">
               <AnnouncementBar initialConfig={announcementConfig} />
