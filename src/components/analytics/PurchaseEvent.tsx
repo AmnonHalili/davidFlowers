@@ -35,6 +35,14 @@ export default function PurchaseEvent({ orderId, total, currency = "ILS", items 
             },
         });
 
+        // Google Ads Conversion tracking
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+            (window as any).gtag('event', 'conversion', {
+                'send_to': process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID,
+                'transaction_id': orderId
+            });
+        }
+
         // Clear the cart on successful purchase
         clearCart();
 
