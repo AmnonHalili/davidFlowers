@@ -3,13 +3,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, User, Menu, Search, Lock, Phone, MapPin, Heart } from 'lucide-react';
+import { ShoppingBag, User, Menu, Search, Lock, Phone, MapPin, Heart, Truck, Instagram } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import SearchOverlay from './SearchOverlay';
 import { Dock, DockLink } from '@/components/ui/Dock';
+import DeliveryCountdown from './DeliveryCountdown';
+import TopBarTicker from './TopBarTicker';
 
 type NavbarProps = {
     isAdmin?: boolean;
@@ -58,35 +60,43 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                 : 'bg-david-beige border-b border-[#DCDBCF]'
                 }`}>
                 {/* Top Contact Bar */}
-                <div className={`text-white py-1.5 px-4 text-[10px] md:text-xs font-medium tracking-wide ${pathname === '/' ? 'bg-transparent' : 'bg-stone-900'}`}>
-                    <div className="max-w-screen-2xl mx-auto flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                            <a href="tel:0535879344" className="flex items-center gap-1.5 hover:text-stone-300 transition-colors">
-                                <Phone className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                                <span className="dir-ltr">053-587-9344</span>
-                            </a>
-                            <span className="text-stone-700 hidden md:inline">|</span>
-                            <a
-                                href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 hover:text-stone-300 transition-colors hidden md:flex"
-                            >
-                                <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                                <span>רחבעם זאבי 4, אשקלון</span>
-                            </a>
+                <div className={`text-white py-1.5 md:py-1.5 px-4 text-[10px] md:text-xs font-medium tracking-wide ${pathname === '/' ? 'bg-transparent' : 'bg-stone-900 border-b border-white/5'}`}>
+                    <div className="max-w-screen-2xl mx-auto">
+                        {/* Desktop View */}
+                        <div className="hidden md:flex justify-between items-center w-full">
+                            {/* Right on Desktop: Delivery Areas */}
+                            <div className="flex items-center gap-2">
+                                <Truck className="w-3.5 h-3.5 text-david-beige/60" />
+                                <span className="text-david-beige/90">משלוחים לאשקלון והסביבה</span>
+                            </div>
+
+                            {/* Center: Delivery Countdown */}
+                            <div>
+                                <DeliveryCountdown />
+                            </div>
+
+                            {/* Left on Desktop: Phone & Location */}
+                            <div className="flex items-center gap-4">
+                                <a href="tel:0535879344" className="flex items-center gap-1.5 hover:text-stone-300 transition-colors">
+                                    <Phone className="w-3.5 h-3.5" />
+                                    <span className="dir-ltr">053-587-9344</span>
+                                </a>
+                                <span className="text-stone-700">|</span>
+                                <a
+                                    href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 hover:text-stone-300 transition-colors"
+                                >
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    <span>רחבעם זאבי 4, אשקלון</span>
+                                </a>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            {/* Mobile Address (shown only on mobile on right side if needed, or hidden to save space) */}
-                            <a
-                                href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 block md:hidden hover:text-stone-300 transition-colors"
-                            >
-                                <MapPin className="w-3 h-3" />
-                                <span>רחבעם זאבי 4, אשקלון</span>
-                            </a>
+
+                        {/* Mobile View: Professional Ticker */}
+                        <div className="md:hidden">
+                            <TopBarTicker />
                         </div>
                     </div>
                 </div>
@@ -166,6 +176,16 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                                 <Lock className="w-5 h-5" strokeWidth={1.5} />
                             </Link>
                         )}
+
+                        <a
+                            href="https://www.instagram.com/davidflower__?igsh=NXNudHU1emMwcWVl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-2`}
+                            title="עקבו אחרינו באינסטגרם"
+                        >
+                            <Instagram className="w-5 h-5 md:w-5 md:h-5" strokeWidth={1.5} />
+                        </a>
 
                         <Link href="/wishlist" className={`${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-2`} title="המועדפים שלי">
                             <Heart className="w-5 h-5 md:w-5 md:h-5" strokeWidth={1.5} />

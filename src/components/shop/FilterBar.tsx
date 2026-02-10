@@ -43,17 +43,17 @@ export default function FilterBar() {
     }, [sort, debouncedMin, debouncedMax, router, searchParams]);
 
     return (
-        <div className="mb-12">
+        <div className="mb-6 md:mb-8">
             {/* Mobile Filter Toggle */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="md:hidden w-full flex items-center justify-between p-4 bg-[#F5F5F0] text-david-green font-serif text-lg rounded-sm"
+                className="md:hidden w-full flex items-center justify-between p-3 bg-stone-100/50 text-david-green font-serif text-base rounded-sm border border-stone-200/50"
             >
                 <div className="flex items-center gap-2">
-                    <SlidersHorizontal className="w-5 h-5" />
+                    <SlidersHorizontal className="w-4 h-4" />
                     <span>סינון ומיון</span>
                 </div>
-                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Filter Content */}
@@ -82,10 +82,46 @@ export default function FilterBar() {
                 </div>
 
                 {/* Price Range */}
-                <div className="mt-6 md:mt-0 flex-1 md:flex md:justify-end">
-                    <div className="flex items-end gap-4">
-                        <div className="w-[120px]">
-                            <label className="block text-xs font-bold text-david-green/80 mb-2 uppercase tracking-widest">מחיר מ-</label>
+                <div className="mt-6 md:mt-0 flex-1 flex flex-col items-start md:items-end">
+                    <label className="block text-xs font-bold text-david-green/80 mb-3 uppercase tracking-widest self-start md:self-auto">טווח מחירים</label>
+
+                    {/* Range Chips */}
+                    <div className="flex flex-wrap gap-2 mb-6 md:justify-end">
+                        {[
+                            { label: 'עד 150 ₪', min: '', max: '150' },
+                            { label: '150 - 250 ₪', min: '150', max: '250' },
+                            { label: '250 - 400 ₪', min: '250', max: '400' },
+                            { label: '400+ ₪', min: '400', max: '' }
+                        ].map((range) => {
+                            const isActive = minPrice === range.min && maxPrice === range.max;
+                            return (
+                                <button
+                                    key={range.label}
+                                    onClick={() => {
+                                        if (isActive) {
+                                            setMinPrice('');
+                                            setMaxPrice('');
+                                        } else {
+                                            setMinPrice(range.min);
+                                            setMaxPrice(range.max);
+                                        }
+                                    }}
+                                    className={`
+                                        px-4 py-1.5 rounded-full border text-xs tracking-wide transition-all duration-300
+                                        ${isActive
+                                            ? 'bg-david-green text-white border-david-green shadow-md translate-y-[-1px]'
+                                            : 'bg-white text-david-green/70 border-david-green/10 hover:border-david-green/30 hover:bg-david-green/5'}
+                                    `}
+                                >
+                                    {range.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex items-end gap-3 w-full md:w-auto">
+                        <div className="w-full md:w-[100px]">
+                            <label className="block text-[10px] font-bold text-david-green/50 mb-1 uppercase tracking-widest">מ-</label>
                             <div className="relative group">
                                 <input
                                     type="number"
@@ -93,14 +129,14 @@ export default function FilterBar() {
                                     placeholder="0"
                                     value={minPrice}
                                     onChange={(e) => setMinPrice(e.target.value)}
-                                    className="w-full bg-transparent border-b border-david-green/30 text-david-green text-lg font-sans py-2 pl-6 pr-2 focus:outline-none focus:border-david-green transition-colors placeholder:text-david-green/30"
+                                    className="w-full bg-transparent border-b border-david-green/20 text-david-green text-base font-sans py-1.5 pl-6 pr-1 focus:outline-none focus:border-david-green transition-colors placeholder:text-david-green/20"
                                 />
-                                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-david-green/50 text-sm">₪</span>
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-david-green/40 text-xs">₪</span>
                             </div>
                         </div>
-                        <span className="text-david-green/30 mb-3">–</span>
-                        <div className="w-[120px]">
-                            <label className="block text-xs font-bold text-david-green/80 mb-2 uppercase tracking-widest">עד מחיר</label>
+                        <span className="text-david-green/20 mb-2">/</span>
+                        <div className="w-full md:w-[100px]">
+                            <label className="block text-[10px] font-bold text-david-green/50 mb-1 uppercase tracking-widest">עד-</label>
                             <div className="relative group">
                                 <input
                                     type="number"
@@ -108,9 +144,9 @@ export default function FilterBar() {
                                     placeholder="הכל"
                                     value={maxPrice}
                                     onChange={(e) => setMaxPrice(e.target.value)}
-                                    className="w-full bg-transparent border-b border-david-green/30 text-david-green text-lg font-sans py-2 pl-6 pr-2 focus:outline-none focus:border-david-green transition-colors placeholder:text-david-green/30"
+                                    className="w-full bg-transparent border-b border-david-green/20 text-david-green text-base font-sans py-1.5 pl-6 pr-1 focus:outline-none focus:border-david-green transition-colors placeholder:text-david-green/20"
                                 />
-                                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-david-green/50 text-sm">₪</span>
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-david-green/40 text-xs">₪</span>
                             </div>
                         </div>
                     </div>

@@ -20,6 +20,9 @@ const config: Config = {
         bellefair: ['var(--font-bellefair)'],
         assistant: ['var(--font-assistant)'],
       },
+      animation: {
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
     },
   },
   plugins: [],

@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import BouquetSizeSelector from './product/BouquetSizeSelector';
 import InscriptionModal from './product/InscriptionModal';
 import { sendGTMEvent } from '@/lib/gtm';
+import DeliveryCountdown from './layout/DeliveryCountdown';
 
 type PurchaseType = 'SUBSCRIPTION' | 'ONETIME';
 type Frequency = 'WEEKLY' | 'BIWEEKLY';
@@ -363,6 +364,11 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
         </span>
         <span className="group-hover:-translate-x-1 transition-transform">←</span>
       </button>
+
+      <div className="bg-david-green/5 border border-david-green/10 rounded-lg p-3 flex flex-col items-center gap-1">
+        <span className="text-[10px] text-david-green/50 uppercase tracking-widest font-bold">זמינות למשלוח באשקלון והסביבה</span>
+        <DeliveryCountdown />
+      </div>
 
       <p className="text-center text-[10px] text-stone-400">
         תשלום מאובטח באמצעות PayPlus. ניתן לבטל את המנוי בכל עת.

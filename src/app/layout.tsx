@@ -53,7 +53,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { heIL } from '@clerk/localizations';
 import { currentUser } from '@clerk/nextjs/server';
 import { PrismaClient } from '@prisma/client';
-import WhatsAppButton from '@/components/WhatsAppButton';
+import ContactFloatingMenu from '@/components/ContactFloatingMenu';
 import AccessibilityWidget from '@/components/AccessibilityWidget';
 import CookieConsent from '@/components/ui/CookieConsent';
 
@@ -158,7 +158,7 @@ export default async function RootLayout({
               <Footer />
             </div>
             <CartDrawer />
-            <WhatsAppButton />
+            <ContactFloatingMenu />
             <AccessibilityWidget />
             <CookieConsent />
 

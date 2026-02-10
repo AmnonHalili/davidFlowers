@@ -122,13 +122,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     }
 
     return (
-        <main className="min-h-screen pt-8 pb-20 px-6 bg-[#FAFAFA]" dir="rtl">
-            <div className="max-w-screen-2xl mx-auto space-y-12">
+        <main className="min-h-screen pt-4 md:pt-6 pb-20 px-6 bg-[#FAFAFA]" dir="rtl">
+            <div className="max-w-screen-2xl mx-auto space-y-6 md:space-y-8">
 
                 {/* Header */}
-                <div className="text-center space-y-4 mb-4">
-                    <h1 className="font-serif text-5xl text-david-green">{title}</h1>
-                    <p className="text-david-green/60 text-lg font-light max-w-lg mx-auto">
+                <div className="text-center space-y-2 md:space-y-2 mb-2 md:mb-2">
+                    <h1 className="font-serif text-4xl md:text-5xl text-david-green">{title}</h1>
+                    <p className="text-david-green/60 text-base md:text-lg font-light max-w-lg mx-auto">
                         קולקציית {title} שנבחרה בקפידה עבורכם
                     </p>
                 </div>
