@@ -22,7 +22,7 @@ export default async function AdminLayout({
     });
 
     if (dbUser?.role !== 'ADMIN') {
-        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.replace(/['"]+/g, '').trim().toLowerCase());
         const userEmail = user.emailAddresses[0]?.emailAddress?.toLowerCase();
 
         if (!userEmail || !adminEmails.includes(userEmail)) {
