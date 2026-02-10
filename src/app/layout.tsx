@@ -89,12 +89,15 @@ export default async function RootLayout({
   let isAdmin = false;
 
   if (user) {
-    // ... (existing admin check logic)
     try {
       const dbUser = await prisma.user.findUnique({
         where: { clerkId: user.id }
       });
-      if (dbUser?.role === 'ADMIN') {
+
+      const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.replace(/['"]+/g, '').trim().toLowerCase());
+      const userEmail = user.emailAddresses[0]?.emailAddress?.toLowerCase();
+
+      if (dbUser?.role === 'ADMIN' || (userEmail && adminEmails.includes(userEmail))) {
         isAdmin = true;
       }
     } catch (error) {
