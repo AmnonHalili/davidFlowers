@@ -41,7 +41,7 @@ export default function TopBarTicker() {
                     className="flex items-center gap-1.5 text-david-beige/90"
                 >
                     <MapPin className="w-3 h-3 text-david-beige/60" />
-                    <span>רחבעם זאבי 4, אשקלון</span>
+                    <span>רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
                 </a>
             )
         }

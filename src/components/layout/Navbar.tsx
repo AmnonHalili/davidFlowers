@@ -89,7 +89,7 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                                     className="flex items-center gap-1.5 hover:text-stone-300 transition-colors"
                                 >
                                     <MapPin className="w-3.5 h-3.5" />
-                                    <span>רחבעם זאבי 4, אשקלון</span>
+                                    <span>רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
                                 </a>
                             </div>
                         </div>
@@ -301,7 +301,7 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                                                     <MapPin className="w-4 h-4" />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-medium">רחבעם זאבי 4, אשקלון</span>
+                                                    <span className="text-sm font-medium">רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
                                                     <span className="text-[10px] text-stone-400">לחץ לניווט ב-Waze</span>
                                                 </div>
                                             </div>

@@ -19,7 +19,7 @@ export default function Footer() {
                                     className="hover:text-white transition-colors flex items-center gap-2"
                                 >
                                     <MapPin className="w-4 h-4" />
-                                    <span>רחבעם זאבי 4, אשקלון</span>
+                                    <span>רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
                                 </a>
                                 <a href="tel:0535879344" className="hover:text-white transition-colors flex items-center gap-2">
                                     <Phone className="w-4 h-4" />

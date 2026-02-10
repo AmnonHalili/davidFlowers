@@ -125,7 +125,7 @@ export default function Home() {
 
             <p className="font-sans font-light text-stone-100 text-lg md:text-xl max-w-lg mx-auto leading-relaxed tracking-[0.15em] mix-blend-screen">
               אומנות השזירה פוגשת טריות חסרת פשרות. משלוחי פרחים באשקלון שהופכים רגעים לזיכרונות.
-              <span className="block mt-2 text-sm md:text-base font-normal text-white/90">רחבעם זאבי 4, אשקלון</span>
+              <span className="block mt-2 text-sm md:text-base font-bold text-white drop-shadow-sm">רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
             </p>
 
             <div className="pt-10 flex flex-col md:flex-row gap-6 justify-center items-center">
@@ -170,7 +170,7 @@ export default function Home() {
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוחים מהיום להיום באשקלון והסביבה</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
-          <span className="mx-8 text-sm uppercase tracking-widest font-medium">החנות שלנו: רחבעם זאבי 4, אשקלון</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">החנות שלנו: רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">עטוף באהבה: 100% טריות מובטחת</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
@@ -178,7 +178,7 @@ export default function Home() {
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">משלוחים מהיום להיום באשקלון והסביבה</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
-          <span className="mx-8 text-sm uppercase tracking-widest font-medium">החנות שלנו: רחבעם זאבי 4, אשקלון</span>
+          <span className="mx-8 text-sm uppercase tracking-widest font-medium">החנות שלנו: רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">•</span>
           <span className="mx-8 text-sm uppercase tracking-widest font-medium">עטוף באהבה: 100% טריות מובטחת</span>
         </motion.div>
