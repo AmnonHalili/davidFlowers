@@ -389,20 +389,20 @@ export default function CartDrawer() {
                         className="fixed top-0 right-0 bottom-0 w-full md:max-w-[500px] h-[100dvh] bg-stone-50 md:bg-white z-[70] flex flex-col shadow-2xl overflow-hidden"
                     >
                         {/* Mobile Step Header */}
-                        <div className="md:hidden pt-4 pb-2 px-6 bg-white border-b border-stone-100">
-                            <div className="flex justify-between items-center gap-2 mb-2">
+                        <div className="md:hidden pt-2 pb-1 px-4 bg-white border-b border-stone-100">
+                            <div className="flex justify-between items-center gap-2 mb-1">
                                 {[
                                     { step: 'cart', label: 'עגלה' },
                                     { step: 'contact', label: 'פרטים' },
                                     { step: 'delivery', label: shippingMethod === 'delivery' ? 'משלוח' : 'איסוף' }
                                 ].map((item, idx) => (
-                                    <div key={item.step} className="flex-1 flex flex-col items-center gap-1.5">
+                                    <div key={item.step} className="flex-1 flex flex-col items-center gap-1">
                                         <div className={`h-1 w-full rounded-full transition-all duration-300 ${(checkoutStep === 'cart' && idx === 0) ||
                                             (checkoutStep === 'contact' && idx <= 1) ||
                                             (checkoutStep === 'delivery' && idx <= 2)
                                             ? 'bg-david-green' : 'bg-stone-100'
                                             }`} />
-                                        <span className={`text-[10px] font-bold ${checkoutStep === item.step ? 'text-david-green' : 'text-stone-400'
+                                        <span className={`text-[9px] font-bold ${checkoutStep === item.step ? 'text-david-green' : 'text-stone-400'
                                             }`}>{item.label}</span>
                                     </div>
                                 ))}
@@ -410,7 +410,7 @@ export default function CartDrawer() {
                         </div>
 
                         {/* Header */}
-                        <div className="p-5 md:p-6 border-b border-stone-100 flex justify-between items-center bg-white z-10 shrink-0">
+                        <div className="p-4 md:p-5 border-b border-stone-100 flex justify-between items-center bg-white z-10 shrink-0">
                             <div className="flex items-center gap-3">
                                 {checkoutStep !== 'cart' && (
                                     <button
@@ -420,7 +420,7 @@ export default function CartDrawer() {
                                         <ChevronRight className="w-6 h-6 rotate-180" />
                                     </button>
                                 )}
-                                <h2 className="font-serif text-xl md:text-2xl text-stone-900">
+                                <h2 className="font-serif text-lg md:text-xl text-stone-900">
                                     {checkoutStep === 'cart' ? 'העגלה שלך' :
                                         checkoutStep === 'contact' ? 'פרטי המזמין' : (shippingMethod === 'delivery' ? 'פרטי משלוח' : 'פרטי איסוף')}
                                 </h2>
@@ -429,17 +429,23 @@ export default function CartDrawer() {
                                 onClick={closeCart}
                                 className="p-2 -mr-2 text-stone-400 hover:text-stone-900 transition-colors rounded-full hover:bg-stone-50"
                             >
-                                <X className="w-6 h-6" />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
                         {/* Free Shipping Progress Bar */}
-                        <div className="px-8 py-5 bg-stone-50/50 border-b border-stone-100">
-                            <div className="flex justify-between items-end mb-2">
-                                <span className="text-sm font-medium text-stone-700">משלוח חינם</span>
-                                <span className="text-xs text-stone-500 font-mono">{progress.toFixed(0)}%</span>
+                        <div className="px-6 py-3 bg-stone-50 border-b border-stone-100">
+                            <div className="flex justify-between items-center mb-1.5">
+                                <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">
+                                    {progress === 100 ? (
+                                        <span className="text-david-green">משלוח חינם הופעל! 🎉</span>
+                                    ) : (
+                                        <span>עוד <span className="text-stone-900">₪{remainingForFreeShipping.toFixed(0)}</span> למשלוח חינם</span>
+                                    )}
+                                </p>
+                                <span className="text-[10px] text-stone-400 font-mono">{progress.toFixed(0)}%</span>
                             </div>
-                            <div className="h-1.5 w-full bg-stone-200 rounded-full overflow-hidden">
+                            <div className="h-1 w-full bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progress}%` }}
@@ -447,17 +453,10 @@ export default function CartDrawer() {
                                     className="h-full bg-david-green"
                                 />
                             </div>
-                            <p className="text-xs text-stone-500 mt-2 text-center">
-                                {progress === 100 ? (
-                                    <span className="text-david-green font-medium">מעולה! קיבלת משלוח חינם 🎉</span>
-                                ) : (
-                                    <span>עוד <span className="font-bold text-stone-900">₪{remainingForFreeShipping.toFixed(0)}</span> למשלוח חינם</span>
-                                )}
-                            </p>
                         </div>
 
                         {/* Items - Extended Scroll Area */}
-                        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 scrollbar-hide">
+                        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 space-y-4 scrollbar-hide">
                             {items.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6 text-stone-300">
                                     <ShoppingBag className="w-16 h-16 opacity-20" strokeWidth={1} />
@@ -485,30 +484,30 @@ export default function CartDrawer() {
                                             className="space-y-6 pb-6"
                                         >
                                             {/* Shipping Type Toggle */}
-                                            <div className="grid grid-cols-2 gap-4 p-1.5 bg-stone-100 rounded-2xl">
+                                            <div className="grid grid-cols-2 gap-2 p-1.5 bg-stone-100 rounded-xl">
                                                 <button
                                                     onClick={() => setShippingMethod('pickup')}
-                                                    className={`py-3.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${shippingMethod === 'pickup' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                                                    className={`py-2 px-3 rounded-lg text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 ${shippingMethod === 'pickup' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                                         }`}
                                                 >
-                                                    <MapPin className="w-4 h-4" />
+                                                    <MapPin className="w-3.5 h-3.5" />
                                                     איסוף עצמי
                                                 </button>
                                                 <button
                                                     onClick={() => setShippingMethod('delivery')}
-                                                    className={`py-3.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${shippingMethod === 'delivery' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                                                    className={`py-2 px-3 rounded-lg text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 ${shippingMethod === 'delivery' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                                         }`}
                                                 >
-                                                    <Truck className="w-4 h-4" />
+                                                    <Truck className="w-3.5 h-3.5" />
                                                     משלוח
                                                 </button>
                                             </div>
 
                                             <div className="space-y-4">
                                                 {items.map((item) => (
-                                                    <div key={item.id} className="flex gap-4 p-3 bg-white md:bg-transparent rounded-2xl md:rounded-none border border-stone-100 md:border-0 shadow-sm md:shadow-none group">
+                                                    <div key={item.id} className="flex gap-3 p-2 bg-white md:bg-transparent rounded-xl md:rounded-none border border-stone-100 md:border-0 shadow-sm md:shadow-none group">
                                                         {/* Image */}
-                                                        <div className="relative w-20 h-24 md:w-24 md:h-32 bg-stone-100 shrink-0 overflow-hidden rounded-xl md:rounded-sm">
+                                                        <div className="relative w-16 h-20 md:w-20 md:h-24 bg-stone-100 shrink-0 overflow-hidden rounded-lg md:rounded-sm">
                                                             <img
                                                                 src={item.image}
                                                                 alt={item.name}
@@ -885,7 +884,7 @@ export default function CartDrawer() {
 
                         {/* Footer - Optimized for Mobile Steps */}
                         {items.length > 0 && (
-                            <div className="p-6 md:p-8 border-t border-white/50 bg-white/85 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-20 space-y-4 shrink-0">
+                            <div className="p-4 md:p-6 border-t border-white/50 bg-white/85 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-20 space-y-3 shrink-0">
                                 {/* Coupon Input - Only on first step */}
                                 {checkoutStep === 'cart' && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -898,16 +897,16 @@ export default function CartDrawer() {
                                                         value={couponCode}
                                                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                                                         onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                                                        placeholder="יש לך קוד קופון?"
-                                                        className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 pr-10 pl-3 text-sm focus:outline-none focus:border-david-green uppercase"
+                                                        placeholder="קוד קופון?"
+                                                        className="w-full bg-stone-50 border border-stone-200 rounded-lg py-2 pr-9 pl-3 text-xs focus:outline-none focus:border-david-green uppercase"
                                                     />
                                                 </div>
                                                 <button
                                                     onClick={handleApplyCoupon}
                                                     disabled={!couponCode || couponLoading}
-                                                    className="bg-stone-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50 transition-all hover:bg-black active:scale-[0.97]"
+                                                    className="bg-stone-900 text-white px-4 py-2 rounded-lg text-xs font-bold disabled:opacity-50 transition-all hover:bg-black active:scale-[0.97]"
                                                 >
-                                                    {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'החל'}
+                                                    {couponLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'החל'}
                                                 </button>
                                             </div>
                                         ) : (
@@ -944,40 +943,53 @@ export default function CartDrawer() {
                                         >
                                             {/* Upsell Preview on Step 1 */}
                                             {upsellItems.length > 0 && (
-                                                <div className="px-1 -mt-2">
-                                                    <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -mx-2 px-2 mask-linear-fade">
-                                                        {upsellItems.slice(0, 4).map((item) => (
-                                                            <div key={item.id} className="shrink-0 w-14 group cursor-pointer" onClick={() => handleAddUpsell(item)}>
-                                                                <div className={`relative aspect-square rounded-lg overflow-hidden bg-white border transition-all duration-300 ${addedUpsellId === item.id ? 'border-david-green ring-1 ring-david-green' : 'border-stone-100'}`}>
+                                                <div className="pt-2 border-t border-stone-100/40 mt-1">
+                                                    <div className="flex items-center justify-between mb-1.5 px-0.5">
+                                                        <h3 className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">תוספות מומלצות 🍫🍷</h3>
+                                                    </div>
+                                                    <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -mx-2 px-2">
+                                                        {upsellItems.map((item) => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="shrink-0 w-[80px] group cursor-pointer bg-stone-50/30 border border-stone-100/50 rounded-lg p-1 hover:bg-white transition-all flex flex-col items-center text-center"
+                                                                onClick={() => handleAddUpsell(item)}
+                                                            >
+                                                                <div className="relative w-full aspect-square rounded-md overflow-hidden bg-white mb-1 border border-stone-50">
                                                                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                                                    {addedUpsellId === item.id && (
-                                                                        <div className="absolute inset-0 bg-david-green/20 flex items-center justify-center">
-                                                                            <Check className="w-4 h-4 text-david-green bg-white rounded-full p-0.5" strokeWidth={4} />
+                                                                    {addedUpsellId === item.id ? (
+                                                                        <div className="absolute inset-0 bg-david-green/20 backdrop-blur-[1px] flex items-center justify-center">
+                                                                            <Check className="w-3 h-3 text-david-green bg-white rounded-full p-0.5" strokeWidth={5} />
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="absolute top-0.5 left-0.5 bg-david-green/10 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <Plus className="w-2 h-2 text-david-green" />
                                                                         </div>
                                                                     )}
                                                                 </div>
+                                                                <h4 className="text-[8px] font-bold text-stone-600 line-clamp-1 mb-0.5">{item.name}</h4>
+                                                                <p className="text-[9px] font-serif font-bold text-david-green">₪{item.price.toFixed(0)}</p>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
                                             )}
 
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between items-center text-sm font-medium text-stone-500">
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between items-center text-[10px] font-medium text-stone-400">
                                                     <span>סכום ביניים</span>
                                                     <span>₪{subtotal.toFixed(0)}</span>
                                                 </div>
                                                 <div className="flex justify-between items-end">
                                                     <div>
                                                         <span className="text-xl md:text-2xl font-serif font-bold text-stone-900 italic tracking-tight">₪{finalTotal.toFixed(0)}</span>
-                                                        <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">סה"כ בעגלה</p>
+                                                        <p className="text-[9px] text-stone-300 font-bold uppercase tracking-wider">סה"כ בעגלה</p>
                                                     </div>
                                                     <button
                                                         onClick={() => setCheckoutStep('contact')}
-                                                        className="bg-david-green text-david-beige px-8 py-3.5 rounded-2xl text-sm font-bold tracking-widest hover:bg-david-green/90 transition-all shadow-xl shadow-david-green/20 active:scale-[0.98] flex items-center gap-2"
+                                                        className="bg-david-green text-david-beige px-6 py-2.5 rounded-xl text-xs font-bold tracking-widest hover:bg-david-green/90 transition-all shadow-lg shadow-david-green/10 active:scale-[0.98] flex items-center gap-2"
                                                     >
                                                         המשך לפרטים
-                                                        <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                        <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
                                                     </button>
                                                 </div>
                                             </div>

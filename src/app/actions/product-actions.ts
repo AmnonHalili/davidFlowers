@@ -299,12 +299,12 @@ export async function getUpsellProducts() {
             where: {
                 categories: {
                     some: {
-                        slug: { in: ['add-ons', 'gifts', 'extras'] }
+                        slug: { in: ['add-ons'] }
                     }
                 },
                 stock: { gt: 0 }
             },
-            take: 6,
+            take: 10,
             include: {
                 images: true
             }

@@ -3,9 +3,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Instagram, Phone, X, MessageSquare } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 
 export default function ContactFloatingMenu() {
     const [isOpen, setIsOpen] = useState(false);
+    const { isOpen: isCartOpen } = useCart();
     const menuRef = useRef<HTMLDivElement>(null);
 
     const whatsappNumber = '972535879344';
@@ -62,8 +64,10 @@ export default function ContactFloatingMenu() {
         }
     ];
 
+    if (isCartOpen) return null;
+
     return (
-        <div ref={menuRef} className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-4">
+        <div ref={menuRef} className="fixed bottom-6 right-6 z-[40] flex flex-col items-end gap-4">
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
