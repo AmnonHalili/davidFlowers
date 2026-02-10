@@ -29,11 +29,32 @@ export async function syncUser() {
         return existingUser;
     }
 
-    // Create new user
+    // If not found by Clerk ID, try to find by Email (Migration / Production Switch fix)
+    const email = user.emailAddresses[0]?.emailAddress;
+    if (email) {
+        const existingUserByEmail = await prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (existingUserByEmail) {
+            // Relink the existing user to the new Clerk ID
+            console.log(`Relinking user ${email} to new Clerk ID: ${user.id}`);
+            return await prisma.user.update({
+                where: { id: existingUserByEmail.id },
+                data: {
+                    clerkId: user.id,
+                    image: user.imageUrl, // Update image while we're at it
+                    name: `${user.firstName || ''} ${user.lastName || ''}`.trim()
+                }
+            });
+        }
+    }
+
+    // Create new user if absolutely no record found
     return await prisma.user.create({
         data: {
             clerkId: user.id,
-            email: user.emailAddresses[0]?.emailAddress,
+            email: email!, // We verified it exists above or Clerk ensures it
             name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
             image: user.imageUrl,
             role: isAdmin ? 'ADMIN' : 'CUSTOMER',
