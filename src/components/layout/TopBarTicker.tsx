@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Truck, Phone, Clock } from 'lucide-react';
+import { Truck, Phone, Clock, MapPin } from 'lucide-react';
 import DeliveryCountdown from './DeliveryCountdown';
 
 export default function TopBarTicker() {
@@ -28,6 +28,20 @@ export default function TopBarTicker() {
                 <a href="tel:0535879344" className="flex items-center gap-1.5 text-david-beige/80">
                     <Phone className="w-3 h-3 text-david-beige/40" />
                     <span className="dir-ltr text-[11px]">053-587-9344</span>
+                </a>
+            )
+        },
+        {
+            id: 'address',
+            content: (
+                <a
+                    href="https://waze.com/ul?q=%D7%A8%D7%9ח%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-david-beige/90"
+                >
+                    <MapPin className="w-3 h-3 text-david-beige/60" />
+                    <span>רחבעם זאבי 4, אשקלון</span>
                 </a>
             )
         }

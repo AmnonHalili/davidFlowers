@@ -286,6 +286,43 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                                         </Link>
                                     </SignedOut>
                                 </div>
+
+                                <div className="border-t border-david-green/10 pt-6 mt-6 space-y-4">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] uppercase tracking-widest font-bold text-david-green/40">החנות שלנו</span>
+                                        <a
+                                            href="https://waze.com/ul?q=%D7%A8%D7%97%D7%91%D7%A2%D7%9D%20%D7%96%D7%90%D7%91%D7%99%204%2C%20%D7%90%D7%A9%D7%A7%D7%9C%D7%95%D7%9F&navigate=yes"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-stone-900 group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-david-green/10 p-2 rounded-full text-david-green group-hover:bg-david-green group-hover:text-white transition-colors">
+                                                    <MapPin className="w-4 h-4" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium">רחבעם זאבי 4, אשקלון</span>
+                                                    <span className="text-[10px] text-stone-400">לחץ לניווט ב-Waze</span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] uppercase tracking-widest font-bold text-david-green/40">זמינים עבורכם</span>
+                                        <a href="tel:0535879344" className="text-stone-900 group">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-david-green/10 p-2 rounded-full text-david-green group-hover:bg-david-green group-hover:text-white transition-colors">
+                                                    <Phone className="w-4 h-4" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium">053-587-9344</span>
+                                                    <span className="text-[10px] text-stone-400">מרכז ההזמנות</span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </motion.div>
                     </>
