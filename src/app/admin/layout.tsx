@@ -25,6 +25,15 @@ export default async function AdminLayout({
         const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.replace(/['"]+/g, '').trim().toLowerCase());
         const userEmail = user.emailAddresses[0]?.emailAddress?.toLowerCase();
 
+        console.log('--- Admin Access Debug ---');
+        console.log('User ID:', user.id);
+        console.log('User Email:', userEmail);
+        console.log('Admin Emails List:', adminEmails);
+        console.log('DB User Found:', !!dbUser);
+        console.log('DB User Role:', dbUser?.role);
+        console.log('Access Granted via Email:', userEmail && adminEmails.includes(userEmail));
+        console.log('--------------------------');
+
         if (!userEmail || !adminEmails.includes(userEmail)) {
             redirect('/');
         }
