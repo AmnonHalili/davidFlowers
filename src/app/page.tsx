@@ -6,6 +6,7 @@ import { ArrowLeft, Flower2 } from 'lucide-react';
 import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
 import CategoryExplorer from '@/components/home/CategoryExplorer';
 import InstagramFeed from '@/components/home/InstagramFeed';
+import CustomerTestimonials from '@/components/home/CustomerTestimonials';
 
 // Configuration for Hero Videos
 const HERO_VIDEOS = [
@@ -182,6 +183,9 @@ export default function Home() {
       <section id="best-sellers" className="scroll-mt-24">
         <CategoryExplorer />
       </section>
+
+      {/* Social Proof Section */}
+      <CustomerTestimonials />
 
       {/* Instagram Feed */}
       <InstagramFeed />
