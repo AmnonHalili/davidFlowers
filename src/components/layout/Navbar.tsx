@@ -177,15 +177,7 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                             </Link>
                         )}
 
-                        <a
-                            href="https://www.instagram.com/davidflower__?igsh=NXNudHU1emMwcWVl"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-2`}
-                            title="עקבו אחרינו באינסטגרם"
-                        >
-                            <Instagram className="w-5 h-5 md:w-5 md:h-5" strokeWidth={1.5} />
-                        </a>
+
 
                         <Link href="/wishlist" className={`${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-2`} title="המועדפים שלי">
                             <Heart className="w-5 h-5 md:w-5 md:h-5" strokeWidth={1.5} />
