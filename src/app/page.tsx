@@ -130,8 +130,11 @@ export default function Home() {
 
             <p className="font-sans font-light text-stone-100 text-lg md:text-xl max-w-lg mx-auto leading-relaxed tracking-[0.15em] mix-blend-screen hidden md:block">
               אומנות השזירה פוגשת טריות חסרת פשרות. משלוחי פרחים באשקלון שהופכים רגעים לזיכרונות.
-              <span className="block mt-2 text-sm md:text-base font-bold text-white drop-shadow-sm">רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
             </p>
+
+            <span className="block mt-8 mb-4 md:mt-2 text-sm md:text-base font-bold text-white drop-shadow-sm opacity-90">
+              רחבעם זאבי 4, אשקלון (מתחם האייקון)
+            </span>
 
             <div className="pt-10 flex flex-col md:flex-row gap-6 justify-center items-center">
               <motion.div
