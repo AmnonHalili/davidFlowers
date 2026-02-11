@@ -118,10 +118,15 @@ export default function Home() {
               </motion.div>
             </div>
 
-            <h1 className="font-bellefair text-[2.8rem] leading-[1.05] md:text-5xl lg:text-[5.5rem] tracking-wide text-white drop-shadow-xl shadow-black/50">
-              <span className="block drop-shadow-lg">לשמח את</span>
-              <span className="block font-light italic text-[#E8E8E8]">מי שאתם אוהבים</span>
+            {/* SEO Optimized H1 */}
+            <h1 className="font-bellefair text-white drop-shadow-xl shadow-black/50 tracking-wide flex flex-col items-center">
+              <span className="text-6xl md:text-7xl lg:text-[6rem] drop-shadow-lg mb-1 md:mb-2">פרחי דוד</span>
+              <span className="text-xl md:text-2xl font-sans font-light tracking-[0.15em] md:tracking-[0.25em] text-white/90">משלוחי פרחים באשקלון</span>
             </h1>
+
+            <p className="font-bellefair text-2xl md:text-4xl text-[#E8E8E8] italic mt-6 opacity-90 drop-shadow-md">
+              "לשמח את מי שאתם אוהבים"
+            </p>
 
             <p className="font-sans font-light text-stone-100 text-lg md:text-xl max-w-lg mx-auto leading-relaxed tracking-[0.15em] mix-blend-screen">
               אומנות השזירה פוגשת טריות חסרת פשרות. משלוחי פרחים באשקלון שהופכים רגעים לזיכרונות.
