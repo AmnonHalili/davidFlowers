@@ -65,18 +65,18 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                         {/* Desktop View */}
                         <div className="hidden md:flex justify-between items-center w-full">
                             {/* Right on Desktop: Delivery Areas */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex-1 flex justify-start items-center gap-2">
                                 <Truck className="w-3.5 h-3.5 text-david-beige/60" />
                                 <span className="text-david-beige/90">משלוחים לאשקלון והסביבה</span>
                             </div>
 
                             {/* Center: Delivery Countdown */}
-                            <div>
+                            <div className="flex-1 flex justify-center">
                                 <DeliveryCountdown />
                             </div>
 
                             {/* Left on Desktop: Phone & Location */}
-                            <div className="flex items-center gap-4">
+                            <div className="flex-1 flex justify-end items-center gap-4">
                                 <a href="tel:0535879344" className="flex items-center gap-1.5 hover:text-stone-300 transition-colors">
                                     <Phone className="w-3.5 h-3.5" />
                                     <span className="dir-ltr">053-587-9344</span>
