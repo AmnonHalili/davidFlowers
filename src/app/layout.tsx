@@ -38,15 +38,6 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     images: ['/logo_original.jpg'],
   },
-  icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-    other: {
-      rel: 'apple-touch-icon-precomposed',
-      url: '/apple-touch-icon.png',
-    },
-  },
   verification: {
     google: 'rDkvHMWzuXR1l-ff5fT-OGHsMov-4gbkjnEAfBwpnkk',
   },

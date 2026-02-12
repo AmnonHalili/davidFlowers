@@ -24,6 +24,7 @@ export default function Home() {
     '@type': 'Florist',
     name: 'פרחי דוד',
     image: 'https://davidflowers.co.il/logo_original.jpg',
+    logo: 'https://davidflowers.co.il/David-Logo-Enhanced.png',
     description: 'משלוחי פרחים טריים, עציצים ומתנות באשקלון והסביבה. חנות פרחים מובילה עם משלוחים מהיום להיום.',
     address: {
       '@type': 'PostalAddress',
