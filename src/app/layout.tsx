@@ -163,17 +163,23 @@ export default async function RootLayout({
           <GoogleTag tagId={process.env.NEXT_PUBLIC_GOOGLE_TAG_ID || ''} />
           <CartProvider>
             <div className="flex flex-col min-h-screen">
-              <AnnouncementBar initialConfig={announcementConfig} />
-              <Navbar isAdmin={isAdmin} categories={categories} />
+              <div className="print:hidden">
+                <AnnouncementBar initialConfig={announcementConfig} />
+                <Navbar isAdmin={isAdmin} categories={categories} />
+              </div>
               <div className="flex-grow">
                 {children}
               </div>
-              <Footer />
+              <div className="print:hidden">
+                <Footer />
+              </div>
             </div>
-            <CartDrawer />
-            <ContactFloatingMenu />
-            <AccessibilityWidget />
-            <CookieConsent />
+            <div className="print:hidden">
+              <CartDrawer />
+              <ContactFloatingMenu />
+              <AccessibilityWidget />
+              <CookieConsent />
+            </div>
 
             <Toaster position="top-center" richColors />
           </CartProvider>
