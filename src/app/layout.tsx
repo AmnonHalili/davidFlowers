@@ -52,6 +52,14 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+    other: {
+      rel: 'icon',
+      url: '/logo-new.png',
+    },
+  },
   manifest: '/manifest.json',
 };
 
