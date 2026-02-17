@@ -9,6 +9,16 @@ export const CATEGORIES = [
     { slug: 'add-ons', name: 'תוספות (Upsells)' },
 ];
 
+export const CATEGORY_ORDER = [
+    'bouquets',   // זרי פרחים
+    'plants',     // עציצים
+    'wedding',    // חתן וכלה
+    'gifts',      // מתנות ומתוקים
+    'chocolates', // שוקולדים
+    'balloons',   // בלונים
+    'vases',      // כלים ואגרטלים
+];
+
 export const getCategoryName = (slug: string) => {
     return CATEGORIES.find(c => c.slug === slug)?.name || slug;
 };

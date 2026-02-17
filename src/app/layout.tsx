@@ -126,15 +126,9 @@ export default async function RootLayout({
 
   // Fetch Categories for Navbar
   let categories: { name: string; slug: string }[] = [];
-  const CATEGORY_ORDER = [
-    'bouquets',  // זרי פרחים
-    'gifts',  // מתנות ומתוקים
-    'balloons',  // בלונים
-    'wedding',  // חתן וכלה
-    'plants',  // עציצים
-    'vases',   // כלים ואגרטלים
-    'chocolates' // שוקולדים
-  ];
+
+  // Import sorting logic
+  const { CATEGORY_ORDER } = require('@/lib/categories');
 
   try {
     categories = await prisma.category.findMany({
