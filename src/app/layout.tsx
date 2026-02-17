@@ -81,6 +81,7 @@ import GoogleTag from '@/components/analytics/GoogleTag';
 const prisma = new PrismaClient();
 
 import { getSiteConfig } from '@/app/actions/site-config-actions';
+import { CATEGORY_ORDER } from '@/lib/categories';
 
 // ... (existing imports)
 
