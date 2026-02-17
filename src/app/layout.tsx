@@ -128,8 +128,7 @@ export default async function RootLayout({
   // Fetch Categories for Navbar
   let categories: { name: string; slug: string }[] = [];
 
-  // Import sorting logic
-  const { CATEGORY_ORDER } = require('@/lib/categories');
+
 
   try {
     categories = await prisma.category.findMany({
