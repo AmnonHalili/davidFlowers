@@ -15,9 +15,15 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     const slug = decodeURIComponent(params.slug);
 
     // Try to get category info from DB for SEO fields
-    const dbCategory = (await prisma.category.findUnique({
-        where: { slug }
-    })) as any;
+    let dbCategory: any = null;
+    try {
+        dbCategory = await prisma.category.findUnique({
+            where: { slug }
+        });
+    } catch (e) {
+        // Database might be unreachable locally
+        console.warn(`Could not fetch category metadata for ${slug}, using fallback.`);
+    }
 
     const categoryInfo = CATEGORIES.find((c: any) => c.slug === slug);
     const categoryName = dbCategory?.name || categoryInfo?.name || slug;
@@ -118,7 +124,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             }
         }
     } catch (error) {
-        console.error("Category: Failed to fetch user favorites", error);
+        // Silently fail for favorites if DB is down
+        console.warn("Category: Failed to fetch user favorites (local dev or DB issue)");
     }
 
     return (
