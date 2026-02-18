@@ -12,6 +12,7 @@ import SearchOverlay from './SearchOverlay';
 import { Dock, DockLink } from '@/components/ui/Dock';
 import DeliveryCountdown from './DeliveryCountdown';
 import TopBarTicker from './TopBarTicker';
+import { CATEGORIES as GLOBAL_CATEGORIES, CATEGORY_ORDER } from '@/lib/categories';
 
 type NavbarProps = {
     isAdmin?: boolean;
@@ -37,15 +38,12 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
 
     const navLinks = categories && categories.length > 0
         ? categories.map(cat => ({ label: cat.name, href: `/category/${cat.slug}` }))
-        : [
-            { label: 'זרי פרחים', href: '/category/bouquets' },
-            { label: 'מתנות ומתוקים', href: '/category/gifts' },
-            { label: 'בלונים', href: '/category/balloons' },
-            { label: 'חתן וכלה', href: '/category/wedding' },
-            { label: 'עציצים', href: '/category/plants' },
-            { label: 'כלים ואגרטלים', href: '/category/vases' },
-            { label: 'שוקולדים', href: '/category/chocolates' },
-        ];
+        : CATEGORY_ORDER
+            .map(slug => {
+                const cat = GLOBAL_CATEGORIES.find(c => c.slug === slug);
+                return cat ? { label: cat.name, href: `/category/${cat.slug}` } : null;
+            })
+            .filter((link): link is { label: string; href: string } => link !== null);
 
     // Always add 'About' at the end or specific position if needed
     // Assuming 'About' is static and not a product category

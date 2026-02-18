@@ -72,7 +72,7 @@ export default function CustomerTestimonials() {
                             transition={{ duration: 0.6, delay: index * 0.1 }}
                             className="group relative bg-[#FAFAFA] p-8 md:p-10 rounded-3xl border border-stone-100 hover:border-david-green/20 hover:bg-white transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.03)]"
                         >
-                            <Quote className="absolute top-8 right-8 w-10 h-10 text-david-green/5 group-hover:text-david-green/10 transition-colors" />
+                            <Quote className="absolute top-8 left-8 w-10 h-10 text-david-green/5 group-hover:text-david-green/10 transition-colors" />
 
                             <div className="flex gap-1 mb-6">
                                 {[...Array(testimonial.rating)].map((_, i) => (
