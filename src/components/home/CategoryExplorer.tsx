@@ -7,15 +7,15 @@ import ProductCard from '@/components/shop/ProductCard';
 import { getProductsByCategory } from '@/app/actions/product-actions';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CATEGORIES = [
-    { label: 'זרי פרחים', slug: 'bouquets' },
-    { label: 'מתנות ומתוקים', slug: 'gifts' },
-    { label: 'בלונים', slug: 'balloons' },
-    { label: 'חתן וכלה', slug: 'wedding' },
-    { label: 'עציצים', slug: 'plants' },
-    { label: 'כלים ואגרטלים', slug: 'vases' },
-    { label: 'שוקולדים', slug: 'chocolates' }
-];
+import { CATEGORIES as GLOBAL_CATEGORIES, CATEGORY_ORDER } from '@/lib/categories';
+
+// Sort categories based on the global order and map to component format
+const CATEGORIES = CATEGORY_ORDER
+    .map(slug => {
+        const cat = GLOBAL_CATEGORIES.find(c => c.slug === slug);
+        return cat ? { label: cat.name, slug: cat.slug } : null;
+    })
+    .filter((cat): cat is { label: string; slug: string } => cat !== null);
 
 export default function CategoryExplorer() {
     const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].slug);
