@@ -323,6 +323,19 @@ export async function getUpsellProducts() {
     }
 }
 
+export async function getVisibleCategories() {
+    try {
+        const categories = await prisma.category.findMany({
+            where: { isHidden: false },
+            select: { name: true, slug: true }
+        });
+        return { success: true, categories };
+    } catch (error) {
+        console.error('Error fetching visible categories:', error);
+        return { success: false, categories: [] };
+    }
+}
+
 export async function getProductsByCategory(categorySlug: string, limit: number = 8) {
     try {
         console.log(`[getProductsByCategory] Fetching for slug: ${categorySlug}`);

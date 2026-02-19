@@ -9,29 +9,39 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { CATEGORIES as GLOBAL_CATEGORIES, CATEGORY_ORDER } from '@/lib/categories';
 
-// Sort categories based on the global order and map to component format
-const CATEGORIES = CATEGORY_ORDER
+// Fallback categories if dynamic fetching fails
+const FALLBACK_CATEGORIES = CATEGORY_ORDER
     .map(slug => {
         const cat = GLOBAL_CATEGORIES.find(c => c.slug === slug);
         return cat ? { label: cat.name, slug: cat.slug } : null;
     })
     .filter((cat): cat is { label: string; slug: string } => cat !== null);
 
-export default function CategoryExplorer() {
-    const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].slug);
+interface CategoryExplorerProps {
+    initialCategories?: { name: string; slug: string }[];
+}
+
+export default function CategoryExplorer({ initialCategories = [] }: CategoryExplorerProps) {
+    // Map initial categories to the format expected by the component
+    const mappedCategories = initialCategories.length > 0
+        ? initialCategories.map(cat => ({ label: cat.name, slug: cat.slug }))
+        : FALLBACK_CATEGORIES;
+
+    const [selectedCategory, setSelectedCategory] = useState(mappedCategories[0]?.slug || '');
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [cache, setCache] = useState<Record<string, any[]>>({});
+    const [displayCategories, setDisplayCategories] = useState(mappedCategories);
 
     useEffect(() => {
-        const fetchProducts = async () => {
-            // Check cache first
-            if (cache[selectedCategory]) {
-                setProducts(cache[selectedCategory]);
-                setLoading(false);
-                return;
-            }
+        if (selectedCategory && cache[selectedCategory]) {
+            setProducts(cache[selectedCategory]);
+            setLoading(false);
+            return;
+        }
 
+        const fetchProducts = async () => {
+            if (!selectedCategory) return;
             setLoading(true);
             const res = await getProductsByCategory(selectedCategory);
 
@@ -44,6 +54,17 @@ export default function CategoryExplorer() {
 
         fetchProducts();
     }, [selectedCategory, cache]);
+
+    // Handle case where categories might change or being empty initially
+    useEffect(() => {
+        if (initialCategories.length > 0) {
+            const newMapped = initialCategories.map(cat => ({ label: cat.name, slug: cat.slug }));
+            setDisplayCategories(newMapped);
+            if (!selectedCategory || !newMapped.find(c => c.slug === selectedCategory)) {
+                setSelectedCategory(newMapped[0]?.slug || '');
+            }
+        }
+    }, [initialCategories]);
 
     return (
         <section className="py-16 md:py-24 bg-white border-t border-stone-100">
@@ -69,7 +90,7 @@ export default function CategoryExplorer() {
                     {/* Scrollable Tabs (Mobile) / Centered Row (Desktop) */}
                     <div className="relative -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible no-scrollbar">
                         <div className="flex md:flex-wrap md:justify-center gap-2 md:gap-3 min-w-max md:min-w-0 pb-2">
-                            {CATEGORIES.map((cat) => (
+                            {displayCategories.map((cat) => (
                                 <button
                                     key={cat.slug}
                                     onClick={() => setSelectedCategory(cat.slug)}
