@@ -331,12 +331,12 @@ export async function getProductsByCategory(categorySlug: string, limit: number 
                     some: {
                         slug: categorySlug
                     }
-                },
-                stock: { gt: 0 } // Only show in-stock items
+                }
+                // Removed stock filter to match category page behavior
             },
             take: limit,
             orderBy: {
-                createdAt: 'desc' // Newest first
+                updatedAt: 'desc' // Match category page sort (recently updated)
             },
             include: {
                 images: {
