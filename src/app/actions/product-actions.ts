@@ -326,14 +326,25 @@ export async function getUpsellProducts() {
 export async function getProductsByCategory(categorySlug: string, limit: number = 8) {
     try {
         console.log(`[getProductsByCategory] Fetching for slug: ${categorySlug}`);
+
+        // Robustness: Handle potential slug variations for 'bouquets'
+        let slugFilter: any = {
+            equals: categorySlug,
+            mode: 'insensitive'
+        };
+
+        if (categorySlug === 'bouquets') {
+            slugFilter = {
+                in: ['bouquets', 'bouquet', 'zerim', 'flowers'], // Fallback for common misnamings
+                mode: 'insensitive'
+            };
+        }
+
         const products = await prisma.product.findMany({
             where: {
                 categories: {
                     some: {
-                        slug: {
-                            equals: categorySlug,
-                            mode: 'insensitive' // Ensure case doesn't break matching
-                        }
+                        slug: slugFilter
                     }
                 }
                 // Removed stock filter to match category page behavior
@@ -346,8 +357,7 @@ export async function getProductsByCategory(categorySlug: string, limit: number 
                 images: {
                     take: 2 // get main and hover
                 },
-                // We might need to check wishlist status here if we have userId,
-                // but for public homepage cacheability, better to fetch wishlist separately or client-side.
+                categories: true // Include categories to debug if needed
             }
         });
 
