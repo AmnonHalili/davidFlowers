@@ -325,11 +325,15 @@ export async function getUpsellProducts() {
 
 export async function getProductsByCategory(categorySlug: string, limit: number = 8) {
     try {
+        console.log(`[getProductsByCategory] Fetching for slug: ${categorySlug}`);
         const products = await prisma.product.findMany({
             where: {
                 categories: {
                     some: {
-                        slug: categorySlug
+                        slug: {
+                            equals: categorySlug,
+                            mode: 'insensitive' // Ensure case doesn't break matching
+                        }
                     }
                 }
                 // Removed stock filter to match category page behavior
@@ -346,6 +350,8 @@ export async function getProductsByCategory(categorySlug: string, limit: number 
                 // but for public homepage cacheability, better to fetch wishlist separately or client-side.
             }
         });
+
+        console.log(`[getProductsByCategory] Found ${products.length} products for ${categorySlug}`);
 
         // Transform Decimals to Numbers for Client Components
         const safeProducts = products.map(p => ({
