@@ -193,11 +193,9 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                             className={`relative ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-2`}
                         >
                             <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
-                            {itemsCount > 0 && (
-                                <span className="absolute 0 top-0 -right-0 w-4 h-4 bg-david-green text-david-beige text-[10px] flex items-center justify-center rounded-full">
-                                    {itemsCount}
-                                </span>
-                            )}
+                            <span className="absolute 0 top-0 -right-0 w-4 h-4 bg-david-green text-david-beige text-[10px] flex items-center justify-center rounded-full">
+                                {itemsCount}
+                            </span>
                         </button>
                     </div>
                 </div>
