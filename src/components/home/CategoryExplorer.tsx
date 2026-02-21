@@ -67,11 +67,11 @@ export default function CategoryExplorer({ initialCategories = [] }: CategoryExp
     }, [initialCategories]);
 
     return (
-        <section className="py-16 md:py-24 bg-white border-t border-stone-100">
-            <div className="max-w-screen-2xl mx-auto space-y-8 md:space-y-12">
+        <section className="pt-10 pb-16 md:py-24 bg-white border-t border-stone-100">
+            <div className="max-w-screen-2xl mx-auto space-y-6 md:space-y-12">
 
                 {/* Header & Tabs */}
-                <div className="space-y-6 px-4 md:px-6">
+                <div className="space-y-4 md:space-y-6 px-4 md:px-6">
                     {/* Modern 'Split Divider' Header */}
                     <div className="flex flex-col items-center gap-2">
                         <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-stone-500 font-medium">

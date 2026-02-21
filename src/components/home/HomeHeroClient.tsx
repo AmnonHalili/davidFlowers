@@ -13,7 +13,7 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
     const y1 = useTransform(scrollY, [0, 500], [0, 150]);
 
     return (
-        <section className="relative h-screen w-full overflow-hidden">
+        <section className="relative h-[85vh] md:h-screen w-full overflow-hidden">
             {/* Background - Video */}
             <div className="absolute inset-0 bg-stone-900">
                 {videos.length > 0 ? (
@@ -36,7 +36,7 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
             </motion.div>
 
             {/* Hero Content */}
-            <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-24 md:pt-32 z-20">
+            <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-16 md:pt-32 z-20">
                 <motion.div
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -103,7 +103,7 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
             </div>
 
             {/* Marquee Strip */}
-            <div className="bg-david-green text-david-beige py-3 overflow-hidden whitespace-nowrap relative z-20">
+            <div className="absolute bottom-0 left-0 right-0 bg-david-green text-david-beige py-2 md:py-3 overflow-hidden whitespace-nowrap z-20">
                 <motion.div
                     animate={{ x: [0, -1000] }}
                     transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
