@@ -327,7 +327,8 @@ export async function getVisibleCategories() {
     try {
         const categories = await prisma.category.findMany({
             where: { isHidden: false },
-            select: { name: true, slug: true }
+            select: { name: true, slug: true },
+            orderBy: { order: 'asc' }
         });
         return { success: true, categories };
     } catch (error) {

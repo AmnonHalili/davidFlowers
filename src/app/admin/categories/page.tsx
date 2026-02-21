@@ -7,11 +7,12 @@ import {
     createCategory,
     updateCategoryDetails,
     deleteCategory,
+    updateCategoriesOrder,
     CategoryPromotionData
 } from '@/app/actions/category-actions';
 import { DiscountType } from '@prisma/client';
 import { toast } from 'sonner';
-import { Loader2, Calendar as CalendarIcon, Tag, Percent, DollarSign, Edit2, Check, X, Plus, Trash2, Pencil, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Tag, Percent, DollarSign, Edit2, Check, X, Plus, Trash2, Pencil, Eye, EyeOff, ChevronUp, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,6 +24,7 @@ type CategoryWithCount = {
     discountEndDate: Date | null;
     isSaleActive: boolean;
     isHidden: boolean;
+    order: number;
     _count: { products: number };
 };
 
@@ -88,13 +90,6 @@ export default function CategoriesPage() {
         // 2. Update Name/Details if Changed
         let namePromise: Promise<{ success: boolean; error?: string }> = Promise.resolve({ success: true });
         if (newName || data.isHidden !== undefined) {
-            // We need to cast or ensure updateCategoryDetails accepts isHidden
-            // Logic: If newName is provided, use it. If not, we might still need to update isHidden.
-            // But existing handleSave logic checks 'if (newName)'.
-            // We should change the signature of onSave/handleSave to be more robust.
-            // For now, let's assume we pass the current name if it hasn't changed but isHidden has?
-            // Actually, updateCategoryDetails(id, name, isHidden) takes name as required.
-
             namePromise = updateCategoryDetails(id, newName || 'PLACEHOLDER_SHOULD_NOT_HAPPEN', data.isHidden);
         }
 
@@ -106,6 +101,37 @@ export default function CategoriesPage() {
             loadCategories();
         } else {
             toast.error('שגיאה בעדכון הקטגוריה');
+        }
+    };
+
+    const handleMove = async (index: number, direction: 'up' | 'down') => {
+        const newCategories = [...categories];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+        if (targetIndex < 0 || targetIndex >= categories.length) return;
+
+        // Swap the elements
+        [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
+
+        // Update orders
+        const categoryOrders = newCategories.map((cat, i) => ({
+            id: cat.id,
+            order: i
+        }));
+
+        // Optimistic UI update
+        // We temporarily update the categories state just for UI responsiveness
+        // But the indices/order field here is a bit tricky with local state.
+        // Let's just call the server action and reload.
+
+        setCategories(newCategories.map((c, i) => ({ ...c, order: i })));
+
+        const result = await updateCategoriesOrder(categoryOrders);
+        if (result.success) {
+            toast.success('סדר הקטגוריות עודכן');
+        } else {
+            toast.error('שגיאה בעדכון הסדר');
+            loadCategories(); // Rollback
         }
     };
 
@@ -168,8 +194,8 @@ export default function CategoriesPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnimatePresence>
-                    {categories.map((category) => (
+                <AnimatePresence mode="popLayout">
+                    {categories.map((category, index) => (
                         <CategoryCard
                             key={category.id}
                             category={category}
@@ -178,6 +204,8 @@ export default function CategoriesPage() {
                             onCancel={() => setEditingId(null)}
                             onSave={(data, newName) => handleSave(category.id, data, newName)}
                             onDelete={() => handleDelete(category.id, category.name)}
+                            onMoveUp={index > 0 ? () => handleMove(index, 'up') : undefined}
+                            onMoveDown={index < categories.length - 1 ? () => handleMove(index, 'down') : undefined}
                         />
                     ))}
                 </AnimatePresence>
@@ -192,13 +220,15 @@ export default function CategoriesPage() {
     );
 }
 
-function CategoryCard({ category, isEditing, onEdit, onCancel, onSave, onDelete }: {
+function CategoryCard({ category, isEditing, onEdit, onCancel, onSave, onDelete, onMoveUp, onMoveDown }: {
     category: CategoryWithCount;
     isEditing: boolean;
     onEdit: () => void;
     onCancel: () => void;
     onSave: (data: CategoryPromotionData, newName?: string) => void;
     onDelete: () => void;
+    onMoveUp?: () => void;
+    onMoveDown?: () => void;
 }) {
     const [data, setData] = useState<CategoryPromotionData>({
         discountType: category.discountType || 'PERCENTAGE',
@@ -244,7 +274,27 @@ function CategoryCard({ category, isEditing, onEdit, onCancel, onSave, onDelete 
                     </p>
                 </div>
                 {!isEditing && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 items-center">
+                        <div className="flex flex-col gap-1 mr-2 border-r border-stone-200 pr-2 py-1">
+                            {onMoveUp && (
+                                <button
+                                    onClick={onMoveUp}
+                                    className="p-1 hover:bg-stone-200 rounded text-stone-400 hover:text-david-green transition-colors"
+                                    title="הזז למעלה"
+                                >
+                                    <ChevronUp className="w-4 h-4" />
+                                </button>
+                            )}
+                            {onMoveDown && (
+                                <button
+                                    onClick={onMoveDown}
+                                    className="p-1 hover:bg-stone-200 rounded text-stone-400 hover:text-david-green transition-colors"
+                                    title="הזז למטה"
+                                >
+                                    <ChevronDown className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
                         <button
                             onClick={onEdit}
                             className="p-2 hover:bg-stone-200 rounded-full transition-colors text-stone-500 hover:text-david-green"

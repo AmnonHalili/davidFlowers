@@ -138,25 +138,8 @@ export default async function RootLayout({
   try {
     categories = await prisma.category.findMany({
       where: { isHidden: false },
-      select: { name: true, slug: true }
-    });
-
-    // Sort categories based on the predefined order
-    categories.sort((a, b) => {
-      const indexA = CATEGORY_ORDER.indexOf(a.slug);
-      const indexB = CATEGORY_ORDER.indexOf(b.slug);
-
-      // If both are in the list, sort by index
-      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-
-      // If only A is in list, move it up
-      if (indexA !== -1) return -1;
-
-      // If only B is in list, move it up
-      if (indexB !== -1) return 1;
-
-      // Otherwise sort alphabetically
-      return a.name.localeCompare(b.name);
+      select: { name: true, slug: true },
+      orderBy: { order: 'asc' }
     });
   } catch (error) {
     console.error("Layout: Failed to fetch categories", error);

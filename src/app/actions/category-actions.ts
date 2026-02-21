@@ -7,7 +7,10 @@ import { revalidatePath } from 'next/cache';
 export async function getCategoriesWithPromotions() {
     try {
         const categories = await prisma.category.findMany({
-            orderBy: { name: 'asc' },
+            orderBy: [
+                { order: 'asc' },
+                { name: 'asc' }
+            ],
             include: {
                 _count: {
                     select: { products: true }
@@ -52,20 +55,21 @@ export async function updateCategoryPromotion(id: string, data: CategoryPromotio
 
 export async function createCategory(name: string) {
     try {
-        // Simple slug generation for Hebrew support (might need better logic if hebrew strings)
-        // Actually, slug usually needs to be english for URLs. 
-        // If user enters Hebrew name, we might need an English slug or just use ID?
-        // Let's try to keep it simple: Use a random ID if slug can't be generated, or just use the name if it's english.
-        // Better: Allow user to provide slug, or auto-generate.
-        // For this MVP, let's assume we use a simple transliteration or just ID-based slug if empty.
-        // Let's just use the name as slug for now, but encoded.
-
         const slug = name.trim().toLowerCase().replace(/\s+/g, '-');
+
+        // Get the current max order to place the new category at the end
+        const maxOrderCategory = await prisma.category.findFirst({
+            orderBy: { order: 'desc' },
+            select: { order: true }
+        });
+
+        const nextOrder = (maxOrderCategory?.order ?? -1) + 1;
 
         const category = await prisma.category.create({
             data: {
                 name,
                 slug: slug || `cat-${Date.now()}`, // Fallback
+                order: nextOrder
             },
         });
         revalidatePath('/admin/categories');
@@ -73,6 +77,27 @@ export async function createCategory(name: string) {
     } catch (error) {
         console.error('Error creating category:', error);
         return { success: false, error: 'Failed to create category' };
+    }
+}
+
+export async function updateCategoriesOrder(categoryOrders: { id: string; order: number }[]) {
+    try {
+        // Use a transaction to update all orders
+        await prisma.$transaction(
+            categoryOrders.map((cat) =>
+                prisma.category.update({
+                    where: { id: cat.id },
+                    data: { order: cat.order },
+                })
+            )
+        );
+
+        revalidatePath('/admin/categories');
+        revalidatePath('/');
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating category orders:', error);
+        return { success: false, error: 'Failed to update category order' };
     }
 }
 
