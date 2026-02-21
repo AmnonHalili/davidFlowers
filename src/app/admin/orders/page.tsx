@@ -1,9 +1,10 @@
 import { getOrders } from "@/app/actions/order-actions";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import Link from "next/link";
-import { Eye, Calendar, User, Package, ChevronRight, Phone, Mail, Truck, MapPin } from "lucide-react";
+import { Eye, Calendar, User, Package, ChevronRight, Phone, Mail, Truck, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
+import { getDeliverySlot } from "@/lib/date-utils";
 
 export default async function AdminOrdersPage() {
     const orders = await getOrders();
@@ -80,6 +81,20 @@ export default async function AdminOrdersPage() {
                                                     <span className="text-sm font-medium" dir="ltr">{order.ordererPhone}</span>
                                                 </div>
                                             )}
+
+                                            {order.desiredDeliveryDate && (
+                                                <div className="flex items-center gap-2.5 text-david-green col-span-2 pt-2 border-t border-david-green/10">
+                                                    <div className="p-1.5 bg-green-50 rounded-lg">
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] font-bold uppercase opacity-60">מועד מבוקש:</div>
+                                                        <span className="text-sm font-bold">
+                                                            {format(toZonedTime(new Date(order.desiredDeliveryDate), TIME_ZONE), 'dd/MM/yyyy')} {getDeliverySlot(new Date(order.desiredDeliveryDate))}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center gap-3 pt-4 border-t border-stone-100">
@@ -107,7 +122,8 @@ export default async function AdminOrdersPage() {
                                     <th className="px-8 py-5 text-right font-bold">מספר הזמנה</th>
                                     <th className="px-8 py-5 text-right font-bold">לקוח</th>
                                     <th className="px-8 py-5 text-center font-bold">סוג</th>
-                                    <th className="px-8 py-5 text-center font-bold">תאריך ושעה</th>
+                                    <th className="px-8 py-5 text-center font-bold">מועד אספקה</th>
+                                    <th className="px-8 py-5 text-center font-bold">תאריך הזמנה</th>
                                     <th className="px-8 py-5 text-center font-bold">סה"כ</th>
                                     <th className="px-8 py-5 text-right font-bold">סטטוס</th>
                                     <th className="px-8 py-5 text-left font-bold">פעולות</th>
@@ -142,7 +158,17 @@ export default async function AdminOrdersPage() {
                                                 </div>
                                             </td>
                                             <td className="px-8 py-5 text-center">
-                                                <div className="font-bold text-stone-800">{format(dateIsrael, 'dd/MM/yyyy')}</div>
+                                                {order.desiredDeliveryDate ? (
+                                                    <>
+                                                        <div className="font-bold text-david-green">{format(toZonedTime(new Date(order.desiredDeliveryDate), TIME_ZONE), 'dd/MM/yyyy')}</div>
+                                                        <div className="text-[11px] text-david-green/70 font-mono font-bold">{getDeliverySlot(new Date(order.desiredDeliveryDate))}</div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-stone-300 italic text-xs">לא צוין</span>
+                                                )}
+                                            </td>
+                                            <td className="px-8 py-5 text-center">
+                                                <div className="font-medium text-stone-600">{format(dateIsrael, 'dd/MM/yyyy')}</div>
                                                 <div className="text-[11px] text-stone-400 font-mono">{format(dateIsrael, 'HH:mm:ss')}</div>
                                             </td>
                                             <td className="px-8 py-5 text-center">

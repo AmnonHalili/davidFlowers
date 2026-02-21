@@ -7,7 +7,7 @@ import { ShoppingBag, User, Menu, Search, Lock, Phone, MapPin, Heart, Truck, Ins
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
-import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
+import { UserButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs';
 import SearchOverlay from './SearchOverlay';
 import { Dock, DockLink } from '@/components/ui/Dock';
 import DeliveryCountdown from './DeliveryCountdown';
@@ -25,6 +25,7 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
     const [isScrolled, setIsScrolled] = useState(false);
     const { openCart, itemsCount } = useCart();
     const pathname = usePathname();
+    const { isLoaded, isSignedIn } = useUser();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -158,16 +159,22 @@ export default function Navbar({ isAdmin = false, categories = [] }: NavbarProps
                             <Search className="w-5 h-5" strokeWidth={1.5} />
                         </button>
 
-                        <SignedIn>
-                            <div className="hidden md:block scale-90 origin-center">
-                                <UserButton userProfileMode="navigation" userProfileUrl="/account" afterSignOutUrl="/" />
+                        {isLoaded ? (
+                            isSignedIn ? (
+                                <div className="scale-90 origin-center">
+                                    <UserButton userProfileMode="navigation" userProfileUrl="/account" afterSignOutUrl="/" />
+                                </div>
+                            ) : (
+                                <Link href="/sign-in" className={`${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity p-2`}>
+                                    <User className="w-5 h-5 md:w-5 md:h-5" strokeWidth={1.5} />
+                                </Link>
+                            )
+                        ) : (
+                            /* Fallback icon while loading or if Clerk fails to init locally */
+                            <div className={`${pathname === '/' ? 'text-white' : 'text-david-green'} opacity-20 p-2`}>
+                                <User className="w-5 h-5 md:w-5 md:h-5" strokeWidth={1.5} />
                             </div>
-                        </SignedIn>
-                        <SignedOut>
-                            <Link href="/sign-in" className={`hidden md:block ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity`}>
-                                <User className="w-5 h-5" strokeWidth={1.5} />
-                            </Link>
-                        </SignedOut>
+                        )}
 
                         {isAdmin && (
                             <Link href="/admin" className={`hidden md:block ${pathname === '/' ? 'text-white' : 'text-david-green'} hover:opacity-70 transition-opacity`} title="ניהול האתר">

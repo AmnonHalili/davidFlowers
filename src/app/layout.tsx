@@ -122,6 +122,11 @@ export default async function RootLayout({
     }
   }
 
+  // FORCE ADMIN IN DEVELOPMENT
+  if (process.env.NODE_ENV === 'development') {
+    isAdmin = true;
+  }
+
   // Fetch Announcement Bar Config
   const announcementConfig = await getSiteConfig('announcement_bar');
 

@@ -3,6 +3,7 @@ import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { ArrowRight, MapPin, Phone, Mail, CreditCard, Package } from "lucide-react";
+import { getDeliverySlot } from "@/lib/date-utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -156,7 +157,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                                     <div>
                                         <div className="text-xs text-stone-400 mb-0.5">מועד משלוח מבוקש</div>
                                         <div className="text-stone-900 text-sm font-medium">
-                                            {format(new Date(order.desiredDeliveryDate), "EEEE, d בMMMM, HH:mm", { locale: he })}
+                                            {format(new Date(order.desiredDeliveryDate), "EEEE, d בMMMM, ", { locale: he })} {getDeliverySlot(order.desiredDeliveryDate)}
                                         </div>
                                     </div>
                                 </div>

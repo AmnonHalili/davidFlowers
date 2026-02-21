@@ -10,6 +10,20 @@ export default async function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
+    if (process.env.NODE_ENV === 'development') {
+        return (
+            <div className="min-h-screen bg-stone-50" dir="rtl">
+                <div className="print:hidden">
+                    <AdminSidebar />
+                </div>
+
+                <main className="md:mr-64 min-h-screen transition-all duration-300 pt-20 md:pt-0 print:mr-0 print:pt-0 print:w-full">
+                    {children}
+                </main>
+            </div>
+        );
+    }
+
     const user = await currentUser();
 
     if (!user) {
@@ -24,15 +38,6 @@ export default async function AdminLayout({
     if (dbUser?.role !== 'ADMIN') {
         const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.replace(/['"]+/g, '').trim().toLowerCase());
         const userEmail = user.emailAddresses[0]?.emailAddress?.toLowerCase();
-
-        console.log('--- Admin Access Debug ---');
-        console.log('User ID:', user.id);
-        console.log('User Email:', userEmail);
-        console.log('Admin Emails List:', adminEmails);
-        console.log('DB User Found:', !!dbUser);
-        console.log('DB User Role:', dbUser?.role);
-        console.log('Access Granted via Email:', userEmail && adminEmails.includes(userEmail));
-        console.log('--------------------------');
 
         if (!userEmail || !adminEmails.includes(userEmail)) {
             redirect('/');
