@@ -120,7 +120,7 @@ export default function CustomerTestimonials() {
                     </div>
                     <div className="w-[1px] h-8 bg-stone-200 hidden md:block" />
                     <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold font-serif">10k+</span>
+                        <span className="text-2xl font-bold font-serif">1,500+</span>
                         <div className="text-[10px] leading-tight font-bold uppercase tracking-widest text-stone-900">
                             לקוחות <br /> מרוצים
                         </div>
