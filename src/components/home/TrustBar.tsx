@@ -6,7 +6,7 @@ import Link from 'next/link';
 const trustItems = [
     {
         emoji: '🌸',
-        title: 'פרחים טריים יומיים',
+        title: 'פרחים טריים יום-יום',
         subtitle: 'ישירות מהמגדל',
         href: '/freshness-guarantee'
     },
