@@ -5,8 +5,10 @@ import ProductSubscriptionForm from '@/components/ProductSubscriptionForm';
 import ProductCard from '@/components/shop/ProductCard';
 import ViewItemEvent from '@/components/analytics/ViewItemEvent';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Star, TrendingUp } from 'lucide-react';
 import { calculateProductPrice } from '@/lib/price-utils';
+import { getRecentPurchaseCount, getProductRatingSummary } from '@/app/actions/review-actions';
+import ReviewSection from '@/components/product/ReviewSection';
 
 const prisma = new PrismaClient();
 
@@ -79,6 +81,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
         ? await getRelatedProducts(product.id, product.categories[0]?.slug)
         : [];
 
+    const [purchaseCountRes, ratingSummaryRes] = product
+        ? await Promise.all([
+            getRecentPurchaseCount(product.id),
+            getProductRatingSummary(product.id)
+        ])
+        : [{ count: 0 }, { averageRating: 0, totalReviews: 0 }];
+
     if (!product) {
         notFound();
     }
@@ -140,10 +149,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 }}
             />
 
-            <div className="max-w-screen-xl mx-auto md:px-6 md:pt-8 pt-6">
+            <div className="max-w-screen-xl mx-auto md:px-6 md:pt-8 pt-4">
 
                 {/* Back Button (Mobile & Desktop) */}
-                <div className="flex justify-between items-center px-6 md:px-0 mb-6 md:mb-8">
+                <div className="flex justify-between items-center px-6 md:px-0 mb-4 md:mb-8">
                     <Link
                         href="/shop"
                         className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition-colors group"
@@ -167,7 +176,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     <div className="relative">
                         <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-0 md:mx-0">
                             {/* Main Image */}
-                            <div className="snap-center min-w-full h-[65vh] md:h-auto md:aspect-[3/4] bg-white overflow-hidden relative">
+                            <div className="snap-center min-w-full h-[45vh] md:h-auto md:aspect-[3/4] bg-white overflow-hidden relative">
                                 <img
                                     src={mainImage}
                                     alt={product.name}
@@ -210,12 +219,27 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     </div>
 
                     {/* Product Details & Purchase */}
-                    <div className="px-6 py-8 md:p-0 space-y-8 md:space-y-10 md:sticky md:top-32 md:h-fit">
-                        <div className="space-y-3 md:space-y-4">
-                            <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-stone-500">
-                                {product.categories.map((c: any) => c.name).join(', ')}
-                            </span>
-                            <h1 className="font-serif text-3xl md:text-5xl text-stone-900">{product.name}</h1>
+                    <div className="px-6 py-6 md:p-0 space-y-6 md:space-y-10 md:sticky md:top-32 md:h-fit">
+                        <div className="space-y-2 md:space-y-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-stone-500">
+                                    {product.categories.map((c: any) => c.name).join(', ')}
+                                </span>
+                                {ratingSummaryRes.totalReviews > 0 && (
+                                    <div className="flex items-center gap-1 text-[#D4AF37] text-xs font-bold border-r border-stone-200 pr-3">
+                                        <Star className="w-3.5 h-3.5 fill-current" />
+                                        <span>{ratingSummaryRes.averageRating.toFixed(1)}</span>
+                                        <span className="text-stone-400 font-normal">({ratingSummaryRes.totalReviews})</span>
+                                    </div>
+                                )}
+                                {purchaseCountRes.count > 0 && (
+                                    <div className="flex items-center gap-1.5 text-david-green text-[10px] md:text-xs font-medium bg-david-green/5 px-2.5 py-1 rounded-full border border-david-green/10 shadow-sm animate-pulse">
+                                        <TrendingUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                        <span>{purchaseCountRes.count} אנשים רכשו השבוע</span>
+                                    </div>
+                                )}
+                            </div>
+                            <h1 className="font-serif text-2xl md:text-5xl text-stone-900">{product.name}</h1>
 
                             {/* Price Display (Hidden for Variable Products to avoid duplication) */}
                             {!product.isVariablePrice && (
@@ -293,6 +317,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
                         </div>
                     </div>
                 </div>
+
+                {/* Reviews Section */}
+                <ReviewSection productId={product.id} productName={product.name} />
             </div>
 
             {/* Related Products Section */}

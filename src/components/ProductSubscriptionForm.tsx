@@ -219,7 +219,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Pre-order Notice */}
       {canPreorder && launchDate && (
         <div className="bg-david-green/10 border border-david-green/20 p-4 rounded-lg flex items-start gap-3">
@@ -371,7 +371,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       </div>
 
       <p className="text-center text-[10px] text-stone-400">
-        תשלום מאובטח באמצעות PayPlus. ניתן לבטל את המנוי בכל עת.
+        תשלום מאובטח באמצעות PayPlus. רכישה בטוחה ושירות באחריות מלאה.
       </p>
 
       {/* Mobile Sticky Bottom Bar */}
