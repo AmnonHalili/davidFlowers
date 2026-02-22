@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
@@ -88,11 +89,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
                 {/* Main Image */}
                 {post.image && (
-                    <div className="aspect-[16/9] bg-stone-100 mb-16 overflow-hidden">
-                        <img
+                    <div className="aspect-[16/9] bg-stone-100 mb-16 overflow-hidden relative">
+                        <Image
                             src={post.image}
                             alt={post.title}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                         />
                     </div>
                 )}

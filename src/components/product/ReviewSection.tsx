@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Star, CheckCircle2, Image as ImageIcon, MessageSquare, Loader2, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getProductReviews, getProductRatingSummary } from '@/app/actions/review-actions';
@@ -18,24 +18,24 @@ export default function ReviewSection({ productId, productName }: ReviewSectionP
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         const [revRes, sumRes] = await Promise.all([
             getProductReviews(productId),
             getProductRatingSummary(productId)
         ]);
 
-        if (revRes.success) setReviews(revRes.reviews);
+        if (revRes.success && revRes.reviews) setReviews(revRes.reviews);
         if (sumRes.success) setSummary({
             averageRating: sumRes.averageRating || 0,
             totalReviews: sumRes.totalReviews || 0
         });
         setLoading(false);
-    };
+    }, [productId]);
 
     useEffect(() => {
         loadData();
-    }, [productId]);
+    }, [loadData]);
 
     if (loading) {
         return (

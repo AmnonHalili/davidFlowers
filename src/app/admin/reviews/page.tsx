@@ -88,7 +88,11 @@ export default function AdminReviewsPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center text-xs font-bold text-stone-500 overflow-hidden">
-                                                    {review.userImage ? <img src={review.userImage} alt="" /> : review.userName?.[0] || 'A'}
+                                                    {review.userImage ? (
+                                                        <Image src={review.userImage} alt="" width={32} height={32} className="object-cover" />
+                                                    ) : (
+                                                        review.userName?.[0] || 'A'
+                                                    )}
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-medium text-stone-900">{review.userName || 'אנונימי'}</span>
@@ -119,8 +123,8 @@ export default function AdminReviewsPage() {
                                                 {review.images?.length > 0 && (
                                                     <div className="flex gap-1 mt-2">
                                                         {review.images.map((img: any) => (
-                                                            <div key={img.id} className="w-8 h-8 rounded border border-stone-200 overflow-hidden">
-                                                                <img src={img.url} className="w-full h-full object-cover" alt="" />
+                                                            <div key={img.id} className="w-8 h-8 rounded border border-stone-200 overflow-hidden relative">
+                                                                <Image src={img.url} className="object-cover" alt="" fill />
                                                             </div>
                                                         ))}
                                                     </div>
@@ -129,8 +133,8 @@ export default function AdminReviewsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${review.status === 'APPROVED' ? 'bg-green-50 text-green-700' :
-                                                    review.status === 'REJECTED' ? 'bg-red-50 text-red-700' :
-                                                        'bg-yellow-50 text-yellow-700'
+                                                review.status === 'REJECTED' ? 'bg-red-50 text-red-700' :
+                                                    'bg-yellow-50 text-yellow-700'
                                                 }`}>
                                                 {review.status === 'APPROVED' ? 'מאושר' : review.status === 'REJECTED' ? 'נדחה' : 'ממתין'}
                                             </span>

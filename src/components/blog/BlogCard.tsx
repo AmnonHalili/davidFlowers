@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 interface BlogCardProps {
     title: string;
@@ -20,10 +21,11 @@ export default function BlogCard({ title, slug, excerpt, image, publishedAt }: B
         <Link href={`/blog/${slug}`} className="group block space-y-4">
             <div className="aspect-[16/10] bg-stone-100 overflow-hidden rounded-sm relative">
                 {image ? (
-                    <img
+                    <Image
                         src={image}
                         alt={title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-stone-300">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { ChevronDown, Package } from 'lucide-react';
 import Link from 'next/link';
 import OrderTimeline from '@/components/orders/OrderTimeline';
@@ -133,7 +134,7 @@ export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
                                     <div key={item.id} className="flex gap-4 p-3 bg-white border border-stone-100 rounded-lg">
                                         <div className="w-12 h-12 bg-stone-100 rounded-sm relative overflow-hidden shrink-0">
                                             {item.product.images && item.product.images.length > 0 && (
-                                                <img src={item.product.images[0].url} className="w-full h-full object-cover" alt={item.product.name} />
+                                                <Image src={item.product.images[0].url} fill className="object-cover" alt={item.product.name} />
                                             )}
                                         </div>
                                         <div>

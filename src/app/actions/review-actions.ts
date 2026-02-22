@@ -144,7 +144,7 @@ export async function getProductRatingSummary(productId: string) {
     }
 }
 
-export async function getAllReviews() {
+export async function getAllReviews(): Promise<{ success: true; reviews: any[] } | { success: false; error: string }> {
     try {
         const reviews = await prisma.review.findMany({
             include: {

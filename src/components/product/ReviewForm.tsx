@@ -6,6 +6,7 @@ import { createReview } from '@/app/actions/review-actions';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { CldUploadWidget } from 'next-cloudinary';
+import Image from 'next/image';
 
 interface ReviewFormProps {
     productId: string;
@@ -119,7 +120,7 @@ export default function ReviewForm({ productId, onSuccess, onCancel }: ReviewFor
                 <div className="flex flex-wrap gap-2">
                     {images.map((url, i) => (
                         <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-stone-200 group">
-                            <img src={url} alt="review" className="w-full h-full object-cover" />
+                            <Image src={url} alt="review" fill className="object-cover" />
                             <button
                                 type="button"
                                 onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}

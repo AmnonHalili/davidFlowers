@@ -512,10 +512,11 @@ export default function CartDrawer() {
                                                     <div key={item.id} className="flex gap-3 p-2 bg-white md:bg-transparent rounded-xl md:rounded-none border border-stone-100 md:border-0 shadow-sm md:shadow-none group">
                                                         {/* Image */}
                                                         <div className="relative w-16 h-20 md:w-20 md:h-24 bg-stone-100 shrink-0 overflow-hidden rounded-lg md:rounded-sm">
-                                                            <img
+                                                            <Image
                                                                 src={item.image}
                                                                 alt={item.name}
-                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                                fill
+                                                                className="object-cover transition-transform duration-500 group-hover:scale-110"
                                                             />
                                                         </div>
 
@@ -961,7 +962,7 @@ export default function CartDrawer() {
                                                                     onClick={() => handleAddUpsell(item)}
                                                                 >
                                                                     <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-white mb-1.5 border border-stone-50 shadow-sm group-hover:scale-105 transition-transform">
-                                                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                                                        <Image src={item.image} alt={item.name} fill className="object-cover" />
                                                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
                                                                         {addedUpsellId === item.id ? (
                                                                             <div className="absolute inset-0 bg-david-green/20 backdrop-blur-[1px] flex items-center justify-center">

@@ -2,6 +2,7 @@
 
 import { CldUploadWidget } from 'next-cloudinary';
 import { ImagePlus, Trash } from 'lucide-react';
+import Image from 'next/image';
 
 interface ImageUploadProps {
     value: string[];
@@ -32,10 +33,11 @@ export default function ImageUpload({
                                 <Trash className="w-4 h-4" />
                             </button>
                         </div>
-                        <img
-                            className="object-cover w-full h-full"
+                        <Image
+                            className="object-cover"
                             alt="Image"
                             src={url}
+                            fill
                         />
                     </div>
                 ))}

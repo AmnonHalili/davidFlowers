@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { Plus } from 'lucide-react';
 import ProductRowActions from '@/components/admin/ProductRowActions';
@@ -98,7 +99,7 @@ export default async function ProductsPage({
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 rounded-lg bg-stone-100 overflow-hidden shrink-0 border border-stone-100">
                                                 {product.images[0]?.url && (
-                                                    <img src={product.images[0].url} alt="" className="w-full h-full object-cover" />
+                                                    <Image src={product.images[0].url} alt="" width={48} height={48} className="object-cover" />
                                                 )}
                                             </div>
                                             <div>
@@ -151,7 +152,7 @@ export default async function ProductsPage({
                             {/* Image */}
                             <div className="w-20 h-20 rounded-lg bg-stone-100 overflow-hidden shrink-0 border border-stone-100 relative">
                                 {product.images[0]?.url ? (
-                                    <img src={product.images[0].url} alt="" className="w-full h-full object-cover" />
+                                    <Image src={product.images[0].url} alt="" fill className="object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-stone-300 bg-stone-50">
                                         <span className="text-xs">אין תמונה</span>

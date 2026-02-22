@@ -64,7 +64,7 @@ export default function CategoryExplorer({ initialCategories = [] }: CategoryExp
                 setSelectedCategory(newMapped[0]?.slug || '');
             }
         }
-    }, [initialCategories]);
+    }, [initialCategories, selectedCategory]);
 
     return (
         <section className="pt-10 pb-16 md:py-24 bg-white border-t border-stone-100">

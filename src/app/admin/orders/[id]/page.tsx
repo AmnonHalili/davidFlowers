@@ -6,6 +6,7 @@ import { ArrowRight, MapPin, Phone, Mail, CreditCard, Package } from "lucide-rea
 import { getDeliverySlot } from "@/lib/date-utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 
 export default async function OrderPage({ params }: { params: { id: string } }) {
     const order = await getOrder(params.id);
@@ -70,10 +71,11 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                                 <div key={item.id} className="p-6 flex gap-4">
                                     <div className="w-20 h-24 bg-stone-100 rounded-lg shrink-0 overflow-hidden relative">
                                         {item.product.images[0] && (
-                                            <img
+                                            <Image
                                                 src={item.product.images[0].url}
                                                 alt={item.product.name}
-                                                className="w-full h-full object-cover"
+                                                fill
+                                                className="object-cover"
                                             />
                                         )}
                                     </div>

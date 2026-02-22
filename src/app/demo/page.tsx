@@ -1,4 +1,5 @@
 import ProductSubscriptionForm from '@/components/ProductSubscriptionForm';
+import Image from 'next/image';
 
 export default function DemoPage() {
     return (
@@ -7,10 +8,11 @@ export default function DemoPage() {
                 <div className="space-y-6">
                     <div className="aspect-[4/5] bg-stone-100 relative group overflow-hidden">
                         <div className="absolute inset-0 bg-stone-200 animate-pulse" />
-                        <img
+                        <Image
                             src="https://images.unsplash.com/photo-1526047932273-341f2a7631f9?q=80&w=2000&auto=format&fit=crop"
                             alt="Luxury Bouquet"
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                     </div>
                     <div className="flex gap-4">

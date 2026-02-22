@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
 
 interface HomeHeroClientProps {
@@ -32,7 +33,7 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
                 style={{ y: y1, rotate: scrollY }}
                 className="absolute top-[15%] right-[10%] md:right-[20%] opacity-40 blur-[1px] z-20 pointer-events-none hidden md:block"
             >
-                <img src="/medium-zer.png" alt="Floating Petal" className="w-32 h-32 md:w-48 md:h-48 object-contain drop-shadow-2xl" />
+                <Image src="/medium-zer.png" alt="Floating Petal" width={192} height={192} className="object-contain drop-shadow-2xl" />
             </motion.div>
 
             {/* Hero Content */}
