@@ -4,6 +4,8 @@ import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
 import CategoryExplorer from '@/components/home/CategoryExplorer';
 import InstagramFeed from '@/components/home/InstagramFeed';
 import CustomerTestimonials from '@/components/home/CustomerTestimonials';
+import TrustBar from '@/components/home/TrustBar';
+import LiveGallery from '@/components/home/LiveGallery';
 import { getVisibleCategories } from '@/app/actions/product-actions';
 import HomeHeroClient from '@/components/home/HomeHeroClient';
 
@@ -74,6 +76,9 @@ export default async function Home() {
 
       <HomeHeroClient videos={HERO_VIDEOS} />
 
+      {/* Trust Signals - Visible above the fold */}
+      <TrustBar />
+
       {/* Featured Categories - Replaced with Dynamic Explorer */}
       <section id="best-sellers" className="scroll-mt-24">
         <CategoryExplorer initialCategories={categories} />
@@ -81,6 +86,9 @@ export default async function Home() {
 
       {/* Social Proof Section */}
       <CustomerTestimonials />
+
+      {/* Live Gallery - Real photos from the shop */}
+      <LiveGallery />
 
       {/* Instagram Feed */}
       <InstagramFeed />

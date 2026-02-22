@@ -293,3 +293,13 @@ enum ReviewStatus {
   REJECTED
 }
 
+model GalleryImage {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String?
+  takenAt   DateTime @default(now())
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([isVisible, takenAt])
+}
