@@ -26,7 +26,8 @@ export async function POST(req: Request) {
             couponId,
             selectedCity,
             shippingCost: clientShippingCost = 0,
-            newsletterConsent // Added
+            newsletterConsent, // Added
+            orderId // 🆕 Support for updating a draft
         } = body;
 
         const SHIPPING_COSTS: Record<string, number> = {
@@ -179,38 +180,50 @@ export async function POST(req: Request) {
         // Discount applies to subtotal, shipping is added after
         const totalAmount = Math.max(0, calculatedSubtotal - discountAmount + finalShippingCost);
 
-        // 3. CREATE ORDER IN DATABASE (PENDING STATUS)
-        const order = await prisma.order.create({
-            data: {
-                // Connect user only if logged in
-                ...(userId && { user: { connect: { clerkId: userId } } }),
-                totalAmount,
-                status: 'PENDING',
-                paymentMethod: 'CREDIT_CARD',
-                recipientName,
-                shippingAddress: shippingMethod === 'delivery' ? `${shippingAddress}, ${selectedCity}` : 'Self Pickup',
-                recipientPhone,
-                ordererName,
-                ordererPhone,
-                ordererEmail,
-                desiredDeliveryDate: desiredDeliveryDate ? new Date(desiredDeliveryDate) : null,
-                deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null,
-                cardMessage: cardMessage || null,
-                ...(couponId && { coupon: { connect: { id: couponId } } }),
-                newsletterConsent: newsletterConsent || false, // Added newsletterConsent
-                items: {
-                    create: validItems.map((item: any) => ({
-                        product: { connect: { id: item.productId } },
-                        quantity: item.quantity,
-                        price: item.price,
-                        selectedSize: item.selectedSize,
-                        personalizationText: item.personalizationText
-                    }))
-                }
+        // 3. CREATE OR UPDATE ORDER IN DATABASE (PENDING STATUS)
+        const orderData = {
+            // Connect user only if logged in
+            ...(userId && { user: { connect: { clerkId: userId } } }),
+            totalAmount,
+            status: 'PENDING' as any,
+            paymentMethod: 'CREDIT_CARD' as any,
+            recipientName,
+            shippingAddress: shippingMethod === 'delivery' ? `${shippingAddress}, ${selectedCity}` : 'Self Pickup',
+            recipientPhone,
+            ordererName,
+            ordererPhone,
+            ordererEmail,
+            desiredDeliveryDate: desiredDeliveryDate ? new Date(desiredDeliveryDate) : null,
+            deliveryNotes: shippingMethod === 'delivery' ? deliveryNotes : null,
+            cardMessage: cardMessage || null,
+            ...(couponId && { coupon: { connect: { id: couponId } } }),
+            newsletterConsent: newsletterConsent || false,
+            items: {
+                create: validItems.map((item: any) => ({
+                    product: { connect: { id: item.productId } },
+                    quantity: item.quantity,
+                    price: item.price,
+                    selectedSize: item.selectedSize,
+                    personalizationText: item.personalizationText
+                }))
             }
-        });
+        };
 
-        console.log(`✅ Order created: ${order.id}`);
+        let order;
+        if (orderId) {
+            // If we have a draft order, clear old items and update
+            await prisma.orderItem.deleteMany({ where: { orderId } });
+            order = await prisma.order.update({
+                where: { id: orderId },
+                data: orderData
+            });
+            console.log(`✅ Draft Order updated: ${order.id}`);
+        } else {
+            order = await prisma.order.create({
+                data: orderData
+            });
+            console.log(`✅ New Order created: ${order.id}`);
+        }
 
         // 2. UPDATE USER PROFILE (If logged in)
         if (userId) {

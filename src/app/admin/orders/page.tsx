@@ -1,26 +1,50 @@
 import { getOrders } from "@/app/actions/order-actions";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import Link from "next/link";
-import { Eye, Calendar, User, Package, ChevronRight, Phone, Mail, Truck, MapPin, Clock } from "lucide-react";
+import { Eye, Calendar, User, Package, ChevronRight, Phone, Mail, Truck, MapPin, Clock, Ghost } from "lucide-react";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { getDeliverySlot } from "@/lib/date-utils";
+import { OrderStatus } from "@prisma/client";
 
-export default async function AdminOrdersPage() {
-    const orders = await getOrders();
+export default async function AdminOrdersPage({
+    searchParams
+}: {
+    searchParams: { status?: string }
+}) {
+    const status = searchParams.status as OrderStatus | undefined;
+    const orders = await getOrders(status);
     const TIME_ZONE = 'Asia/Jerusalem';
 
     return (
         <div className="space-y-8 pb-12 rtl" dir="rtl">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                     <h1 className="text-3xl font-serif font-bold text-stone-900 mb-2">ניהול הזמנות</h1>
                     <p className="text-stone-500 font-medium tracking-tight">מעקב וניהול סטטוסים בזמן אמת</p>
                 </div>
+
+                {/* Status Tabs */}
+                <div className="flex bg-stone-100 p-1 rounded-2xl border border-stone-200 shadow-sm self-start">
+                    <Link
+                        href="/admin/orders"
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${!status ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                    >
+                        הזמנות פעילות
+                    </Link>
+                    <Link
+                        href="/admin/orders?status=PENDING"
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${status === 'PENDING' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                    >
+                        <Ghost className="w-3.5 h-3.5" />
+                        עגלות נטושות
+                    </Link>
+                </div>
+
                 <div className="bg-white px-4 py-2 rounded-2xl border border-stone-200 shadow-sm inline-flex items-center gap-2">
                     <span className="w-2 h-2 bg-david-green rounded-full animate-pulse" />
-                    <span className="text-sm font-bold text-stone-600">{orders.length} הזמנות פעילות</span>
+                    <span className="text-sm font-bold text-stone-600">{orders.length} {status === 'PENDING' ? 'עגלות נטושות' : 'הזמנות פעילות'}</span>
                 </div>
             </div>
 

@@ -10,6 +10,7 @@ import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
 import { getUpsellProducts } from '@/app/actions/product-actions';
 import { getUserProfile } from '@/app/actions/user-actions';
+import { saveDraftOrder } from '@/app/actions/order-actions';
 import { validateCoupon } from '@/app/actions/coupon-actions';
 import { getHolidayStatus } from '@/lib/holidays';
 
@@ -149,6 +150,8 @@ export default function CartDrawer() {
     const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; amount: number; type: string; id: string } | null>(null);
     const [couponLoading, setCouponLoading] = useState(false);
     const [addedUpsellId, setAddedUpsellId] = useState<string | null>(null);
+    const [draftOrderId, setDraftOrderId] = useState<string | null>(null);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return;
@@ -348,7 +351,8 @@ export default function CartDrawer() {
                     couponId: appliedCoupon?.id,
                     selectedCity: shippingMethod === 'delivery' ? selectedCity : null,
                     shippingCost: currentShippingCost,
-                    newsletterConsent: newsletterConsent // 🆕
+                    newsletterConsent: newsletterConsent, // 🆕
+                    orderId: draftOrderId // Re-use the draft we captured!
                 }),
             });
 
@@ -942,34 +946,37 @@ export default function CartDrawer() {
                                             className="space-y-4"
                                         >
                                             {/* Upsell Preview on Step 1 */}
-                                            {upsellItems.length > 0 && (
+                                            {upsellItems.filter(ui => !items.some(k => k.productId === ui.productId)).length > 0 && (
                                                 <div className="pt-2 border-t border-stone-100/40 mt-1">
                                                     <div className="flex items-center justify-between mb-1.5 px-0.5">
-                                                        <h3 className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">תוספות מומלצות 🍫🍷</h3>
+                                                        <h3 className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">לחוויה מושלמת... 💖</h3>
                                                     </div>
                                                     <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 -mx-2 px-2">
-                                                        {upsellItems.map((item) => (
-                                                            <div
-                                                                key={item.id}
-                                                                className="shrink-0 w-[80px] group cursor-pointer bg-stone-50/30 border border-stone-100/50 rounded-lg p-1 hover:bg-white transition-all flex flex-col items-center text-center"
-                                                                onClick={() => handleAddUpsell(item)}
-                                                            >
-                                                                <div className="relative w-full aspect-square rounded-md overflow-hidden bg-white mb-1 border border-stone-50">
-                                                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                                                    {addedUpsellId === item.id ? (
-                                                                        <div className="absolute inset-0 bg-david-green/20 backdrop-blur-[1px] flex items-center justify-center">
-                                                                            <Check className="w-3 h-3 text-david-green bg-white rounded-full p-0.5" strokeWidth={5} />
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="absolute top-0.5 left-0.5 bg-david-green/10 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                            <Plus className="w-2 h-2 text-david-green" />
-                                                                        </div>
-                                                                    )}
+                                                        {upsellItems
+                                                            .filter(ui => !items.some(k => k.productId === ui.productId))
+                                                            .map((item) => (
+                                                                <div
+                                                                    key={item.id}
+                                                                    className="shrink-0 w-[85px] group cursor-pointer bg-amber-50/20 border border-stone-100/50 rounded-xl p-1.5 hover:bg-white hover:shadow-sm transition-all flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-500"
+                                                                    onClick={() => handleAddUpsell(item)}
+                                                                >
+                                                                    <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-white mb-1.5 border border-stone-50 shadow-sm group-hover:scale-105 transition-transform">
+                                                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+                                                                        {addedUpsellId === item.id ? (
+                                                                            <div className="absolute inset-0 bg-david-green/20 backdrop-blur-[1px] flex items-center justify-center">
+                                                                                <Check className="w-4 h-4 text-david-green bg-white rounded-full p-1" strokeWidth={5} />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="absolute top-1 left-1 bg-white p-1 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all transform -translate-y-2 group-hover:translate-y-0">
+                                                                                <Plus className="w-2.5 h-2.5 text-david-green" />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <h4 className="text-[8px] font-bold text-stone-700 line-clamp-1 mb-0.5">{item.name}</h4>
+                                                                    <p className="text-[9px] font-serif font-bold text-david-green">₪{item.price.toFixed(0)}</p>
                                                                 </div>
-                                                                <h4 className="text-[8px] font-bold text-stone-600 line-clamp-1 mb-0.5">{item.name}</h4>
-                                                                <p className="text-[9px] font-serif font-bold text-david-green">₪{item.price.toFixed(0)}</p>
-                                                            </div>
-                                                        ))}
+                                                            ))}
                                                     </div>
                                                 </div>
                                             )}
@@ -1012,12 +1019,45 @@ export default function CartDrawer() {
                                                     <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">סכום לתשלום</p>
                                                 </div>
                                                 <button
-                                                    onClick={() => setCheckoutStep('delivery')}
-                                                    disabled={ordererName.length < 2 || ordererPhone.length < 9 || (shippingMethod === 'delivery' && (recipientName.length < 2 || recipientPhone.length < 9))}
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (!ordererName || !ordererPhone || !ordererEmail) {
+                                                            toast.error('נא למלא את כל פרטי המזמין');
+                                                            return;
+                                                        }
+
+                                                        // Capturing Abandoned Cart - Professional capturing early!
+                                                        setIsSavingDraft(true);
+                                                        try {
+                                                            const res = await saveDraftOrder({
+                                                                items,
+                                                                ordererName,
+                                                                ordererPhone,
+                                                                ordererEmail,
+                                                                clerkId: clerkUser?.id,
+                                                                orderId: draftOrderId || undefined
+                                                            });
+                                                            if (res.success && res.orderId) {
+                                                                setDraftOrderId(res.orderId);
+                                                                console.log('Capture draft order:', res.orderId);
+                                                            }
+                                                        } catch (err) {
+                                                            // Non-blocking for the user
+                                                            console.error('Draft save failed', err);
+                                                        } finally {
+                                                            setIsSavingDraft(false);
+                                                            setCheckoutStep('delivery');
+                                                        }
+                                                    }}
+                                                    disabled={isSavingDraft || ordererName.length < 2 || ordererPhone.length < 9 || (shippingMethod === 'delivery' && (recipientName.length < 2 || recipientPhone.length < 9))}
                                                     className="bg-david-green text-david-beige px-8 py-3.5 rounded-2xl text-sm font-bold tracking-widest hover:bg-david-green/90 transition-all shadow-xl shadow-david-green/20 active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:grayscale"
                                                 >
-                                                    {shippingMethod === 'delivery' ? 'המשך למשלוח' : 'המשך לאיסוף'}
-                                                    <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                    {isSavingDraft ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                                        <>
+                                                            {shippingMethod === 'delivery' ? 'המשך למשלוח' : 'המשך לאיסוף'}
+                                                            <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
                                         </motion.div>

@@ -45,9 +45,11 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
     }
 }
 
-export async function getOrders() {
+export async function getOrders(status?: OrderStatus) {
     return await prisma.order.findMany({
-        where: { status: { not: 'PENDING' } }, // Hide abandoned checkouts
+        // By default show paid/shipped/delivered. Added a way to fetch PENDING later.
+        // Default: Hide abandoned checkouts unless requested
+        where: status ? { status } : { status: { not: 'PENDING' } },
         orderBy: { createdAt: 'desc' },
         include: {
             user: true,
@@ -58,6 +60,72 @@ export async function getOrders() {
             }
         }
     });
+}
+
+/**
+ * Capture a draft order as soon as contact details are entered.
+ * This helps recover abandoned carts by saving user info before they leave.
+ */
+export async function saveDraftOrder(data: {
+    items: any[];
+    ordererName: string;
+    ordererPhone: string;
+    ordererEmail: string;
+    clerkId?: string;
+    orderId?: string; // Optional: If we already have a draft order ID to update
+}) {
+    try {
+        const { items, ordererName, ordererPhone, ordererEmail, clerkId, orderId } = data;
+
+        // Basic validation
+        if (!items || items.length === 0 || !ordererPhone || !ordererName) {
+            return { success: false, error: 'Missing basic info' };
+        }
+
+        const totalAmount = items.reduce((sum, item) => sum + (Number(item.price) || 0) * item.quantity, 0);
+
+        const orderData = {
+            totalAmount,
+            status: 'PENDING' as OrderStatus,
+            ordererName,
+            ordererPhone,
+            ordererEmail,
+            recipientName: ordererName, // Temporary until delivery step
+            shippingAddress: 'Draft',
+            ...(clerkId && { user: { connect: { clerkId } } }),
+            items: {
+                create: items.map((item: any) => ({
+                    product: { connect: { id: item.productId } },
+                    quantity: item.quantity,
+                    price: item.price,
+                    selectedSize: item.selectedSize,
+                    personalizationText: item.personalizationText
+                }))
+            }
+        };
+
+        let order;
+        if (orderId) {
+            // If we have an ID, clear items and re-create them (common pattern for drafts)
+            await prisma.orderItem.deleteMany({ where: { orderId } });
+            order = await prisma.order.update({
+                where: { id: orderId },
+                data: {
+                    ...orderData,
+                    items: orderData.items // Re-link
+                }
+            });
+        } else {
+            order = await prisma.order.create({
+                data: orderData
+            });
+        }
+
+        return { success: true, orderId: order.id };
+    } catch (error) {
+        console.error('Error saving draft order:', error);
+        return { success: false, error: 'Failed to save draft' };
+    }
 }
 
 export async function getOrder(id: string) {
