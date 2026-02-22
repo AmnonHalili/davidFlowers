@@ -33,6 +33,7 @@ export const metadata: Metadata = {
     title: 'פרחי דוד אשקלון | משלוח פרחים באשקלון',
     description: 'משלוחי פרחים טריים, עציצים ומתנות באשקלון והסביבה.',
     images: ['/logo_original.jpg'],
+    siteName: 'פרחי דוד',
   },
   twitter: {
     card: 'summary_large_image',
@@ -61,6 +62,22 @@ export const metadata: Metadata = {
     },
   },
   manifest: '/manifest.json',
+  applicationName: 'פרחי דוד',
+  appleWebApp: {
+    title: 'פרחי דוד',
+    statusBarStyle: 'default',
+  },
+  other: {
+    'apple-mobile-web-app-title': 'פרחי דוד',
+  },
+};
+
+const WEBSITE_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  'name': 'פרחי דוד',
+  'alternateName': ['David Flowers', 'פרחי דוד אשקלון'],
+  'url': 'https://davidflowers.co.il',
 };
 
 import { CartProvider } from '@/context/CartContext';
@@ -148,6 +165,12 @@ export default async function RootLayout({
   return (
     <ClerkProvider localization={heIL}>
       <html lang="he" dir="rtl">
+        <head>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD) }}
+          />
+        </head>
         <body className={`${heebo.variable} ${frankRuhl.variable} ${bellefair.variable} ${assistant.variable} font-sans antialiased text-stone-900 bg-[#FAFAFA]`}>
           <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
           <GoogleTag tagId={process.env.NEXT_PUBLIC_GOOGLE_TAG_ID || ''} />
