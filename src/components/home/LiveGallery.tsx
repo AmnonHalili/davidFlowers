@@ -2,7 +2,13 @@ import { getGalleryImages } from '@/app/actions/gallery-actions';
 import LiveGalleryClient from './LiveGalleryClient';
 
 export default async function LiveGallery() {
-    const images = await getGalleryImages();
+    let images: Awaited<ReturnType<typeof getGalleryImages>> = [];
+    try {
+        images = await getGalleryImages();
+    } catch {
+        // Prisma client may be stale after schema migration; silently skip gallery
+        return null;
+    }
 
     if (!images || images.length === 0) return null;
 
