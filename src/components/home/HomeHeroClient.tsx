@@ -37,7 +37,7 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
             </motion.div>
 
             {/* Hero Content */}
-            <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-28 md:pt-36 z-20">
+            <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-32 pb-24 md:pt-36 md:pb-12 z-20">
                 <motion.div
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
