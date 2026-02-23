@@ -79,9 +79,19 @@ export async function POST(req: Request) {
                 }
             }
 
+            let basePrice = Number(product.price);
+
+            // Extract the variable price based on selected size if applicable
+            if (product.isVariablePrice && item.selectedSize && product.variations) {
+                const variations = product.variations as Record<string, any>;
+                if (variations[item.selectedSize]) {
+                    basePrice = Number(variations[item.selectedSize].price);
+                }
+            }
+
             // Calculate effective price (Sale vs Regular)
             const { price: effectivePrice } = calculateProductPrice({
-                price: Number(product.price),
+                price: basePrice,
                 salePrice: product.salePrice ? Number(product.salePrice) : null,
                 saleStartDate: product.saleStartDate,
                 saleEndDate: product.saleEndDate
