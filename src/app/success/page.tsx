@@ -24,14 +24,19 @@ async function getOrder(orderId: string) {
     });
 }
 
+import { processSuccessfulPayment } from '@/app/actions/order-actions';
+
 export default async function SuccessPage({
     searchParams,
 }: {
     searchParams?: {
         orderId?: string;
+        transaction_uid?: string;
+        uid?: string;
     };
 }) {
     const orderId = searchParams?.orderId;
+    const transactionUid = searchParams?.transaction_uid || searchParams?.uid;
 
     if (!orderId) {
         return (
@@ -40,6 +45,15 @@ export default async function SuccessPage({
                 <Link href="/" className="text-david-green hover:underline">חזרה לדף הבית</Link>
             </div>
         );
+    }
+
+    // Try fast-lane fulfillment before rendering
+    if (transactionUid) {
+        try {
+            await processSuccessfulPayment(orderId, transactionUid);
+        } catch (e) {
+            console.error('[SUCCESS_PAGE] Fast-lane fulfillment error:', e);
+        }
     }
 
     const order = await getOrder(orderId);
