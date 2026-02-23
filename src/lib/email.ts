@@ -22,6 +22,8 @@ export interface SendAdminNotificationData {
     orderNumber: string;
     customerName: string;
     totalAmount: number;
+    shippingAddress?: string;
+    deliveryDate?: Date | null;
     items: Array<{
         name: string;
         quantity: number;
@@ -75,6 +77,24 @@ export async function sendAdminNotification(data: SendAdminNotificationData) {
 
         if (adminEmails.length === 0) return;
 
+        const isPickup = data.shippingAddress === 'Self Pickup';
+        const deliveryText = isPickup ? 'איסוף עצמי' : 'משלוח';
+
+        let deliveryDateLine = '';
+        if (data.deliveryDate) {
+            const tempDate = new Date(data.deliveryDate);
+            const dateStr = tempDate.toLocaleDateString('he-IL');
+            const hour = tempDate.getHours().toString().padStart(2, '0');
+            const min = tempDate.getMinutes().toString().padStart(2, '0');
+            // If it's strictly Midnight (00:00), we probably only captured a Date.
+            // Otherwise, we captured a Date + Time slot.
+            const hasTime = (tempDate.getHours() !== 0 || tempDate.getMinutes() !== 0);
+            const timeStr = hasTime ? ` בשעה ${hour}:${min}` : '';
+            deliveryDateLine = `<p><strong>מועד ${isPickup ? 'איסוף' : 'משלוח'}:</strong> ${dateStr}${timeStr}</p>`;
+        } else {
+            deliveryDateLine = `<p><strong>מועד ${isPickup ? 'איסוף' : 'משלוח'}:</strong> לא נבחר</p>`;
+        }
+
         await resend.emails.send({
             from: fromEmail,
             to: adminEmails,
@@ -85,6 +105,8 @@ export async function sendAdminNotification(data: SendAdminNotificationData) {
                     <p><strong>מספר הזמנה:</strong> ${data.orderNumber}</p>
                     <p><strong>לקוח:</strong> ${data.customerName}</p>
                     <p><strong>סכום כולל:</strong> ₪${data.totalAmount}</p>
+                    <p><strong>סוג:</strong> ${deliveryText}</p>
+                    ${deliveryDateLine}
                     <h3>פריטים:</h3>
                     <ul>
                         ${data.items.map(item => `<li>${item.name} (x${item.quantity})</li>`).join('')}

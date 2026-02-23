@@ -10,6 +10,7 @@ async function getOrder(orderId: string) {
     return await prisma.order.findUnique({
         where: { id: orderId },
         include: {
+            coupon: true,
             items: {
                 include: {
                     product: {
@@ -142,23 +143,26 @@ export default async function SuccessPage({
                     <div className="p-6 bg-stone-50/50 space-y-3">
                         <div className="flex justify-between text-sm text-stone-600">
                             <span>סכום ביניים</span>
-                            {/* We need to re-calc subtotal to show it, or assume total - shipping? 
-                                Actually, checking order.items sum is safer if we don't have subtotal field. 
-                            */}
+                            {/* Calculate the raw subtotal for the items explicitly */}
                             <span>₪{order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0).toFixed(2)}</span>
                         </div>
+
+                        {Number(order.discountAmount) > 0 && order.coupon && (
+                            <div className="flex justify-between text-sm text-david-green font-medium">
+                                <span>הנחת קופון ({order.coupon.code})</span>
+                                <span>-₪{Number(order.discountAmount).toFixed(2)}</span>
+                            </div>
+                        )}
 
                         {!isPickup && (
                             <div className="flex justify-between text-sm text-stone-600">
                                 <span>משלוח</span>
-                                {/* Try to deduce shipping cost: Total - Subtotal - Discount? 
-                                    Or just use the logic: if > 350 Free, else 30? 
-                                    The user wanted to NOT show it for pickup. 
-                                    For delivery, the previous logic was simple ternary. 
-                                    Let's keep it simple for now or try to be more accurate if possible. 
-                                    Let's stick to the previous hardcoded logic for now as requested fix was for Pickup.
-                                */}
-                                <span>{Number(order.totalAmount) - order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0) <= 0 ? 'חינם' : `₪${(Number(order.totalAmount) - order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0)).toFixed(2)}`}</span>
+                                {/* Properly calculate shipping: Shipping Cost = TotalAmount - Subtotal + DiscountAmount */}
+                                {(() => {
+                                    const subtotal = order.items.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0);
+                                    const shippingCost = Number(order.totalAmount) - subtotal + Number(order.discountAmount);
+                                    return <span>{shippingCost <= 0 ? 'חינם' : `₪${shippingCost.toFixed(2)}`}</span>;
+                                })()}
                             </div>
                         )}
 

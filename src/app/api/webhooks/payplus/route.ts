@@ -212,8 +212,10 @@ export async function POST(req: Request) {
                 // ALSO Send Admin Notification
                 await sendAdminNotification({
                     orderNumber: updatedOrder.id,
-                    customerName: updatedOrder.ordererName || updatedOrder.recipientName,
+                    customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח ללא שם',
                     totalAmount: Number(updatedOrder.totalAmount),
+                    shippingAddress: updatedOrder.shippingAddress || undefined,
+                    deliveryDate: updatedOrder.desiredDeliveryDate,
                     items: updatedOrder.items.map(item => ({
                         name: item.product.name,
                         quantity: item.quantity
