@@ -16,6 +16,8 @@ export interface SendOrderConfirmationData {
     shippingAddress: string;
     deliveryDate?: string | Date | null;
     deliveryNotes?: string;
+    discountAmount?: number;
+    couponCode?: string;
 }
 
 export interface SendAdminNotificationData {
@@ -28,6 +30,8 @@ export interface SendAdminNotificationData {
         name: string;
         quantity: number;
     }>;
+    discountAmount?: number;
+    couponCode?: string;
 }
 
 export async function sendOrderConfirmation(data: SendOrderConfirmationData) {
@@ -105,6 +109,7 @@ export async function sendAdminNotification(data: SendAdminNotificationData) {
                     <p><strong>מספר הזמנה:</strong> ${data.orderNumber}</p>
                     <p><strong>לקוח:</strong> ${data.customerName}</p>
                     <p><strong>סכום כולל:</strong> ₪${data.totalAmount}</p>
+                    ${data.discountAmount ? `<p><strong>הנחת קופון (${data.couponCode || ''}):</strong> -₪${data.discountAmount}</p>` : ''}
                     <p><strong>סוג:</strong> ${deliveryText}</p>
                     ${deliveryDateLine}
                     <h3>פריטים:</h3>

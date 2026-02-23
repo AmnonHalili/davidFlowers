@@ -195,6 +195,7 @@ export async function POST(req: Request) {
             // Connect user only if logged in
             ...(userId && { user: { connect: { clerkId: userId } } }),
             totalAmount,
+            discountAmount,
             status: 'PENDING' as any,
             paymentMethod: 'CREDIT_CARD' as any,
             recipientName,

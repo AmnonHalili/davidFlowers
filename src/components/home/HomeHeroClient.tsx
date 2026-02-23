@@ -94,7 +94,7 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
                             whileTap={{ scale: 0.97 }}
                         >
                             <Link
-                                href="/shop"
+                                href="#best-sellers"
                                 className="group relative flex items-center justify-center gap-3 px-14 py-5 bg-david-green border border-david-green/50 text-white uppercase tracking-[0.25em] text-xs font-bold rounded-full overflow-hidden transition-all duration-500 hover:shadow-[0_0_40px_rgba(58,80,68,0.4)]"
                             >
                                 <span className="relative z-10 text-david-beige">להזמנת משלוח</span>
