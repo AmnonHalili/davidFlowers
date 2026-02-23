@@ -613,7 +613,7 @@ export default function CartDrawer() {
                                                             <input
                                                                 type="tel"
                                                                 value={ordererPhone}
-                                                                onChange={(e) => setOrdererPhone(e.target.value)}
+                                                                onChange={(e) => setOrdererPhone(e.target.value.replace(/\D/g, ''))}
                                                                 placeholder="לעדכונים על המשלוח"
                                                                 className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all placeholder:text-stone-300 text-right"
                                                             />
@@ -671,7 +671,7 @@ export default function CartDrawer() {
                                                             <input
                                                                 type="tel"
                                                                 value={recipientPhone}
-                                                                onChange={(e) => setRecipientPhone(e.target.value)}
+                                                                onChange={(e) => setRecipientPhone(e.target.value.replace(/\D/g, ''))}
                                                                 placeholder="לתיאום המסירה"
                                                                 className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all placeholder:text-stone-300 text-right"
                                                             />
