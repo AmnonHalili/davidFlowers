@@ -173,3 +173,150 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
         return { success: false, error: 'Failed to update order status' };
     }
 }
+
+import { verifyPayPlusTransaction } from '@/lib/payplus';
+import { sendAdminNotification, sendOrderConfirmation } from '@/lib/email';
+
+export async function processSuccessfulPayment(orderId: string, transactionUid: string) {
+    try {
+        if (!orderId || !transactionUid) {
+            return { success: false, error: 'Missing parameters' };
+        }
+
+        // 1. Check if already processed (Idempotency)
+        const existingOrder = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                items: { include: { product: true } },
+                user: true
+            }
+        });
+
+        if (!existingOrder) {
+            return { success: false, error: 'Order not found' };
+        }
+
+        if (existingOrder.status === 'PAID') {
+            return { success: true, message: 'Already processed' };
+        }
+
+        // 2. Verify with PayPlus to prevent abuse of this endpoint
+        const isVerified = await verifyPayPlusTransaction(transactionUid, orderId);
+        if (!isVerified) {
+            console.error(`[ACTION] Transaction ${transactionUid} verification failed`);
+            return { success: false, error: 'Verification failed' };
+        }
+
+        // 3. Mark as PAID natively
+        const updatedOrder = await prisma.order.update({
+            where: { id: orderId },
+            data: {
+                status: 'PAID',
+                payplusTransactionId: transactionUid
+            },
+            include: {
+                items: { include: { product: true } },
+                user: true
+            }
+        });
+
+        console.log(`✅ [ACTION] Order ${orderId} marked as PAID via Success Page sync`);
+
+        // 4. Reduce Stock
+        try {
+            for (const item of updatedOrder.items) {
+                const product = item.product;
+
+                if (product.isVariablePrice && product.variations) {
+                    const variations = product.variations as Record<string, any>;
+                    let variantKeyToUpdate: string | null = null;
+
+                    if (item.selectedSize) {
+                        const normalizedSize = item.selectedSize.toLowerCase().trim();
+                        for (const [key, details] of Object.entries(variations)) {
+                            const detailLabel = ((details as any).label || '').toLowerCase().trim();
+                            const detailKey = key.toLowerCase().trim();
+                            if (detailLabel === normalizedSize || detailKey === normalizedSize || normalizedSize.includes(detailKey) || detailKey.includes(normalizedSize)) {
+                                variantKeyToUpdate = key;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (variantKeyToUpdate) {
+                        const currentVariantStock = (variations[variantKeyToUpdate] as any).stock || 0;
+                        const newVariantStock = Math.max(0, currentVariantStock - item.quantity);
+                        await prisma.product.update({
+                            where: { id: product.id },
+                            data: {
+                                variations: {
+                                    ...variations,
+                                    [variantKeyToUpdate]: {
+                                        ...(variations[variantKeyToUpdate] as any),
+                                        stock: newVariantStock
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    if (product.stock !== null) {
+                        await prisma.product.update({
+                            where: { id: product.id },
+                            data: { stock: { decrement: item.quantity } }
+                        });
+                    }
+                }
+            }
+        } catch (stockError) {
+            console.error('[ACTION_STOCK_ERROR]', stockError);
+        }
+
+        // 5. Send Emails
+        try {
+            const customerEmail = updatedOrder.user?.email || updatedOrder.ordererEmail;
+            if (customerEmail) {
+                await sendOrderConfirmation({
+                    to: customerEmail,
+                    orderNumber: updatedOrder.id,
+                    customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח יקר',
+                    items: updatedOrder.items.map(item => ({
+                        name: item.product.name,
+                        quantity: item.quantity,
+                        price: Number(item.price)
+                    })),
+                    totalAmount: Number(updatedOrder.totalAmount),
+                    shippingAddress: updatedOrder.shippingAddress === 'Self Pickup' ? 'איסוף עצמי' : updatedOrder.shippingAddress || '',
+                    deliveryDate: updatedOrder.desiredDeliveryDate
+                        ? new Date(updatedOrder.desiredDeliveryDate).toLocaleDateString('he-IL', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })
+                        : undefined,
+                    deliveryNotes: (updatedOrder as any).deliveryNotes || undefined
+                });
+
+                await sendAdminNotification({
+                    orderNumber: updatedOrder.id,
+                    customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח ללא שם',
+                    totalAmount: Number(updatedOrder.totalAmount),
+                    shippingAddress: updatedOrder.shippingAddress || undefined,
+                    deliveryDate: updatedOrder.desiredDeliveryDate,
+                    items: updatedOrder.items.map(item => ({
+                        name: item.product.name,
+                        quantity: item.quantity
+                    }))
+                });
+            }
+        } catch (emailError) {
+            console.error('[ACTION_EMAIL_ERROR]', emailError);
+        }
+
+        return { success: true };
+
+    } catch (err: any) {
+        console.error('[ACTION_PROCESS_ERROR]', err);
+        return { success: false, error: err.message };
+    }
+}
