@@ -14,7 +14,7 @@ export interface SendOrderConfirmationData {
     }>;
     totalAmount: number;
     shippingAddress: string;
-    deliveryDate?: string;
+    deliveryDate?: string | Date | null;
     deliveryNotes?: string;
 }
 

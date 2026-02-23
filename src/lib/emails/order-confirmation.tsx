@@ -20,7 +20,7 @@ interface OrderConfirmationEmailProps {
     }>;
     totalAmount: number;
     shippingAddress: string;
-    deliveryDate?: string;
+    deliveryDate?: string | Date | null;
     deliveryNotes?: string;
     cardMessage?: string;
 }
@@ -83,7 +83,16 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
                     </Text>
                     {deliveryDate && (
                         <Text style={paragraph}>
-                            <strong>מועד משלוח משוער:</strong> {deliveryDate}
+                            <strong>מועד משלוח משוער:</strong> {(() => {
+                                // Unified date/time parser
+                                const tempDate = new Date(deliveryDate);
+                                const dateStr = tempDate.toLocaleDateString('he-IL');
+                                const hour = tempDate.getHours().toString().padStart(2, '0');
+                                const min = tempDate.getMinutes().toString().padStart(2, '0');
+                                const hasTime = (tempDate.getHours() !== 0 || tempDate.getMinutes() !== 0);
+                                const timeStr = hasTime ? ` בשעה ${hour}:${min}` : '';
+                                return `${dateStr}${timeStr}`;
+                            })()}
                         </Text>
                     )}
                     {deliveryNotes && (

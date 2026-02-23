@@ -287,13 +287,7 @@ export async function processSuccessfulPayment(orderId: string, transactionUid: 
                     })),
                     totalAmount: Number(updatedOrder.totalAmount),
                     shippingAddress: updatedOrder.shippingAddress === 'Self Pickup' ? 'איסוף עצמי' : updatedOrder.shippingAddress || '',
-                    deliveryDate: updatedOrder.desiredDeliveryDate
-                        ? new Date(updatedOrder.desiredDeliveryDate).toLocaleDateString('he-IL', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        })
-                        : undefined,
+                    deliveryDate: updatedOrder.desiredDeliveryDate,
                     deliveryNotes: (updatedOrder as any).deliveryNotes || undefined
                 });
 
