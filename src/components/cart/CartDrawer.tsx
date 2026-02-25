@@ -2,7 +2,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Plus, Trash2, Lock, ShoppingBag, Loader2, Tag, Check, User, MapPin, Truck, ArrowLeft, ChevronRight } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Lock, ShoppingBag, Loader2, Tag, Check, User, MapPin, Truck, ArrowLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -742,29 +742,39 @@ export default function CartDrawer() {
                                                     <div className="space-y-4 pt-4 border-t border-stone-100">
                                                         <p className="text-sm font-bold text-stone-900">מועד משלוח מבוקש</p>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div className="space-y-1.5">
+                                                            <div className="space-y-1.5 relative">
                                                                 <label className="text-[11px] font-bold text-stone-500 mr-1 italic">תאריך הגעה</label>
-                                                                <input
-                                                                    type="date"
-                                                                    value={date}
-                                                                    min={minDeliveryDate}
-                                                                    onChange={(e) => setDate(e.target.value)}
-                                                                    className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900"
-                                                                />
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-y-0 right-0 pl-3 pr-4 flex items-center pointer-events-none">
+                                                                        <Calendar className="w-5 h-5 text-david-green/70" />
+                                                                    </div>
+                                                                    <input
+                                                                        type="date"
+                                                                        value={date}
+                                                                        min={minDeliveryDate}
+                                                                        onChange={(e) => setDate(e.target.value)}
+                                                                        className="w-full p-4 pr-12 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-12 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                            <div className="space-y-1.5">
+                                                            <div className="space-y-1.5 relative">
                                                                 <label className="text-[11px] font-bold text-stone-500 mr-1 italic">חלון זמן</label>
-                                                                <select
-                                                                    value={time}
-                                                                    onChange={(e) => setTime(e.target.value)}
-                                                                    disabled={!date || availableTimeSlots.slots.length === 0}
-                                                                    className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl disabled:opacity-50"
-                                                                >
-                                                                    <option value="">בחירת שעה</option>
-                                                                    {availableTimeSlots.slots.map((slot) => (
-                                                                        <option key={slot} value={slot}>{slot}</option>
-                                                                    ))}
-                                                                </select>
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-y-0 right-0 pl-3 pr-4 flex items-center pointer-events-none">
+                                                                        <Clock className="w-5 h-5 text-david-green/70" />
+                                                                    </div>
+                                                                    <select
+                                                                        value={time}
+                                                                        onChange={(e) => setTime(e.target.value)}
+                                                                        disabled={!date || availableTimeSlots.slots.length === 0}
+                                                                        className="w-full p-4 pr-12 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl disabled:opacity-50 appearance-none"
+                                                                    >
+                                                                        <option value="">בחירת שעה</option>
+                                                                        {availableTimeSlots.slots.map((slot) => (
+                                                                            <option key={slot} value={slot}>{slot}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         {!availableTimeSlots.slots.length && date && (
@@ -777,22 +787,22 @@ export default function CartDrawer() {
                                             ) : (
                                                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
                                                     {/* Pro-designed Pickup Header */}
-                                                    <div className="relative p-6 md:p-7 bg-gradient-to-br from-[#FDFBF7] to-[#F4F1E8] rounded-2xl md:rounded-3xl border border-[#E8E4D9] text-center shadow-sm overflow-hidden group">
+                                                    <div className="relative p-4 md:p-7 bg-gradient-to-br from-[#FDFBF7] to-[#F4F1E8] rounded-2xl md:rounded-3xl border border-[#E8E4D9] text-center shadow-sm overflow-hidden group">
                                                         <div className="absolute top-0 left-0 w-full h-1 md:h-1.5 bg-david-green/80" />
 
                                                         {/* Decorative Background Elements */}
-                                                        <div className="absolute -top-10 -right-10 w-24 h-24 md:w-32 md:h-32 bg-white/40 rounded-full blur-2xl pointer-events-none" />
-                                                        <div className="absolute -bottom-10 -left-10 w-24 h-24 md:w-32 md:h-32 bg-david-green/5 rounded-full blur-2xl pointer-events-none" />
+                                                        <div className="absolute -top-10 -right-10 w-20 h-20 md:w-32 md:h-32 bg-white/40 rounded-full blur-2xl pointer-events-none" />
+                                                        <div className="absolute -bottom-10 -left-10 w-20 h-20 md:w-32 md:h-32 bg-david-green/5 rounded-full blur-2xl pointer-events-none" />
 
-                                                        <div className="relative z-10 flex flex-col items-center space-y-3 md:space-y-4">
-                                                            <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center shadow-md border border-stone-100 transform group-hover:scale-105 transition-transform duration-500">
-                                                                <MapPin className="w-5 h-5 md:w-6 md:h-6 text-david-green" />
+                                                        <div className="relative z-10 flex flex-col items-center space-y-2 md:space-y-4">
+                                                            <div className="w-10 h-10 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center shadow-md border border-stone-100 transform group-hover:scale-105 transition-transform duration-500">
+                                                                <MapPin className="w-4 h-4 md:w-6 md:h-6 text-david-green" />
                                                             </div>
-                                                            <div className="space-y-1 md:space-y-1.5">
-                                                                <p className="font-serif font-bold text-stone-900 text-lg md:text-xl tracking-tight">איסוף עצמי מהחנות</p>
-                                                                <div className="flex flex-col items-center text-xs md:text-[13px] text-stone-600 font-medium">
-                                                                    <span>העצמאות 58, אשקלון</span>
-                                                                    <span className="text-david-green/80 text-[10px] md:text-xs mt-0.5 font-bold tracking-wider uppercase opacity-80">— פרחי דוד —</span>
+                                                            <div className="space-y-0.5 md:space-y-1.5">
+                                                                <p className="font-serif font-bold text-stone-900 text-base md:text-xl tracking-tight">איסוף עצמי מהחנות</p>
+                                                                <div className="flex flex-col items-center text-[11px] md:text-[13px] text-stone-600 font-medium">
+                                                                    <span>רחבעם זאבי 4, אשקלון</span>
+                                                                    <span className="text-david-green/80 text-[9px] md:text-xs mt-0.5 font-bold tracking-wider uppercase opacity-80">— פרחי דוד —</span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -804,24 +814,34 @@ export default function CartDrawer() {
                                                             <p className="text-sm font-bold text-stone-900">מתי תרצו לבוא לאסוף?</p>
                                                         </div>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <input
-                                                                type="date"
-                                                                value={date}
-                                                                min={minDeliveryDate}
-                                                                onChange={(e) => setDate(e.target.value)}
-                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900"
-                                                            />
-                                                            <select
-                                                                value={time}
-                                                                onChange={(e) => setTime(e.target.value)}
-                                                                disabled={!date || availableTimeSlots.slots.length === 0}
-                                                                className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl disabled:opacity-50"
-                                                            >
-                                                                <option value="">בחירת שעת איסוף</option>
-                                                                {availableTimeSlots.slots.map((slot) => (
-                                                                    <option key={slot} value={slot}>{slot}</option>
-                                                                ))}
-                                                            </select>
+                                                            <div className="relative">
+                                                                <div className="absolute inset-y-0 right-0 pl-3 pr-4 flex items-center pointer-events-none">
+                                                                    <Calendar className="w-5 h-5 text-david-green/70" />
+                                                                </div>
+                                                                <input
+                                                                    type="date"
+                                                                    value={date}
+                                                                    min={minDeliveryDate}
+                                                                    onChange={(e) => setDate(e.target.value)}
+                                                                    className="w-full p-4 pr-12 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-12 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                                                />
+                                                            </div>
+                                                            <div className="relative">
+                                                                <div className="absolute inset-y-0 right-0 pl-3 pr-4 flex items-center pointer-events-none">
+                                                                    <Clock className="w-5 h-5 text-david-green/70" />
+                                                                </div>
+                                                                <select
+                                                                    value={time}
+                                                                    onChange={(e) => setTime(e.target.value)}
+                                                                    disabled={!date || availableTimeSlots.slots.length === 0}
+                                                                    className="w-full p-4 pr-12 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl disabled:opacity-50 appearance-none"
+                                                                >
+                                                                    <option value="">בחירת שעת איסוף</option>
+                                                                    {availableTimeSlots.slots.map((slot) => (
+                                                                        <option key={slot} value={slot}>{slot}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
