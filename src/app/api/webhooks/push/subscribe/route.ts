@@ -5,20 +5,35 @@ import { UserRole } from '@prisma/client';
 
 export async function POST(req: Request) {
     try {
-        const { userId } = await auth();
-        const user = await currentUser();
+        let finalUserId: string | null = null;
+        let dbUser: any = null;
 
-        if (!userId || !user) {
-            return new NextResponse('Unauthorized', { status: 401 });
-        }
+        if (process.env.NODE_ENV === 'development') {
+            // In dev mode, Auth gets bypassed in middleware, so pick the first true admin
+            const firstAdmin = await prisma.user.findFirst({ where: { role: UserRole.ADMIN } });
+            if (!firstAdmin) {
+                return new NextResponse('No admin found in Dev DB', { status: 403 });
+            }
+            dbUser = firstAdmin;
+            finalUserId = firstAdmin.clerkId || firstAdmin.id;
+        } else {
+            // Production auth check
+            const { userId } = await auth();
+            const user = await currentUser();
 
-        // Verify user is an admin
-        const dbUser = await prisma.user.findUnique({
-            where: { clerkId: userId }
-        });
+            if (!userId || !user) {
+                return new NextResponse('Unauthorized', { status: 401 });
+            }
 
-        if (!dbUser || dbUser.role !== UserRole.ADMIN) {
-            return new NextResponse('Forbidden: Admins Only', { status: 403 });
+            dbUser = await prisma.user.findUnique({
+                where: { clerkId: userId }
+            });
+
+            if (!dbUser || dbUser.role !== UserRole.ADMIN) {
+                return new NextResponse('Forbidden: Admins Only', { status: 403 });
+            }
+
+            finalUserId = userId;
         }
 
         const subscription = await req.json();

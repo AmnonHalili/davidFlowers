@@ -95,7 +95,7 @@ export default function AdminPushManager() {
             ) : (
                 <BellOff className="w-4 h-4" />
             )}
-            <span className="hidden sm:inline">
+            <span>
                 {isSubscribed ? 'התראות מופעלות לדפדפן זה' : 'הפעל התראות מכשיר'}
             </span>
         </button>
