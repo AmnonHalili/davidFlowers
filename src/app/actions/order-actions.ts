@@ -272,35 +272,39 @@ export async function processSuccessfulPayment(orderId: string, transactionUid: 
             console.error('[ACTION_STOCK_ERROR]', stockError);
         }
 
-        // 5. Send Emails
+        // 5. Send Emails (Asynchronously without blocking the UI)
         try {
             const customerEmail = updatedOrder.user?.email || updatedOrder.ordererEmail;
             if (customerEmail) {
-                await sendOrderConfirmation({
-                    to: customerEmail,
-                    orderNumber: updatedOrder.id,
-                    customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח יקר',
-                    items: updatedOrder.items.map(item => ({
-                        name: item.product.name,
-                        quantity: item.quantity,
-                        price: Number(item.price)
-                    })),
-                    totalAmount: Number(updatedOrder.totalAmount),
-                    shippingAddress: updatedOrder.shippingAddress === 'Self Pickup' ? 'איסוף עצמי' : updatedOrder.shippingAddress || '',
-                    deliveryDate: updatedOrder.desiredDeliveryDate,
-                    deliveryNotes: (updatedOrder as any).deliveryNotes || undefined
-                });
-
-                await sendAdminNotification({
-                    orderNumber: updatedOrder.id,
-                    customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח ללא שם',
-                    totalAmount: Number(updatedOrder.totalAmount),
-                    shippingAddress: updatedOrder.shippingAddress || undefined,
-                    deliveryDate: updatedOrder.desiredDeliveryDate,
-                    items: updatedOrder.items.map(item => ({
-                        name: item.product.name,
-                        quantity: item.quantity
-                    }))
+                // Fire and forget mechanism to ensure the UI return is instantaneous
+                Promise.allSettled([
+                    sendOrderConfirmation({
+                        to: customerEmail,
+                        orderNumber: updatedOrder.id,
+                        customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח יקר',
+                        items: updatedOrder.items.map(item => ({
+                            name: item.product.name,
+                            quantity: item.quantity,
+                            price: Number(item.price)
+                        })),
+                        totalAmount: Number(updatedOrder.totalAmount),
+                        shippingAddress: updatedOrder.shippingAddress === 'Self Pickup' ? 'איסוף עצמי' : updatedOrder.shippingAddress || '',
+                        deliveryDate: updatedOrder.desiredDeliveryDate,
+                        deliveryNotes: (updatedOrder as any).deliveryNotes || undefined
+                    }),
+                    sendAdminNotification({
+                        orderNumber: updatedOrder.id,
+                        customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח ללא שם',
+                        totalAmount: Number(updatedOrder.totalAmount),
+                        shippingAddress: updatedOrder.shippingAddress || undefined,
+                        deliveryDate: updatedOrder.desiredDeliveryDate,
+                        items: updatedOrder.items.map(item => ({
+                            name: item.product.name,
+                            quantity: item.quantity
+                        }))
+                    })
+                ]).catch(emailErr => {
+                    console.error('[ACTION_ASYNC_EMAIL_ERROR]', emailErr);
                 });
             }
         } catch (emailError) {

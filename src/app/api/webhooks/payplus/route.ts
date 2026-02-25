@@ -201,36 +201,35 @@ export async function POST(req: Request) {
             const { sendOrderConfirmation, sendAdminNotification } = await import('@/lib/email');
 
             try {
-                // AWAIT email confirmation to ensure it finishes or logs properly
-                await sendOrderConfirmation({
-                    to: customerEmail,
-                    orderNumber: updatedOrder.id,
-                    customerName: updatedOrder.ordererName || updatedOrder.recipientName,
-                    items: updatedOrder.items.map(item => ({
-                        name: item.product.name,
-                        quantity: item.quantity,
-                        price: Number(item.price)
-                    })),
-                    totalAmount: Number(updatedOrder.totalAmount),
-                    shippingAddress: updatedOrder.shippingAddress === 'Self Pickup' ? 'איסוף עצמי' : updatedOrder.shippingAddress || '',
-                    deliveryDate: updatedOrder.desiredDeliveryDate,
-                    deliveryNotes: (updatedOrder as any).deliveryNotes || undefined
-                });
-                console.log(`📧 Confirmation email sent to ${customerEmail}`);
+                const results = await Promise.allSettled([
+                    sendOrderConfirmation({
+                        to: customerEmail,
+                        orderNumber: updatedOrder.id,
+                        customerName: updatedOrder.ordererName || updatedOrder.recipientName,
+                        items: updatedOrder.items.map(item => ({
+                            name: item.product.name,
+                            quantity: item.quantity,
+                            price: Number(item.price)
+                        })),
+                        totalAmount: Number(updatedOrder.totalAmount),
+                        shippingAddress: updatedOrder.shippingAddress === 'Self Pickup' ? 'איסוף עצמי' : updatedOrder.shippingAddress || '',
+                        deliveryDate: updatedOrder.desiredDeliveryDate,
+                        deliveryNotes: (updatedOrder as any).deliveryNotes || undefined
+                    }),
+                    sendAdminNotification({
+                        orderNumber: updatedOrder.id,
+                        customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח ללא שם',
+                        totalAmount: Number(updatedOrder.totalAmount),
+                        shippingAddress: updatedOrder.shippingAddress || undefined,
+                        deliveryDate: updatedOrder.desiredDeliveryDate,
+                        items: updatedOrder.items.map(item => ({
+                            name: item.product.name,
+                            quantity: item.quantity
+                        }))
+                    })
+                ]);
 
-                // ALSO Send Admin Notification
-                await sendAdminNotification({
-                    orderNumber: updatedOrder.id,
-                    customerName: updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח ללא שם',
-                    totalAmount: Number(updatedOrder.totalAmount),
-                    shippingAddress: updatedOrder.shippingAddress || undefined,
-                    deliveryDate: updatedOrder.desiredDeliveryDate,
-                    items: updatedOrder.items.map(item => ({
-                        name: item.product.name,
-                        quantity: item.quantity
-                    }))
-                });
-                console.log(`📧 Admin notification sent`);
+                console.log(`📧 Emails triggered via webhook: Customer [${results[0].status}], Admin [${results[1].status}]`);
 
             } catch (error) {
                 console.error('[WEBHOOK_EMAIL_ERROR]', error);
