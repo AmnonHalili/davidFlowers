@@ -460,7 +460,7 @@ export default function CartDrawer() {
                         </div>
 
                         {/* Items - Extended Scroll Area */}
-                        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 space-y-4 scrollbar-hide">
+                        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-4 space-y-4 scrollbar-hide">
                             {items.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6 text-stone-300">
                                     <ShoppingBag className="w-16 h-16 opacity-20" strokeWidth={1} />
@@ -776,16 +776,33 @@ export default function CartDrawer() {
                                                 </div>
                                             ) : (
                                                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
-                                                    <div className="p-6 bg-stone-100 rounded-3xl border border-stone-200 text-center space-y-3">
-                                                        <MapPin className="w-8 h-8 text-stone-400 mx-auto" />
-                                                        <div className="space-y-1">
-                                                            <p className="font-bold text-stone-900 text-lg">איסוף עצמי מהחנות</p>
-                                                            <p className="text-sm text-stone-500">העצמאות 58, אשקלון (פרחי דוד)</p>
+                                                    {/* Pro-designed Pickup Header */}
+                                                    <div className="relative p-6 md:p-7 bg-gradient-to-br from-[#FDFBF7] to-[#F4F1E8] rounded-2xl md:rounded-3xl border border-[#E8E4D9] text-center shadow-sm overflow-hidden group">
+                                                        <div className="absolute top-0 left-0 w-full h-1 md:h-1.5 bg-david-green/80" />
+
+                                                        {/* Decorative Background Elements */}
+                                                        <div className="absolute -top-10 -right-10 w-24 h-24 md:w-32 md:h-32 bg-white/40 rounded-full blur-2xl pointer-events-none" />
+                                                        <div className="absolute -bottom-10 -left-10 w-24 h-24 md:w-32 md:h-32 bg-david-green/5 rounded-full blur-2xl pointer-events-none" />
+
+                                                        <div className="relative z-10 flex flex-col items-center space-y-3 md:space-y-4">
+                                                            <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center shadow-md border border-stone-100 transform group-hover:scale-105 transition-transform duration-500">
+                                                                <MapPin className="w-5 h-5 md:w-6 md:h-6 text-david-green" />
+                                                            </div>
+                                                            <div className="space-y-1 md:space-y-1.5">
+                                                                <p className="font-serif font-bold text-stone-900 text-lg md:text-xl tracking-tight">איסוף עצמי מהחנות</p>
+                                                                <div className="flex flex-col items-center text-xs md:text-[13px] text-stone-600 font-medium">
+                                                                    <span>העצמאות 58, אשקלון</span>
+                                                                    <span className="text-david-green/80 text-[10px] md:text-xs mt-0.5 font-bold tracking-wider uppercase opacity-80">— פרחי דוד —</span>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-4">
-                                                        <p className="text-sm font-bold text-stone-900">מתי תרצו לבוא לאסוף?</p>
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <div className="w-1.5 h-4 bg-david-green rounded-full" />
+                                                            <p className="text-sm font-bold text-stone-900">מתי תרצו לבוא לאסוף?</p>
+                                                        </div>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <input
                                                                 type="date"
