@@ -152,6 +152,7 @@ export default function CartDrawer() {
     const [addedUpsellId, setAddedUpsellId] = useState<string | null>(null);
     const [draftOrderId, setDraftOrderId] = useState<string | null>(null);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [isCheckingOut, setIsCheckingOut] = useState(false);
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return;
@@ -330,6 +331,7 @@ export default function CartDrawer() {
     };
 
     const handleCheckout = async () => {
+        setIsCheckingOut(true);
         try {
             const response = await fetch('/api/checkout', {
                 method: 'POST',
@@ -368,6 +370,7 @@ export default function CartDrawer() {
         } catch (error) {
             console.error('Checkout error:', error);
             alert('אירעה שגיאה במעבר לתשלום. אנא נסה שנית.');
+            setIsCheckingOut(false);
         }
     };
 
@@ -1130,12 +1133,16 @@ export default function CartDrawer() {
                                                 <button
                                                     onClick={handleCheckout}
                                                     disabled={
-                                                        !time || !date || (shippingMethod === 'delivery' && (!address || !selectedCity))
+                                                        !time || !date || (shippingMethod === 'delivery' && (!address || !selectedCity)) || isCheckingOut
                                                     }
                                                     className="flex-1 bg-stone-900 text-david-beige py-4 rounded-2xl text-sm font-bold tracking-widest hover:bg-stone-800 transition-all shadow-xl shadow-stone-900/20 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
                                                 >
-                                                    <Lock className="w-4 h-4" />
-                                                    מעבר לתשלום
+                                                    {isCheckingOut ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                                        <>
+                                                            <Lock className="w-4 h-4" />
+                                                            מעבר לתשלום
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
                                         </motion.div>
