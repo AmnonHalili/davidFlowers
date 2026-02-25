@@ -201,12 +201,26 @@ export async function POST(req: Request) {
             const { sendOrderConfirmation, sendAdminNotification } = await import('@/lib/email');
 
             try {
+                // Trigger Push Notifications to Admins
+                const pushSubsPromise = prisma.pushSubscription.findMany({
+                    where: { user: { role: 'ADMIN' } }
+                }).then(async (pushSubs: any[]) => {
+                    if (pushSubs.length > 0) {
+                        const { sendWebPushNotification } = await import('@/lib/webpush');
+                        await sendWebPushNotification(pushSubs, {
+                            title: 'הזמנה חדשה (דרך PayPlus)',
+                            body: `מאת: ${updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח'} בסך ₪${Number(updatedOrder.totalAmount).toFixed(0)}`,
+                            url: `/admin/orders/${updatedOrder.id}`
+                        });
+                    }
+                }).catch((e: any) => console.error('Failed to dispatch webhook push notification', e));
+
                 const results = await Promise.allSettled([
                     sendOrderConfirmation({
                         to: customerEmail,
                         orderNumber: updatedOrder.id,
                         customerName: updatedOrder.ordererName || updatedOrder.recipientName,
-                        items: updatedOrder.items.map(item => ({
+                        items: updatedOrder.items.map((item: any) => ({
                             name: item.product.name,
                             quantity: item.quantity,
                             price: Number(item.price)
@@ -222,11 +236,12 @@ export async function POST(req: Request) {
                         totalAmount: Number(updatedOrder.totalAmount),
                         shippingAddress: updatedOrder.shippingAddress || undefined,
                         deliveryDate: updatedOrder.desiredDeliveryDate,
-                        items: updatedOrder.items.map(item => ({
+                        items: updatedOrder.items.map((item: any) => ({
                             name: item.product.name,
                             quantity: item.quantity
                         }))
-                    })
+                    }),
+                    pushSubsPromise
                 ]);
 
                 console.log(`📧 Emails triggered via webhook: Customer [${results[0].status}], Admin [${results[1].status}]`);

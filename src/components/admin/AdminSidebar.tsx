@@ -6,6 +6,7 @@ import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Menu, 
 import { UserButton, useClerk } from '@clerk/nextjs';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AdminPushManager from './AdminPushManager';
 
 export default function AdminSidebar() {
     const pathname = usePathname();
@@ -69,7 +70,8 @@ export default function AdminSidebar() {
             </nav>
 
             {/* User Footer */}
-            <div className="p-6 border-t border-stone-800">
+            <div className="p-6 border-t border-stone-800 space-y-4">
+                <AdminPushManager />
                 <div className="flex items-center gap-4 bg-stone-900 p-3 rounded-lg">
                     <UserButton afterSignOutUrl="/" />
                     <div className="flex flex-col">

@@ -277,6 +277,21 @@ export async function processSuccessfulPayment(orderId: string, transactionUid: 
             const customerEmail = updatedOrder.user?.email || updatedOrder.ordererEmail;
             if (customerEmail) {
                 // Fire and forget mechanism to ensure the UI return is instantaneous
+
+                // Setup Push notifications for Admins
+                const pushPromise = prisma.pushSubscription.findMany({
+                    where: { user: { role: 'ADMIN' } }
+                }).then(async (pushSubs: any[]) => {
+                    if (pushSubs.length > 0) {
+                        const { sendWebPushNotification } = await import('@/lib/webpush');
+                        await sendWebPushNotification(pushSubs, {
+                            title: 'הזמנה חדשה התקבלה!',
+                            body: `מאת: ${updatedOrder.ordererName || updatedOrder.recipientName || 'לקוח'} בסך ₪${Number(updatedOrder.totalAmount).toFixed(0)}`,
+                            url: `/admin/orders/${updatedOrder.id}`
+                        });
+                    }
+                }).catch((err: any) => console.error('Push notification failed on action', err));
+
                 Promise.allSettled([
                     sendOrderConfirmation({
                         to: customerEmail,
@@ -302,7 +317,8 @@ export async function processSuccessfulPayment(orderId: string, transactionUid: 
                             name: item.product.name,
                             quantity: item.quantity
                         }))
-                    })
+                    }),
+                    pushPromise
                 ]).catch(emailErr => {
                     console.error('[ACTION_ASYNC_EMAIL_ERROR]', emailErr);
                 });
