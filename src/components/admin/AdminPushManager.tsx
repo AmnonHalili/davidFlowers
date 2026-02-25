@@ -76,16 +76,24 @@ export default function AdminPushManager() {
     };
 
     if (!isSupported) {
-        return null; // Don't show anything if push isn't supported
+        return (
+            <button
+                disabled
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-700"
+            >
+                <BellOff className="w-4 h-4" />
+                <span>פוש לא נתמך במכשיר/דפדפן זה</span>
+            </button>
+        );
     }
 
     return (
         <button
             onClick={subscribeToPush}
             disabled={isLoading || isSubscribed}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isSubscribed
+            className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isSubscribed
                 ? 'bg-david-green/10 text-david-green border border-david-green/20 cursor-default'
-                : 'bg-stone-900 text-white hover:bg-stone-800 shadow-sm active:scale-95'
+                : 'bg-stone-900 text-white hover:bg-stone-800 shadow-sm active:scale-95 border border-stone-700'
                 }`}
         >
             {isLoading ? (
@@ -96,7 +104,7 @@ export default function AdminPushManager() {
                 <BellOff className="w-4 h-4" />
             )}
             <span>
-                {isSubscribed ? 'התראות מופעלות לדפדפן זה' : 'הפעל התראות מכשיר'}
+                {isSubscribed ? 'התראות מופעלות' : 'הפעל התראות לפלאפון זה'}
             </span>
         </button>
     );
