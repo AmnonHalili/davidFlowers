@@ -46,6 +46,25 @@ export default function SeamlessVideoPlayer({ videos, poster }: SeamlessVideoPla
         }
     }, [currentIndex, shouldLoadAll]); // Re-run when new videos might be mounted
 
+    useEffect(() => {
+        const handleInteraction = () => {
+            const currentVideo = videoRefs.current[currentIndex];
+            if (currentVideo && currentVideo.paused) {
+                currentVideo.play().catch(() => { });
+            }
+        };
+
+        window.addEventListener('touchstart', handleInteraction, { once: true });
+        window.addEventListener('click', handleInteraction, { once: true });
+        window.addEventListener('scroll', handleInteraction, { once: true });
+
+        return () => {
+            window.removeEventListener('touchstart', handleInteraction);
+            window.removeEventListener('click', handleInteraction);
+            window.removeEventListener('scroll', handleInteraction);
+        };
+    }, [currentIndex]);
+
     const videosToRender = shouldLoadAll ? videos : [videos[0]];
 
     return (
@@ -68,6 +87,10 @@ export default function SeamlessVideoPlayer({ videos, poster }: SeamlessVideoPla
                     <motion.video
                         key={src}
                         ref={(el) => {
+                            if (el) {
+                                el.defaultMuted = true;
+                                el.muted = true;
+                            }
                             videoRefs.current[index] = el;
                         }}
                         src={src}
