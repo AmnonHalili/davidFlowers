@@ -97,11 +97,17 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                         <div className="bg-stone-50 px-6 py-6 border-t border-stone-100 space-y-2">
                             <div className="flex justify-between text-sm text-stone-600">
                                 <span>סה"כ פריטים</span>
-                                <span>₪{Number(order.totalAmount).toFixed(2)}</span>
+                                <span>₪{(Number(order.totalAmount) - Number(order.shippingCost || 0) + Number(order.discountAmount || 0)).toFixed(2)}</span>
                             </div>
+                            {Number(order.discountAmount) > 0 && (
+                                <div className="flex justify-between text-sm text-green-600">
+                                    <span>הנחה מיושמת</span>
+                                    <span>-₪{Number(order.discountAmount).toFixed(2)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-sm text-stone-600">
                                 <span>משלוח</span>
-                                <span>₪0.00</span>
+                                <span>₪{Number(order.shippingCost || 0).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between font-bold text-lg text-stone-900 pt-2 border-t border-stone-200 mt-2">
                                 <span>סה"כ לתשלום</span>

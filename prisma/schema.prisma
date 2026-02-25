@@ -148,6 +148,8 @@ model Order {
   coupon            Coupon?       @relation(fields: [couponId], references: [id])
   discountAmount    Decimal       @default(0)
 
+  shippingCost      Decimal       @default(0)
+
   newsletterConsent Boolean     @default(false)
   
   createdAt         DateTime    @default(now())

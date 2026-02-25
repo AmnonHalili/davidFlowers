@@ -196,6 +196,7 @@ export async function POST(req: Request) {
             ...(userId && { user: { connect: { clerkId: userId } } }),
             totalAmount,
             discountAmount,
+            shippingCost: finalShippingCost,
             status: 'PENDING' as any,
             paymentMethod: 'CREDIT_CARD' as any,
             recipientName,
