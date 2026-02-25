@@ -125,7 +125,10 @@ export default function CartDrawer() {
     const { user: clerkUser, isSignedIn } = useUser();
     const [shippingMethod, setShippingMethod] = useState<'pickup' | 'delivery'>('delivery');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [address, setAddress] = useState('');
+    const [street, setStreet] = useState('');
+    const [houseNumber, setHouseNumber] = useState('');
+    const [apartment, setApartment] = useState('');
+    const [floor, setFloor] = useState('');
     const [recipientName, setRecipientName] = useState('');
     const [recipientPhone, setRecipientPhone] = useState('');
 
@@ -257,7 +260,7 @@ export default function CartDrawer() {
                     setOrdererName(prev => prev || user.name || '');
                     setOrdererPhone(prev => prev || user.phone || '');
                     setOrdererEmail(prev => prev || user.email || '');
-                    setAddress(prev => prev || user.address || '');
+                    setStreet(prev => prev || user.address || ''); // fallback to street
                 }
             });
         }
@@ -279,7 +282,12 @@ export default function CartDrawer() {
                     if (parsed.phone) setOrdererPhone(prev => prev || parsed.phone || '');
                     if (parsed.email) setOrdererEmail(prev => prev || parsed.email || '');
                     if (parsed.city) setSelectedCity(prev => prev || parsed.city || '');
-                    if (parsed.address) setAddress(prev => prev || parsed.address || '');
+                    if (parsed.street) setStreet(prev => prev || parsed.street || '');
+                    if (parsed.houseNumber) setHouseNumber(prev => prev || parsed.houseNumber || '');
+                    if (parsed.apartment) setApartment(prev => prev || parsed.apartment || '');
+                    if (parsed.floor) setFloor(prev => prev || parsed.floor || '');
+                    // Backwards compatibility
+                    if (!parsed.street && parsed.address) setStreet(prev => prev || parsed.address || '');
                 }
             } catch (error) {
                 console.error('Failed to load saved customer info', error);
@@ -294,13 +302,17 @@ export default function CartDrawer() {
         if (!isOpen) return;
 
         const timer = setTimeout(() => {
-            if (ordererName || ordererPhone || ordererEmail || address || selectedCity) {
+            if (ordererName || ordererPhone || ordererEmail || street || houseNumber || selectedCity) {
                 const infoToSave = {
                     name: ordererName,
                     phone: ordererPhone,
                     email: ordererEmail,
                     city: selectedCity,
-                    address: address,
+                    street: street,
+                    houseNumber: houseNumber,
+                    apartment: apartment,
+                    floor: floor,
+                    address: `${street} ${houseNumber}${apartment ? `, דירה ${apartment}` : ''}${floor ? `, קומה ${floor}` : ''}`,
                     lastUpdated: new Date().toISOString()
                 };
                 localStorage.setItem('davidFlowers_customerInfo', JSON.stringify(infoToSave));
@@ -308,7 +320,7 @@ export default function CartDrawer() {
         }, 1000); // 1 second debounce
 
         return () => clearTimeout(timer);
-    }, [ordererName, ordererPhone, ordererEmail, address, selectedCity, isOpen]);
+    }, [ordererName, ordererPhone, ordererEmail, street, houseNumber, apartment, floor, selectedCity, isOpen]);
 
     const FREE_SHIPPING_THRESHOLD = 350;
     // Calculate totals locally to include discount
@@ -341,7 +353,7 @@ export default function CartDrawer() {
                 body: JSON.stringify({
                     items,
                     shippingMethod,
-                    shippingAddress: shippingMethod === 'delivery' ? address : 'Self Pickup',
+                    shippingAddress: shippingMethod === 'delivery' ? `${street} ${houseNumber}${apartment ? `, דירה ${apartment}` : ''}${floor ? `, קומה ${floor}` : ''}` : 'Self Pickup',
                     recipientName: shippingMethod === 'delivery' ? recipientName : ordererName,
                     recipientPhone: shippingMethod === 'delivery' ? recipientPhone : ordererPhone,
                     ordererName,
@@ -701,31 +713,68 @@ export default function CartDrawer() {
                                                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
                                                     {/* Location Section */}
                                                     <div className="space-y-4">
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div className="space-y-1.5">
-                                                                <label className="text-[11px] font-bold text-stone-500 mr-1 italic">עיר / יישוב *</label>
-                                                                <select
-                                                                    value={selectedCity}
-                                                                    onChange={(e) => setSelectedCity(e.target.value)}
-                                                                    className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl"
-                                                                >
-                                                                    <option value="">בחירת עיר...</option>
-                                                                    {Object.keys(SHIPPING_COSTS).sort().map(city => (
-                                                                        <option key={city} value={city}>
-                                                                            {city} ({subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : `₪${SHIPPING_COSTS[city]}`})
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
+                                                        <div className="grid grid-cols-1 gap-4">
+                                                            {/* First Row: City and Street */}
+                                                            <div className="flex gap-3">
+                                                                <div className="flex-[0.45] space-y-1.5">
+                                                                    <label className="text-[11px] font-bold text-stone-500 mr-1 italic">עיר / יישוב *</label>
+                                                                    <select
+                                                                        value={selectedCity}
+                                                                        onChange={(e) => setSelectedCity(e.target.value)}
+                                                                        className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-stone-900 dir-rtl"
+                                                                    >
+                                                                        <option value="">בחירת עיר...</option>
+                                                                        {Object.keys(SHIPPING_COSTS).sort().map(city => (
+                                                                            <option key={city} value={city}>
+                                                                                {city} ({subtotal >= FREE_SHIPPING_THRESHOLD ? 'חינם' : `₪${SHIPPING_COSTS[city]}`})
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                                <div className="flex-1 space-y-1.5">
+                                                                    <label className="text-[11px] font-bold text-stone-500 mr-1 italic">רחוב *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={street}
+                                                                        onChange={(e) => setStreet(e.target.value)}
+                                                                        placeholder="שם הרחוב"
+                                                                        className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all"
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                            <div className="space-y-1.5">
-                                                                <label className="text-[11px] font-bold text-stone-500 mr-1 italic">כתובת למשלוח *</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={address}
-                                                                    onChange={(e) => setAddress(e.target.value)}
-                                                                    placeholder="רחוב ומספר בית"
-                                                                    className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all"
-                                                                />
+
+                                                            {/* Second Row: House Number, Apartment, Floor */}
+                                                            <div className="flex gap-3">
+                                                                <div className="flex-1 space-y-1.5">
+                                                                    <label className="text-[11px] font-bold text-stone-500 mr-1 italic">מס' בית *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={houseNumber}
+                                                                        onChange={(e) => setHouseNumber(e.target.value)}
+                                                                        placeholder="למשל 12"
+                                                                        className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-center"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex-1 space-y-1.5">
+                                                                    <label className="text-[11px] font-bold text-stone-500 mr-1 italic">דירה</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={apartment}
+                                                                        onChange={(e) => setApartment(e.target.value)}
+                                                                        placeholder="למשל 4"
+                                                                        className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-center"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex-1 space-y-1.5">
+                                                                    <label className="text-[11px] font-bold text-stone-500 mr-1 italic">קומה</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={floor}
+                                                                        onChange={(e) => setFloor(e.target.value)}
+                                                                        placeholder="מפלס / קומה"
+                                                                        className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 transition-all text-center"
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
 
@@ -1133,7 +1182,7 @@ export default function CartDrawer() {
                                                 <button
                                                     onClick={handleCheckout}
                                                     disabled={
-                                                        !time || !date || (shippingMethod === 'delivery' && (!address || !selectedCity)) || isCheckingOut
+                                                        !time || !date || (shippingMethod === 'delivery' && (!street || !houseNumber || !selectedCity)) || isCheckingOut
                                                     }
                                                     className="flex-1 bg-stone-900 text-david-beige py-4 rounded-2xl text-sm font-bold tracking-widest hover:bg-stone-800 transition-all shadow-xl shadow-stone-900/20 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
                                                 >

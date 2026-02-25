@@ -1,5 +1,6 @@
 import { Package, ShoppingCart, TrendingUp, Users, DollarSign } from 'lucide-react';
 import prisma from '@/lib/prisma';
+import { toZonedTime } from 'date-fns-tz';
 import SalesChart from '@/components/admin/SalesChart';
 import RecentOrdersTable from '@/components/admin/RecentOrdersTable';
 import HotProducts from '@/components/admin/HotProducts';
@@ -70,14 +71,25 @@ async function getStats() {
         }
     });
 
-    const formattedRecentOrders = recentOrders.map(order => ({
-        id: order.id,
-        customerName: order.recipientName || order.user?.name || order.user?.email || 'Unknown',
-        total: Number(order.totalAmount),
-        status: order.status,
-        date: order.createdAt.toLocaleDateString('he-IL'),
-        itemsCount: order.items.reduce((acc, item) => acc + item.quantity, 0)
-    }));
+    const formattedRecentOrders = recentOrders.map(order => {
+        const TIME_ZONE = 'Asia/Jerusalem';
+        const zonedDate = toZonedTime(order.createdAt, TIME_ZONE);
+
+        return {
+            id: order.id,
+            customerName: order.recipientName || order.user?.name || order.user?.email || 'Unknown',
+            total: Number(order.totalAmount),
+            status: order.status,
+            date: zonedDate.toLocaleString('he-IL', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }),
+            itemsCount: order.items.reduce((acc, item) => acc + item.quantity, 0)
+        };
+    });
 
 
     // 4. Hot Products

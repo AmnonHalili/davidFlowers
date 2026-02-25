@@ -2,6 +2,7 @@ import { getOrder } from "@/app/actions/order-actions";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
+import { toZonedTime } from "date-fns-tz";
 import { ArrowRight, MapPin, Phone, Mail, CreditCard, Package } from "lucide-react";
 import { getDeliverySlot } from "@/lib/date-utils";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import Image from "next/image";
 
 export default async function OrderPage({ params }: { params: { id: string } }) {
     const order = await getOrder(params.id);
+    const TIME_ZONE = 'Asia/Jerusalem';
 
     if (!order) {
         notFound();
@@ -35,7 +37,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
                         </span>
                     </div>
                     <p className="text-stone-500">
-                        התקבלה ב-{format(new Date(order.createdAt), "d בMMMM yyyy, HH:mm", { locale: he })}
+                        התקבלה ב-{format(toZonedTime(new Date(order.createdAt), TIME_ZONE), "d בMMMM yyyy, HH:mm", { locale: he })}
                     </p>
                 </div>
 
