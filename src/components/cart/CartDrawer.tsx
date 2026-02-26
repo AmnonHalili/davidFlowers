@@ -7,7 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { getUpsellProducts } from '@/app/actions/product-actions';
 import { getUserProfile } from '@/app/actions/user-actions';
 import { saveDraftOrder } from '@/app/actions/order-actions';
@@ -156,6 +156,14 @@ export default function CartDrawer() {
     const [draftOrderId, setDraftOrderId] = useState<string | null>(null);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
     const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+    // Auto-scroll to top when step changes
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [checkoutStep]);
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return;
@@ -475,7 +483,7 @@ export default function CartDrawer() {
                         </div>
 
                         {/* Items - Extended Scroll Area */}
-                        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-4 space-y-4 scrollbar-hide">
+                        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-4 space-y-4 scrollbar-hide">
                             {items.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6 text-stone-300">
                                     <ShoppingBag className="w-16 h-16 opacity-20" strokeWidth={1} />
