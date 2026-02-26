@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { sendGTMEvent } from "@/lib/gtm";
+import { trackViewItem } from "@/lib/analytics";
 import { usePathname } from "next/navigation";
 
 interface ViewItemEventProps {
@@ -27,22 +27,13 @@ export default function ViewItemEvent({ product, currency = "ILS" }: ViewItemEve
         if (sentRef.current === uniqueKey) return;
         sentRef.current = uniqueKey;
 
-        sendGTMEvent({
-            event: "view_item",
-            ecommerce: {
-                currency: currency,
-                value: product.price,
-                items: [
-                    {
-                        item_id: product.id,
-                        item_name: product.name,
-                        price: product.price,
-                        item_category: product.category,
-                        quantity: 1
-                    }
-                ]
-            }
-        });
+        trackViewItem({
+            item_id: product.id,
+            item_name: product.name,
+            price: product.price,
+            item_category: product.category,
+            quantity: 1
+        }, product.price, currency);
 
         // Debug log
         if (process.env.NODE_ENV === 'development') {

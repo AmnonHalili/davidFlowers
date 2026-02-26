@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { sendGTMEvent } from "@/lib/gtm";
+import { trackPurchase } from "@/lib/analytics";
 import { useCart } from "@/context/CartContext";
 
 interface PurchaseEventProps {
@@ -25,15 +25,7 @@ export default function PurchaseEvent({ orderId, total, currency = "ILS", items 
         if (sentRef.current) return;
         sentRef.current = true;
 
-        sendGTMEvent({
-            event: "purchase",
-            ecommerce: {
-                transaction_id: orderId,
-                value: total,
-                currency: currency,
-                items: items,
-            },
-        });
+        trackPurchase(orderId, items, total, 0, 0, currency);
 
         // Google Ads Conversion tracking
         if (typeof window !== 'undefined' && (window as any).gtag) {

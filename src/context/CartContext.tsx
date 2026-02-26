@@ -38,6 +38,8 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+import { trackAddToCart, trackRemoveFromCart } from '@/lib/analytics';
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -73,6 +75,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const closeCart = () => setIsOpen(false);
 
     const addItem = (newItem: CartItem) => {
+        // Track GA4 event
+        trackAddToCart(
+            {
+                item_id: newItem.productId,
+                item_name: newItem.name,
+                price: newItem.price,
+                quantity: newItem.quantity,
+                item_variant: newItem.selectedSize
+            },
+            newItem.price * newItem.quantity
+        );
+
         setItems((currentItems) => {
             // Check if item already exists with same variation/options
             const existing = currentItems.find(
@@ -97,6 +111,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
 
     const removeItem = (id: string) => {
+        const itemToRemove = items.find(i => i.id === id);
+        if (itemToRemove) {
+            trackRemoveFromCart(
+                {
+                    item_id: itemToRemove.productId,
+                    item_name: itemToRemove.name,
+                    price: itemToRemove.price,
+                    quantity: itemToRemove.quantity,
+                    item_variant: itemToRemove.selectedSize
+                },
+                itemToRemove.price * itemToRemove.quantity
+            );
+        }
         setItems((current) => current.filter((i) => i.id !== id));
     };
 

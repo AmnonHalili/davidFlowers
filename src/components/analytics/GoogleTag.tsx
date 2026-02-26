@@ -8,6 +8,7 @@ interface GoogleTagProps {
 
 export default function GoogleTag({ tagId }: GoogleTagProps) {
     const isAnalyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
+    const adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 
     if (!tagId || !isAnalyticsEnabled) {
         return null;
@@ -28,6 +29,7 @@ export default function GoogleTag({ tagId }: GoogleTagProps) {
                         function gtag(){dataLayer.push(arguments);}
                         gtag('js', new Date());
                         gtag('config', '${tagId}');
+                        ${adsId ? `gtag('config', '${adsId}');` : ''}
                     `,
                 }}
             />

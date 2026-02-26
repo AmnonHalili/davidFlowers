@@ -13,6 +13,7 @@ import { getUserProfile } from '@/app/actions/user-actions';
 import { saveDraftOrder } from '@/app/actions/order-actions';
 import { validateCoupon } from '@/app/actions/coupon-actions';
 import { getHolidayStatus } from '@/lib/holidays';
+import { trackBeginCheckout } from '@/lib/analytics'; // 🆕 E-commerce Tracking
 
 // Store Hours Utility Functions
 import { toZonedTime } from 'date-fns-tz';
@@ -1100,7 +1101,20 @@ export default function CartDrawer() {
                                                         <p className="text-[9px] text-stone-300 font-bold uppercase tracking-wider">סה"כ בעגלה</p>
                                                     </div>
                                                     <button
-                                                        onClick={() => setCheckoutStep('contact')}
+                                                        onClick={() => {
+                                                            setCheckoutStep('contact');
+                                                            // 🆕 E-commerce Tracking
+                                                            trackBeginCheckout(
+                                                                items.map(item => ({
+                                                                    item_id: item.productId,
+                                                                    item_name: item.name,
+                                                                    price: Number(item.price) || 0,
+                                                                    quantity: item.quantity,
+                                                                    item_variant: item.selectedSize
+                                                                })),
+                                                                finalTotal
+                                                            );
+                                                        }}
                                                         className="bg-david-green text-david-beige px-6 py-2.5 rounded-xl text-xs font-bold tracking-widest hover:bg-david-green/90 transition-all shadow-lg shadow-david-green/10 active:scale-[0.98] flex items-center gap-2"
                                                     >
                                                         המשך לפרטים
