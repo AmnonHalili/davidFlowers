@@ -237,16 +237,19 @@ export default function ProductCard({
             dir="rtl"
             onMouseEnter={handleMouseEnter}
         >
-            <div className="relative aspect-[4/5] w-full overflow-hidden bg-transparent rounded-sm">
+            <div className="relative aspect-[4/5] w-full overflow-hidden bg-white rounded-md transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:-translate-y-1.5 group-hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] group-hover:border-stone-100/50">
                 {/* Main Image */}
                 <Image
                     src={image}
                     alt={name}
                     fill
                     sizes="(max-width: 768px) 50vw, 33vw"
-                    className={`object-cover mix-blend-multiply transition-all duration-700 ease-in-out group-hover:scale-105 ${hoverImage ? 'group-hover:opacity-0' : ''} ${isOutOfStock ? 'grayscale opacity-80' : ''}`}
+                    className={`object-cover mix-blend-multiply transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.03] ${hoverImage ? 'group-hover:opacity-0' : ''} ${isOutOfStock ? 'grayscale opacity-80' : ''}`}
                     loading="lazy"
                 />
+
+                {/* Premium Shine Effect */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-[1500ms] ease-[cubic-bezier(0.4,0,0.2,1)] z-10 pointer-events-none mix-blend-overlay" />
 
                 {/* Second Image (Crossfade) */}
                 {hoverImage && (
@@ -331,7 +334,7 @@ export default function ProductCard({
                 {/* "Quick Actions" Bottom Up Slide (Desktop Only) */}
                 {!isLocked && (
                     <>
-                        <div className="hidden md:block absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-20">
+                        <div className="hidden md:block absolute inset-x-0 bottom-0 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-20">
                             <button
                                 onClick={handleQuickAdd}
                                 className={`w-full py-4 uppercase text-xs tracking-[0.2em] font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isAdded

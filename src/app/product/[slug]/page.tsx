@@ -5,6 +5,7 @@ import { Metadata } from 'next';
 import ProductSubscriptionForm from '@/components/ProductSubscriptionForm';
 import ProductCard from '@/components/shop/ProductCard';
 import ViewItemEvent from '@/components/analytics/ViewItemEvent';
+import ProductGallery from '@/components/product/ProductGallery';
 import Link from 'next/link';
 import { ArrowRight, Star, TrendingUp } from 'lucide-react';
 import { calculateProductPrice } from '@/lib/price-utils';
@@ -12,6 +13,8 @@ import { getRecentPurchaseCount, getProductRatingSummary } from '@/app/actions/r
 import ReviewSection from '@/components/product/ReviewSection';
 
 const prisma = new PrismaClient();
+
+// ... (rest of the top part)
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
     const decodedSlug = decodeURIComponent(params.slug);
@@ -173,52 +176,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-16">
-                    {/* Gallery Section - Full width on mobile with snap scroll */}
-                    <div className="relative">
-                        <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-0 md:mx-0">
-                            {/* Main Image */}
-                            <div className="snap-center min-w-full h-[45vh] md:h-auto md:aspect-[3/4] bg-white overflow-hidden relative">
-                                <Image
-                                    src={mainImage}
-                                    alt={product.name}
-                                    fill
-                                    className="object-cover"
-                                />
-                                {isOnSale && (
-                                    <div className="absolute top-4 right-4 bg-rose-600 text-white text-xs font-serif tracking-wide px-3 py-1 shadow-sm">
-                                        SALE
-                                    </div>
-                                )}
-                            </div>
-                            {/* Gallery Images */}
-                            {galleryImages.map((img: any) => (
-                                <div key={img.id} className="snap-center min-w-full aspect-[3/4] bg-white overflow-hidden relative">
-                                    <Image src={img.url} alt={img.alt || product.name} fill className="object-cover" />
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Mobile Pagination Dots */}
-                        {(galleryImages.length > 0) && (
-                            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 md:hidden">
-                                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
-                                {galleryImages.map((img: any) => (
-                                    <div key={img.id} className="w-1.5 h-1.5 rounded-full bg-white/50 shadow-sm" />
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Desktop Thumbnails (Hidden on Mobile) */}
-                        {galleryImages.length > 0 && (
-                            <div className="hidden md:grid grid-cols-4 gap-4 mt-4">
-                                {galleryImages.map((img: any) => (
-                                    <div key={img.id} className="aspect-square bg-white overflow-hidden cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
-                                        <Image src={img.url} alt={img.alt || product.name} fill className="object-cover" />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    {/* Gallery Section */}
+                    <ProductGallery
+                        images={product.images}
+                        productName={product.name}
+                        isOnSale={isOnSale}
+                    />
 
                     {/* Product Details & Purchase */}
                     <div className="px-6 py-6 md:p-0 space-y-6 md:space-y-10 md:sticky md:top-32 md:h-fit">
