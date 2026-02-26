@@ -161,7 +161,17 @@ export default function CartDrawer() {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            // Wait slightly for Framer Motion exit/enter animations to settle
+            setTimeout(() => {
+                scrollContainerRef.current?.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+            }, 100);
+
+            // Fallback for immediate jump in case of jitter
+            setTimeout(() => {
+                if (scrollContainerRef.current && scrollContainerRef.current.scrollTop > 0) {
+                    scrollContainerRef.current.scrollTop = 0;
+                }
+            }, 350);
         }
     }, [checkoutStep]);
 
