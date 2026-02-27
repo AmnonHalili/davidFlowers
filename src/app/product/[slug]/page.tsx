@@ -267,7 +267,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                         <div className="space-y-4 pt-4 md:pt-8 bg-stone-50/50 p-4 -mx-6 md:bg-transparent md:p-0 md:mx-0 rounded-lg md:rounded-none">
                             <div className="flex gap-4 items-start">
                                 <span className="text-stone-900 font-medium text-xs uppercase tracking-wider min-w-[80px]">משלוח:</span>
-                                <p className="text-xs text-stone-500 leading-relaxed">משלוח מהיום להיום: בימי חול בהזמנה עד 18:00, בשישי עד 12:00. משלוח באשקלון ₪25, מושבים בסביבה ₪45.</p>
+                                <p className="text-xs text-stone-500 leading-relaxed">משלוח מהיום להיום: בימי חול בהזמנה עד 18:00, בשישי עד 12:30. משלוח באשקלון ₪25, מושבים בסביבה ₪45.</p>
                             </div>
                             <div className="flex gap-4 items-start">
                                 <span className="text-stone-900 font-medium text-xs uppercase tracking-wider min-w-[80px]">טריות:</span>

@@ -45,8 +45,8 @@ function generateTimeSlots(dateString: string): { slots: string[], reason?: stri
     // 2. Friday OR Erev Chag -> Partial Day
     if (holidayStatus === 'FRIDAY_LIKE' || dayOfWeek === 5) {
         slots = [
-            '08:00 - 11:00',
-            '11:00 - 14:00'
+            '08:00 - 12:30',
+            '12:30 - 14:30'
         ];
     } else {
         // 3. Regular Days (Sunday - Thursday)
@@ -71,21 +71,25 @@ function generateTimeSlots(dateString: string): { slots: string[], reason?: stri
 
     if (isToday) {
         const currentHour = nowIsrael.getHours();
+        const currentMinutes = nowIsrael.getMinutes();
+        const currentTotalMinutes = (currentHour * 60) + currentMinutes;
 
-        // Cutoff for same-day delivery: 18:00 on weekdays, 12:00 on Friday
-        const cutoffHour = (holidayStatus === 'FRIDAY_LIKE' || dayOfWeek === 5) ? 12 : 18;
+        // Cutoff for same-day delivery: 18:00 (1080 min) on weekdays, 12:30 (750 min) on Friday
+        const isFridayLike = holidayStatus === 'FRIDAY_LIKE' || dayOfWeek === 5;
+        const cutoffTotalMinutes = isFridayLike ? (12 * 60 + 30) : (18 * 60);
 
-        if (currentHour >= cutoffHour) {
+        if (currentTotalMinutes >= cutoffTotalMinutes) {
             return { slots: [], reason: 'תם הזמן למשלוחים להיום. נא לבחור ויום אחר.' };
         }
 
         slots = slots.filter(slot => {
             // Parse end time of the slot (e.g. "13:00" from "10:00 - 13:00")
             const endTimePart = slot.split(' - ')[1];
-            const endHour = parseInt(endTimePart.split(':')[0], 10);
+            const [endHour, endMin] = endTimePart.split(':').map(Number);
+            const slotEndTotalMinutes = (endHour * 60) + endMin;
 
-            // Allow selecting a slot if it hasn't ended yet
-            return endHour > currentHour;
+            // Allow selecting a slot if it hasn't ended yet (with a 15-minute lead time)
+            return slotEndTotalMinutes > (currentTotalMinutes + 15);
         });
 
         if (slots.length === 0) {

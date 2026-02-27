@@ -27,8 +27,13 @@ export function calculateNextDeliveryDate(
     let daysUntilNext = (targetDay - currentDay + 7) % 7;
 
     // If today is the preferred day, but maybe it's too late to deliver today?
-    // Let's say if it's after 10 AM, we move to the next week.
-    const isTooLateForToday = startDate.getHours() >= 10;
+    const currentHour = startDate.getHours();
+    const currentMinutes = startDate.getMinutes();
+    const currentTotalMinutes = (currentHour * 60) + currentMinutes;
+
+    // Cutoff: 12:30 (750 min) for Fridays, 10:00 (600 min) for other days (as per original logic)
+    const cutoffMinutes = (targetDay === 5) ? (12 * 60 + 30) : (10 * 60);
+    const isTooLateForToday = currentTotalMinutes >= cutoffMinutes;
 
     if (daysUntilNext === 0 && isTooLateForToday) {
         daysUntilNext = 7;

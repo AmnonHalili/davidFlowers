@@ -66,7 +66,7 @@ export default function DeliveriesPage() {
                                 <p className="text-stone-600 font-light leading-relaxed">
                                     <strong>הזמנה מהיום להיום (ימים א-ה):</strong> עד השעה 18:00.
                                     <br />
-                                    <strong>הזמנה מהיום להיום (ימי שישי):</strong> עד השעה 12:00.
+                                    <strong>הזמנה מהיום להיום (ימי שישי):</strong> עד השעה 12:30.
                                     <br />
                                     <strong>אחרי שעות אלו:</strong> המשלוח יסופק ביום העסקים הבא.
                                 </p>

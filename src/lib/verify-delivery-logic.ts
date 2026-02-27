@@ -12,20 +12,20 @@ function testLogic() {
     console.log(case1.getDay() === 5 ? '✅ PASSED' : '❌ FAILED');
     console.log('');
 
-    // Test Case 2: Today is Friday morning (before 10 AM), User wants Friday
-    const fridayMorning = new Date('2026-01-09T08:00:00');
+    // Test Case 2: Today is Friday morning (before 12:30 PM), User wants Friday
+    const fridayMorning = new Date('2026-01-09T11:00:00');
     const case2 = calculateNextDeliveryDate('FRIDAY', 'WEEKLY', fridayMorning);
     console.log(`Initial Date: ${formatDate(fridayMorning)}`);
-    console.log(`Preferred Day: FRIDAY (Before 10AM cut-off)`);
+    console.log(`Preferred Day: FRIDAY (Before 12:30 PM cut-off)`);
     console.log(`Scheduled:     ${formatDate(case2)}`);
     console.log(case2.getDate() === 9 ? '✅ PASSED (Scheduled for today)' : '❌ FAILED');
     console.log('');
 
-    // Test Case 3: Today is Friday afternoon (after 10 AM), User wants Friday
-    const fridayAfternoon = new Date('2026-01-09T14:00:00');
+    // Test Case 3: Today is Friday afternoon (after 12:30 PM), User wants Friday
+    const fridayAfternoon = new Date('2026-01-09T13:00:00');
     const case3 = calculateNextDeliveryDate('FRIDAY', 'WEEKLY', fridayAfternoon);
     console.log(`Initial Date: ${formatDate(fridayAfternoon)}`);
-    console.log(`Preferred Day: FRIDAY (After 10AM cut-off)`);
+    console.log(`Preferred Day: FRIDAY (After 12:30 PM cut-off)`);
     console.log(`Scheduled:     ${formatDate(case3)}`);
     console.log(case3.getDate() === 16 ? '✅ PASSED (Pushed to next week)' : '❌ FAILED');
     console.log('');
