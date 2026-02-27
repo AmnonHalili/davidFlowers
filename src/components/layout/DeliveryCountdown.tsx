@@ -25,8 +25,8 @@ export default function DeliveryCountdown() {
             const currentSeconds = nowIsrael.getSeconds();
 
             let cutoffHour = 18;
-            let isFriday = day === 5;
-            let isSaturday = day === 6;
+            const isFriday = day === 5;
+            const isSaturday = day === 6;
 
             if (isFriday) cutoffHour = 12.5;
 

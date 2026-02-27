@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -56,10 +57,11 @@ export default function LiveGalleryClient({ images }: { images: GalleryImage[] }
                             height: index % 3 === 0 ? '340px' : '280px',
                         }}
                     >
-                        <img
+                        <Image
                             src={img.url}
                             alt={img.caption || 'ישירות מהחנות'}
-                            className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
+                            fill
+                            className="object-cover group-hover/item:scale-105 transition-transform duration-500"
                         />
                         {/* Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity" />

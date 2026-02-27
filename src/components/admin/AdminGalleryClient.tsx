@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Image from 'next/image';
 import { addGalleryImage, toggleGalleryImageVisibility, deleteGalleryImage } from '@/app/actions/gallery-actions';
 import { CldUploadWidget } from 'next-cloudinary';
 import { Eye, EyeOff, Trash2, Upload, Plus, Clock } from 'lucide-react';
@@ -92,8 +93,13 @@ export default function AdminGalleryClient({ images: initialImages }: { images: 
             {/* Gallery Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {images.map(img => (
-                    <div key={img.id} className={`relative group rounded-2xl overflow-hidden border-2 transition-all ${img.isVisible ? 'border-transparent' : 'border-stone-300 opacity-50'}`}>
-                        <img src={img.url} alt={img.caption || ''} className="w-full aspect-square object-cover" />
+                    <div key={img.id} className={`relative group rounded-2xl overflow-hidden border-2 transition-all ${img.isVisible ? 'border-transparent' : 'border-stone-300 opacity-50'} w-full aspect-square`}>
+                        <Image
+                            src={img.url}
+                            alt={img.caption || ''}
+                            fill
+                            className="object-cover"
+                        />
 
                         {/* Caption overlay */}
                         {img.caption && (
