@@ -74,22 +74,23 @@ function generateTimeSlots(dateString: string): { slots: string[], reason?: stri
         const currentMinutes = nowIsrael.getMinutes();
         const currentTotalMinutes = (currentHour * 60) + currentMinutes;
 
-        // Cutoff for same-day delivery: 18:00 (1080 min) on weekdays, 12:30 (750 min) on Friday
+        // Cutoff for same-day delivery: 16:00 (960 min) on weekdays, 12:30 (750 min) on Friday
         const isFridayLike = holidayStatus === 'FRIDAY_LIKE' || dayOfWeek === 5;
-        const cutoffTotalMinutes = isFridayLike ? (12 * 60 + 30) : (18 * 60);
+        const cutoffTotalMinutes = isFridayLike ? (12 * 60 + 30) : (16 * 60);
 
         if (currentTotalMinutes >= cutoffTotalMinutes) {
             return { slots: [], reason: 'תם הזמן למשלוחים להיום. נא לבחור ויום אחר.' };
         }
 
         slots = slots.filter(slot => {
-            // Parse end time of the slot (e.g. "13:00" from "10:00 - 13:00")
-            const endTimePart = slot.split(' - ')[1];
-            const [endHour, endMin] = endTimePart.split(':').map(Number);
-            const slotEndTotalMinutes = (endHour * 60) + endMin;
+            // Parse START time of the slot (e.g. "16:00" from "16:00 - 19:00")
+            const startTimePart = slot.split(' - ')[0];
+            const [startHour, startMin] = startTimePart.split(':').map(Number);
+            const slotStartTotalMinutes = (startHour * 60) + startMin;
 
-            // Allow selecting a slot if it hasn't ended yet (with a 15-minute lead time)
-            return slotEndTotalMinutes > (currentTotalMinutes + 15);
+            // Allow selecting a slot ONLY if it hasn't started yet.
+            // Meaning, if the slot starts at 16:00, it becomes unavailable EXACTLY at 16:00.
+            return slotStartTotalMinutes > currentTotalMinutes;
         });
 
         if (slots.length === 0) {
