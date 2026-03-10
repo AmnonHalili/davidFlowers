@@ -80,13 +80,19 @@ model Product {
 }
 
 model ProductImage {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   url       String
   alt       String?
-  isMain    Boolean  @default(false)
-  product   Product  @relation(fields: [productId], references: [id])
+  isMain    Boolean   @default(false)
+  type      MediaType @default(IMAGE)
+  product   Product   @relation(fields: [productId], references: [id])
   productId String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
 }
 
 model Category {

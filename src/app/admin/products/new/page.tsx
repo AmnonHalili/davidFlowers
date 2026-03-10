@@ -77,7 +77,7 @@ function PriceSection({ isVariablePrice, variations, handleVariationChange }: an
 }
 
 export default function NewProductPage() {
-    const [imageUrl, setImageUrl] = useState('');
+    const [media, setMedia] = useState<any[]>([]);
     const [isVariablePrice, setIsVariablePrice] = useState(false);
     const [isSubscriptionEnabled, setIsSubscriptionEnabled] = useState(false);
     const [isPersonalizationEnabled, setIsPersonalizationEnabled] = useState(false);
@@ -298,11 +298,11 @@ export default function NewProductPage() {
 
                     <div className="space-y-4 pt-6 border-t border-stone-100">
                         <label className="text-sm font-medium text-stone-900 block">תמונות מוצר</label>
-                        <input type="hidden" name="imageUrl" value={imageUrl} />
+                        <input type="hidden" name="media" value={JSON.stringify(media)} />
+                        <input type="hidden" name="imageUrl" value={media.find(m => m.isMain)?.url || media[0]?.url || ''} />
                         <ImageUpload
-                            value={imageUrl ? [imageUrl] : []}
-                            onChange={(url) => setImageUrl(url)}
-                            onRemove={() => setImageUrl('')}
+                            value={media}
+                            onChange={(newMedia) => setMedia(newMedia)}
                         />
                     </div>
 

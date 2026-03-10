@@ -8,7 +8,7 @@ import { useFormStatus } from 'react-dom';
 import { Loader2, Save } from 'lucide-react';
 
 export default function EditProductForm({ product, availableCategories = [] }: { product: any, availableCategories?: any[] }) {
-    const [imageUrl, setImageUrl] = useState(product.images[0]?.url || '');
+    const [media, setMedia] = useState<any[]>(product.images || []);
     const [showScheduling, setShowScheduling] = useState(!!product.availableFrom);
     const [showSale, setShowSale] = useState(!!product.salePrice);
 
@@ -352,12 +352,12 @@ export default function EditProductForm({ product, availableCategories = [] }: {
                 <h3 className="text-lg font-bold text-stone-900 border-b border-stone-100 pb-3 mb-4">תמונת מוצר</h3>
 
                 {/* Hidden input to send data to server action */}
-                <input type="hidden" name="imageUrl" value={imageUrl} />
+                <input type="hidden" name="media" value={JSON.stringify(media)} />
+                <input type="hidden" name="imageUrl" value={media.find(m => m.isMain)?.url || media[0]?.url || ''} />
 
                 <ImageUpload
-                    value={imageUrl ? [imageUrl] : []}
-                    onChange={(url) => setImageUrl(url)}
-                    onRemove={() => setImageUrl('')}
+                    value={media}
+                    onChange={(newMedia) => setMedia(newMedia)}
                 />
             </div>
 

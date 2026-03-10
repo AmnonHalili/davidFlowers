@@ -11,7 +11,8 @@ export async function createProduct(formData: FormData) {
     let price = parseFloat(formData.get('price') as string);
     let stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
-    const imageUrl = formData.get('imageUrl') as string;
+    const mediaStr = formData.get('media') as string;
+    const media = mediaStr ? JSON.parse(mediaStr) : [];
 
     // Sale Fields
     const salePriceStr = formData.get('salePrice') as string;
@@ -98,11 +99,12 @@ export async function createProduct(formData: FormData) {
                 }))
             },
             images: {
-                create: {
-                    url: imageUrl,
-                    alt: name,
-                    isMain: true
-                }
+                create: media.map((m: any) => ({
+                    url: m.url,
+                    alt: m.alt || name,
+                    isMain: m.isMain || false,
+                    type: m.type || 'IMAGE'
+                }))
             }
         }
     });
@@ -117,7 +119,8 @@ export async function updateProduct(id: string, formData: FormData) {
     let price = parseFloat(formData.get('price') as string);
     let stock = parseInt(formData.get('stock') as string) || 0;
     const description = formData.get('description') as string;
-    const imageUrl = formData.get('imageUrl') as string;
+    const mediaStr = formData.get('media') as string;
+    const media = mediaStr ? JSON.parse(mediaStr) : [];
 
     // Sale Fields
     const salePriceStr = formData.get('salePrice') as string;
@@ -203,12 +206,13 @@ export async function updateProduct(id: string, formData: FormData) {
                 }))
             },
             images: {
-                deleteMany: {}, // brutally simple image update: clear and add new one
-                create: {
-                    url: imageUrl,
-                    alt: name,
-                    isMain: true
-                }
+                deleteMany: {}, // Clear existing
+                create: media.map((m: any) => ({
+                    url: m.url,
+                    alt: m.alt || name,
+                    isMain: m.isMain || false,
+                    type: m.type || 'IMAGE'
+                }))
             }
         }
     });
