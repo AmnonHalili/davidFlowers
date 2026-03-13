@@ -1,5 +1,7 @@
 import { Resend } from 'resend';
 import { OrderConfirmationEmail } from './emails/order-confirmation';
+import { toZonedTime } from 'date-fns-tz';
+import { getDeliverySlot } from './date-utils';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -86,14 +88,15 @@ export async function sendAdminNotification(data: SendAdminNotificationData) {
 
         let deliveryDateLine = '';
         if (data.deliveryDate) {
-            const tempDate = new Date(data.deliveryDate);
+            const TIME_ZONE = 'Asia/Jerusalem';
+            const tempDate = toZonedTime(new Date(data.deliveryDate), TIME_ZONE);
             const dateStr = tempDate.toLocaleDateString('he-IL');
-            const hour = tempDate.getHours().toString().padStart(2, '0');
-            const min = tempDate.getMinutes().toString().padStart(2, '0');
-            // If it's strictly Midnight (00:00), we probably only captured a Date.
-            // Otherwise, we captured a Date + Time slot.
+            
+            // Reconstruct the slot if possible
+            const slotStr = getDeliverySlot(data.deliveryDate);
             const hasTime = (tempDate.getHours() !== 0 || tempDate.getMinutes() !== 0);
-            const timeStr = hasTime ? ` בשעה ${hour}:${min}` : '';
+            const timeStr = hasTime ? ` (טווח: ${slotStr})` : '';
+            
             deliveryDateLine = `<p><strong>מועד ${isPickup ? 'איסוף' : 'משלוח'}:</strong> ${dateStr}${timeStr}</p>`;
         } else {
             deliveryDateLine = `<p><strong>מועד ${isPickup ? 'איסוף' : 'משלוח'}:</strong> לא נבחר</p>`;

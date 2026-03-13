@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { toZonedTime } from 'date-fns-tz';
+import { getDeliverySlot } from '../date-utils';
 import {
     Html,
     Head,
@@ -83,14 +85,14 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
                     </Text>
                     {deliveryDate && (
                         <Text style={paragraph}>
-                            <strong>מועד משלוח משוער:</strong> {(() => {
-                                // Unified date/time parser
-                                const tempDate = new Date(deliveryDate);
+                            <strong>מועד משלוח מבוקש:</strong> {(() => {
+                                // Unified date/time parser using Israel timezone
+                                const TIME_ZONE = 'Asia/Jerusalem';
+                                const tempDate = toZonedTime(new Date(deliveryDate), TIME_ZONE);
                                 const dateStr = tempDate.toLocaleDateString('he-IL');
-                                const hour = tempDate.getHours().toString().padStart(2, '0');
-                                const min = tempDate.getMinutes().toString().padStart(2, '0');
+                                const slotStr = getDeliverySlot(deliveryDate);
                                 const hasTime = (tempDate.getHours() !== 0 || tempDate.getMinutes() !== 0);
-                                const timeStr = hasTime ? ` בשעה ${hour}:${min}` : '';
+                                const timeStr = hasTime ? ` בשעות ${slotStr}` : '';
                                 return `${dateStr}${timeStr}`;
                             })()}
                         </Text>
