@@ -10,6 +10,7 @@ export type CartItem = {
     price: number;
     image: string;
     quantity: number;
+    stock: number; // Added stock field
     type: 'ONETIME' | 'SUBSCRIPTION';
     originalPrice?: number; // For sale display
     availableFrom?: string; // Launch date for pre-orders (ISO string)
@@ -39,6 +40,7 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 import { trackAddToCart, trackRemoveFromCart } from '@/lib/analytics';
+import { toast } from 'sonner';
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
@@ -56,7 +58,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     typeof item.price === 'number' &&
                     !isNaN(item.price) &&
                     item.id &&
-                    item.productId
+                    item.productId &&
+                    typeof item.stock === 'number' // Ensure stock exists
                 ) : [];
                 setItems(validItems);
             } catch (e) {
@@ -94,16 +97,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     i.type === newItem.type &&
                     i.frequency === newItem.frequency &&
                     i.availableFrom === newItem.availableFrom &&
-                    i.frequency === newItem.frequency &&
-                    i.availableFrom === newItem.availableFrom &&
                     i.selectedSize === newItem.selectedSize && // Critical Grouping Logic
                     i.personalizationText === newItem.personalizationText // Group by custom text
             );
 
             if (existing) {
+                const totalRequested = existing.quantity + newItem.quantity;
+                if (totalRequested > newItem.stock) {
+                    toast.error(`מצטערים, המלאי המירבי למוצר זה הוא ${newItem.stock}`);
+                    // Return existing quantity or capped quantity? Let's cap it or just reject.
+                    // Rejecting is safer to avoid confusion.
+                    return currentItems.map((i) =>
+                        i.id === existing.id ? { ...i, quantity: newItem.stock, stock: newItem.stock } : i
+                    );
+                }
                 return currentItems.map((i) =>
-                    i.id === existing.id ? { ...i, quantity: i.quantity + newItem.quantity } : i
+                    i.id === existing.id ? { ...i, quantity: i.quantity + newItem.quantity, stock: newItem.stock } : i
                 );
+            }
+            // Even for new item, ensure it doesn't exceed its own stock (safety check)
+            if (newItem.quantity > newItem.stock) {
+                toast.error(`מצטערים, המלאי המירבי למוצר זה הוא ${newItem.stock}`);
+                return [...currentItems, { ...newItem, quantity: newItem.stock }];
             }
             return [...currentItems, newItem];
         });
@@ -129,9 +144,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const updateQuantity = (id: string, quantity: number) => {
         setItems((currentItems) => {
+            const item = currentItems.find(i => i.id === id);
+            if (!item) return currentItems;
+
             if (quantity <= 0) {
                 return currentItems.filter((i) => i.id !== id);
             }
+
+            // Check stock limit
+            if (quantity > item.stock) {
+                toast.error(`מצטערים, המלאי המירבי למוצר זה הוא ${item.stock}`);
+                return currentItems.map((i) =>
+                    i.id === id ? { ...i, quantity: item.stock } : i
+                );
+            }
+
             return currentItems.map((i) =>
                 i.id === id ? { ...i, quantity } : i
             );

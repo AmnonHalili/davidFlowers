@@ -123,6 +123,7 @@ interface UpsellItem {
     image: string;
     type: 'ONETIME' | 'SUBSCRIPTION';
     quantity: number;
+    stock: number; // Added stock
     originalPrice?: number;
 }
 
@@ -265,7 +266,8 @@ export default function CartDrawer() {
                         price: Number(p.price),
                         image: p.images.find(i => i.isMain)?.url || p.images[0]?.url || '',
                         type: 'ONETIME',
-                        quantity: 1
+                        quantity: 1,
+                        stock: p.stock // Pass stock from DB
                     })));
                 }
             });
@@ -597,7 +599,8 @@ export default function CartDrawer() {
                                                                     <span className="w-8 text-center text-xs font-bold text-stone-900">{item.quantity}</span>
                                                                     <button
                                                                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                                        className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                                                                        disabled={item.quantity >= item.stock}
+                                                                        className={`w-8 h-8 flex items-center justify-center transition-colors ${item.quantity >= item.stock ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-900 hover:bg-stone-50'}`}
                                                                     >
                                                                         <Plus className="w-3 h-3" />
                                                                     </button>

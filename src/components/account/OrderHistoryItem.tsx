@@ -48,9 +48,10 @@ export default function OrderHistoryItem({ order }: OrderHistoryItemProps) {
                     price: Number(item.price),
                     image: item.product.images?.[0]?.url || '/placeholder.jpg',
                     quantity: item.quantity,
+                    stock: item.product.stock ?? 99, // Pass available stock
                     type: 'ONETIME',
-                    selectedSize: item.selectedSize, // Assuming this field exists on OrderItem or mapped correctly
-                    sizeLabel: item.selectedSize // Simplified for now, mapped from selectedSize
+                    selectedSize: item.selectedSize,
+                    sizeLabel: item.selectedSize
                 });
                 count++;
             }

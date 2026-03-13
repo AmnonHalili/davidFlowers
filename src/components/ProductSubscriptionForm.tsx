@@ -100,6 +100,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       originalPrice: purchaseType === 'SUBSCRIPTION' ? basePrice : undefined,
       image: product.image,
       quantity: 1,
+      stock: product.isVariablePrice ? (product.variations[selectedSize]?.stock ?? 0) : product.stock,
       type: purchaseType,
       availableFrom: product.availableFrom ? new Date(product.availableFrom).toISOString() : undefined,
       frequency: purchaseType === 'SUBSCRIPTION' ? frequency : undefined,
@@ -147,6 +148,7 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       originalPrice: purchaseType === 'SUBSCRIPTION' ? basePrice : undefined,
       image: product.image,
       quantity: 1,
+      stock: product.isVariablePrice ? (product.variations[selectedSize]?.stock ?? 0) : product.stock,
       type: purchaseType,
       availableFrom: product.availableFrom ? new Date(product.availableFrom).toISOString() : undefined,
       frequency: purchaseType === 'SUBSCRIPTION' ? frequency : undefined,
@@ -154,7 +156,6 @@ export default function ProductSubscriptionForm({ product }: ProductSubscription
       selectedSize: product.isVariablePrice ? selectedSize : undefined,
       sizeLabel: product.isVariablePrice && product.variations ? product.variations[selectedSize].label : undefined,
       personalizationText: text,
-
     };
 
     addItem(newItem);

@@ -134,6 +134,7 @@ export default function ProductCard({
             originalPrice: isOnSale ? regularPrice : undefined,
             image: image,
             quantity: 1,
+            stock: stock,
             type: 'ONETIME',
             availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
         });
@@ -157,7 +158,8 @@ export default function ProductCard({
             setTempVariationData({
                 selectedSize: selectedSize,
                 sizeLabel: variation.label,
-                price: variation.price
+                price: variation.price,
+                stock: variation.stock // Capture stock for inscription confirm
             });
             setIsModalOpen(false);
             setTimeout(() => setIsInscriptionModalOpen(true), 100);
@@ -173,6 +175,7 @@ export default function ProductCard({
             price: variation.price,
             image: image,
             quantity: 1,
+            stock: variation.stock ?? 0, // Pass variation stock
             type: 'ONETIME',
             availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
         });
@@ -195,6 +198,7 @@ export default function ProductCard({
                 personalizationText: text,
                 image: image,
                 quantity: 1,
+                stock: tempVariationData.stock ?? 0,
                 type: 'ONETIME',
                 availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
             });
@@ -210,6 +214,7 @@ export default function ProductCard({
                 personalizationText: text,
                 image: image,
                 quantity: 1,
+                stock: stock, // Pass stock
                 type: 'ONETIME',
                 availableFrom: availableFrom ? new Date(availableFrom).toISOString() : undefined,
             });

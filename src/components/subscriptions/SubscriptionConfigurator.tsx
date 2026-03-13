@@ -26,6 +26,7 @@ export default function SubscriptionConfigurator({ plan }: { plan: Plan }) {
             price: plan.price,
             image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=200&auto=format&fit=crop", // Generic placeholder or specific plan image
             quantity: 1,
+            stock: 999, // Subscriptions are virtually unlimited
             type: 'SUBSCRIPTION',
             frequency,
             deliveryDay
