@@ -44,6 +44,15 @@ export default function TopBarTicker() {
                     <span>רחבעם זאבי 4, אשקלון (מתחם האייקון)</span>
                 </a>
             )
+        },
+        {
+            id: 'pesach-notice',
+            content: (
+                <div className="flex items-center gap-2 text-amber-200/90 font-bold">
+                    <Clock className="w-3 h-3 text-amber-300/70" />
+                    <span className="text-[10px] md:text-xs">ערב פסח (1.4): אין התחייבות לשעת הגעת משלוחים</span>
+                </div>
+            )
         }
     ];
 

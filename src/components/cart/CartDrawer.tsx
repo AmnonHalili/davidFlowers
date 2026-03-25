@@ -856,6 +856,15 @@ export default function CartDrawer() {
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        {date === '2026-04-01' && shippingMethod === 'delivery' && (
+                                                            <div className="p-4 bg-amber-50 text-amber-800 rounded-2xl text-[13px] border border-amber-200/50 font-medium leading-relaxed animate-in fade-in slide-in-from-top-2 duration-400">
+                                                                <div className="flex items-center gap-2 mb-1.5">
+                                                                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                                                                    <span className="font-bold text-amber-900">הערה חשובה למשלוחי ערב החג:</span>
+                                                                </div>
+                                                                בשל עומסי חג חריגים ביום ערב פסח, אין התחייבות לשעת הגעה מדוייקת. אנו מבטיחים לעשות את מירב המאמצים לספק את כל ההזמנות בהקדם האפשרי. חג שמח! 💐
+                                                            </div>
+                                                        )}
                                                         {!availableTimeSlots.slots.length && date && (
                                                             <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm border border-red-100 font-medium tracking-tight">
                                                                 {availableTimeSlots.reason || 'אין משלוחים זמינים למועד זה.'}
