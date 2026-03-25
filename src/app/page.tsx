@@ -8,6 +8,7 @@ import TrustBar from '@/components/home/TrustBar';
 import LiveGallery from '@/components/home/LiveGallery';
 import { getVisibleCategories } from '@/app/actions/product-actions';
 import HomeHeroClient from '@/components/home/HomeHeroClient';
+import HomeSEOContent from '@/components/home/HomeSEOContent';
 
 // Configuration for Hero Videos
 const HERO_VIDEOS = [
@@ -64,7 +65,21 @@ export default async function Home() {
         closes: '14:30'
       }
     ],
-    priceRange: '₪₪'
+    priceRange: '₪₪',
+    areaServed: [
+      { '@type': 'City', name: 'Ashkelon' },
+      { '@type': 'City', name: 'Nitzan' },
+      { '@type': 'City', name: 'Be\'er Ganim' },
+      { '@type': 'City', name: 'Nitzanim' },
+      { '@type': 'City', name: 'Hodiya' },
+      { '@type': 'City', name: 'Berekhya' }
+    ],
+    knowsAbout: [
+      'משלוחי פרחים באשקלון',
+      'זרי פרחים מעוצבים',
+      'עציצים ומתנות',
+      'שזירה אמנותית'
+    ]
   };
 
   return (
@@ -92,6 +107,9 @@ export default async function Home() {
 
       {/* Instagram Feed */}
       <InstagramFeed />
+
+      {/* SEO Strategic Content */}
+      <HomeSEOContent />
 
 
       {/* Value Proposition */}
