@@ -1,12 +1,26 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-// Define protected routes
+// Define route matchers
 const isProtectedRoute = createRouteMatcher([
     '/account(.*)',
     '/admin(.*)'
 ]);
 
+const isAdminRoute = createRouteMatcher(['/admin(.*)']);
+const isPausedPageRoute = createRouteMatcher(['/paused(.*)']);
+
 export default clerkMiddleware(async (auth, req) => {
+    // Check if site is paused via environment variable
+    const isPaused = process.env.NEXT_PUBLIC_SITE_PAUSED === 'true';
+
+    // If site is paused, redirect everything except admin and the paused page
+    if (isPaused && !isAdminRoute(req) && !isPausedPageRoute(req)) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/paused';
+        return NextResponse.redirect(url);
+    }
+
     // Skip protection in development mode to allow testing without Clerk in localhost
     if (process.env.NODE_ENV === 'development') {
         return;
