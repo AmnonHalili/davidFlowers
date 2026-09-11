@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { calculateNextDeliveryDate, DayOfWeek, Frequency, formatDate } from '@/lib/subscription-utils';
+import { validateCardMessage } from '@/lib/validation/card-validation';
 
 export async function POST(req: Request) {
     try {
@@ -19,6 +20,16 @@ export async function POST(req: Request) {
                 { error: 'Missing required fields' },
                 { status: 400 }
             );
+        }
+
+        if (cardMessage) {
+            const cardValidation = validateCardMessage(cardMessage);
+            if (!cardValidation.isValid) {
+                return NextResponse.json(
+                    { error: cardValidation.error },
+                    { status: 400 }
+                );
+            }
         }
 
         // Logic to calculate the first delivery date

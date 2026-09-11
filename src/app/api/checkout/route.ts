@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
 import { calculateProductPrice } from '@/lib/price-utils';
+import { validateCardMessage } from '@/lib/validation/card-validation';
 
 export async function POST(req: Request) {
     try {
@@ -55,6 +56,14 @@ export async function POST(req: Request) {
 
         if (shippingMethod === 'delivery' && !shippingAddress) {
             return NextResponse.json({ error: 'Delivery address required' }, { status: 400 });
+        }
+
+        // Validate card message language (Hebrew / English only)
+        if (cardMessage) {
+            const cardValidation = validateCardMessage(cardMessage);
+            if (!cardValidation.isValid) {
+                return NextResponse.json({ error: cardValidation.error }, { status: 400 });
+            }
         }
 
         // 1. Fetch products to get real prices

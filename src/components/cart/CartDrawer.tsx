@@ -2,7 +2,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Plus, Trash2, Lock, ShoppingBag, Loader2, Tag, Check, User, MapPin, Truck, ArrowLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Lock, ShoppingBag, Loader2, Tag, Check, User, MapPin, Truck, ArrowLeft, ChevronRight, Calendar, Clock, AlertCircle } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ import { saveDraftOrder } from '@/app/actions/order-actions';
 import { validateCoupon } from '@/app/actions/coupon-actions';
 import { getHolidayStatus } from '@/lib/holidays';
 import { trackBeginCheckout } from '@/lib/analytics'; // 🆕 E-commerce Tracking
+import { validateCardMessage } from '@/lib/validation/card-validation';
 
 // Store Hours Utility Functions
 import { toZonedTime } from 'date-fns-tz';
@@ -149,6 +150,7 @@ export default function CartDrawer() {
     const [selectedCity, setSelectedCity] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState(''); // 🆕 הערות למשלוח
     const [cardMessage, setCardMessage] = useState(''); // ✉️ כרטיס ברכה
+    const cardMessageValidation = useMemo(() => validateCardMessage(cardMessage), [cardMessage]);
     const [isAnonymous, setIsAnonymous] = useState(false); // 🕵️‍♂️ הזמנה אנונימית
     const [newsletterConsent, setNewsletterConsent] = useState(true); // 🆕 הסכמה לדיוור
 
@@ -369,6 +371,10 @@ export default function CartDrawer() {
     };
 
     const handleCheckout = async () => {
+        if (!cardMessageValidation.isValid) {
+            toast.error(cardMessageValidation.error || 'כרטיס הברכה כולל תווים שאינם מורשים');
+            return;
+        }
         setIsCheckingOut(true);
         try {
             const response = await fetch('/api/checkout', {
@@ -953,10 +959,13 @@ export default function CartDrawer() {
                                                         <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                                                         </div>
-                                                        <h3 className="text-lg font-bold text-stone-900">כרטיס ברכה חגיגי</h3>
+                                                        <div>
+                                                            <h3 className="text-lg font-bold text-stone-900">כרטיס ברכה חגיגי</h3>
+                                                            <p className="text-[11px] text-stone-500 font-medium">עברית או אנגלית בלבד 🇮🇱 🇬🇧</p>
+                                                        </div>
                                                     </div>
-                                                    <span className={`text-[10px] font-mono ${cardMessage.length > 300 ? 'text-red-500' : 'text-stone-400'}`}>
-                                                        {cardMessage.length}/350
+                                                    <span className={`text-[10px] font-mono ${cardMessage.length > 130 ? 'text-red-500' : 'text-stone-400'}`}>
+                                                        {cardMessage.length}/150
                                                     </span>
                                                 </div>
 
@@ -981,11 +990,23 @@ export default function CartDrawer() {
 
                                                     <textarea
                                                         value={cardMessage}
-                                                        onChange={(e) => setCardMessage(e.target.value.slice(0, 350))}
+                                                        onChange={(e) => setCardMessage(e.target.value.slice(0, 150))}
+                                                        maxLength={150}
                                                         placeholder="כתבו כאן את הברכה שלכם (אופציונלי)..."
                                                         rows={4}
-                                                        className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-base focus:outline-none focus:ring-2 focus:ring-david-green/20 focus:border-david-green transition-all resize-none placeholder:text-stone-300"
+                                                        className={`w-full p-4 bg-white border rounded-2xl text-base focus:outline-none focus:ring-2 transition-all resize-none placeholder:text-stone-300 ${
+                                                            !cardMessageValidation.isValid 
+                                                            ? 'border-rose-400 focus:ring-rose-200 focus:border-rose-500 bg-rose-50/20' 
+                                                            : 'border-stone-200 focus:ring-david-green/20 focus:border-david-green'
+                                                        }`}
                                                     />
+
+                                                    {!cardMessageValidation.isValid && (
+                                                        <p className="text-xs font-semibold text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-100 flex items-center gap-1.5 animate-in fade-in">
+                                                            <AlertCircle className="w-4 h-4 shrink-0" />
+                                                            {cardMessageValidation.error}
+                                                        </p>
+                                                    )}
 
                                                     <label className="flex items-center gap-3 p-4 bg-amber-50/30 rounded-2xl border border-amber-100/50 cursor-pointer group hover:bg-amber-50/50 transition-colors">
                                                         <div className="relative flex items-center">
@@ -1231,7 +1252,7 @@ export default function CartDrawer() {
                                                 <button
                                                     onClick={handleCheckout}
                                                     disabled={
-                                                        !time || !date || (shippingMethod === 'delivery' && (!street || !houseNumber || !selectedCity)) || isCheckingOut
+                                                        !time || !date || (shippingMethod === 'delivery' && (!street || !houseNumber || !selectedCity)) || isCheckingOut || !cardMessageValidation.isValid
                                                     }
                                                     className="flex-1 bg-stone-900 text-david-beige py-4 rounded-2xl text-sm font-bold tracking-widest hover:bg-stone-800 transition-all shadow-xl shadow-stone-900/20 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
                                                 >
