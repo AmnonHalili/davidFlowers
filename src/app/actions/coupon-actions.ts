@@ -1,5 +1,7 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 import { auth } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma'; // Use singleton
 import { revalidatePath } from 'next/cache';
@@ -15,6 +17,7 @@ export async function createCoupon(data: {
     validUntil?: Date | null;
     isFirstOrderOnly?: boolean;
 }) {
+    await requireAdmin();
     // Basic admin check
     const { userId } = await auth();
     if (!userId) return { success: false, error: 'Unauthorized' };
@@ -57,6 +60,7 @@ export async function createCoupon(data: {
 }
 
 export async function getCoupons() {
+    await requireAdmin();
     // Admin check
     const { userId } = await auth();
     if (!userId) return [];
@@ -71,6 +75,7 @@ export async function getCoupons() {
 }
 
 export async function deleteCoupon(id: string) {
+    await requireAdmin();
     // Admin check
     const { userId } = await auth();
     if (!userId) return { success: false, error: 'Unauthorized' };

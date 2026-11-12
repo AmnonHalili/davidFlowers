@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import { PrismaClient } from '@prisma/client';
 import { updateProduct } from '@/app/actions/product-actions';
 import { UploadCloud, ArrowRight } from 'lucide-react';
@@ -9,6 +10,7 @@ import EditProductForm from './EditProductForm';
 const prisma = new PrismaClient();
 
 export default async function EditProductPage({ params }: { params: { id: string } }) {
+    await requireAdmin();
     const [product, categories] = await Promise.all([
         prisma.product.findUnique({
             where: { id: params.id },

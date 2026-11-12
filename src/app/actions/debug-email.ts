@@ -1,8 +1,11 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 import { Resend } from 'resend';
 
 export async function sendTestEmailAction(to: string) {
+    await requireAdmin();
     const apiKey = process.env.RESEND_API_KEY;
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 

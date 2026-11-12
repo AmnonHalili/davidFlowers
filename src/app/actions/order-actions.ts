@@ -1,5 +1,9 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
+import { auth } from '@clerk/nextjs/server';
+import { customerOrderScope } from '@/lib/order-access';
 import prisma from '@/lib/prisma';
 import { OrderStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
@@ -19,7 +23,7 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
         // Find order matching ID and Email (either customer or orderer email)
         const order = await prisma.order.findFirst({
             where: {
-                id: orderId,
+                ...(await customerOrderScope(orderId)),
                 OR: [
                     { user: { email: { equals: email, mode: 'insensitive' } } },
                     { ordererEmail: { equals: email, mode: 'insensitive' } }
@@ -35,7 +39,7 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
         });
 
         if (!order) {
-            return { success: false, error: 'לא נמצאה הזמנה תואמת לפרטים שהוזנו.' };
+            return { success: false, error: 'לצפייה בפרטי הזמנה יש להתחבר לחשבון שביצע אותה או להשתמש בדפדפן שבו הושלם התשלום. לעזרה פנו לחנות.' };
         }
 
         return { success: true, order };
@@ -46,6 +50,7 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
 }
 
 export async function getOrders(status?: OrderStatus) {
+    await requireAdmin();
     return await prisma.order.findMany({
         // By default show paid/shipped/delivered. Added a way to fetch PENDING later.
         // Default: Hide abandoned checkouts unless requested
@@ -75,7 +80,8 @@ export async function saveDraftOrder(data: {
     orderId?: string; // Optional: If we already have a draft order ID to update
 }) {
     try {
-        const { items, ordererName, ordererPhone, ordererEmail, clerkId, orderId } = data;
+        const { items, ordererName, ordererPhone, ordererEmail } = data;
+        const { userId: clerkId } = await auth();
 
         // Basic validation
         if (!items || items.length === 0 || !ordererPhone || !ordererName) {
@@ -104,22 +110,7 @@ export async function saveDraftOrder(data: {
             }
         };
 
-        let order;
-        if (orderId) {
-            // If we have an ID, clear items and re-create them (common pattern for drafts)
-            await prisma.orderItem.deleteMany({ where: { orderId } });
-            order = await prisma.order.update({
-                where: { id: orderId },
-                data: {
-                    ...orderData,
-                    items: orderData.items // Re-link
-                }
-            });
-        } else {
-            order = await prisma.order.create({
-                data: orderData
-            });
-        }
+        const order = await prisma.order.create({ data: orderData });
 
         return { success: true, orderId: order.id };
     } catch (error) {
@@ -129,6 +120,7 @@ export async function saveDraftOrder(data: {
 }
 
 export async function getOrder(id: string) {
+    await requireAdmin();
     return await prisma.order.findUnique({
         where: { id },
         include: {
@@ -145,6 +137,7 @@ export async function getOrder(id: string) {
 import { sendOrderStatusEmail } from '@/lib/email-service';
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+    await requireAdmin();
     try {
         const order = await prisma.order.update({
             where: { id: orderId },
@@ -280,7 +273,8 @@ export async function processSuccessfulPayment(orderId: string, transactionUid: 
 
                 // Setup Push notifications for Admins
                 const pushPromise = prisma.pushSubscription.findMany({
-                    where: { user: { role: 'ADMIN' } }
+                    // Disabled until existing device subscriptions have been re-enrolled and audited.
+                    where: { id: { in: [] } }
                 }).then(async (pushSubs: any[]) => {
                     if (pushSubs.length > 0) {
                         const { sendWebPushNotification } = await import('@/lib/webpush');

@@ -9,19 +9,6 @@ export default async function CancelPage({
 }) {
     const orderId = searchParams?.orderId;
 
-    // Mark order as CANCELLED if orderId provided
-    if (orderId) {
-        try {
-            await prisma.order.update({
-                where: { id: orderId },
-                data: { status: 'CANCELLED' }
-            });
-            console.log(`❌ Order ${orderId} marked as CANCELLED`);
-        } catch (error) {
-            console.error('Error cancelling order:', error);
-        }
-    }
-
     return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">

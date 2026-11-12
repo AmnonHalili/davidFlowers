@@ -1,11 +1,14 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 import { PrismaClient, OrderStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 const prisma = new PrismaClient();
 
 export async function createDemoOrder() {
+    await requireAdmin();
     try {
         // Find existing user or create dummy
         let user = await prisma.user.findFirst({

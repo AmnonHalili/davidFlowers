@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import { getOrder } from "@/app/actions/order-actions";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import { format } from "date-fns";
@@ -10,6 +11,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 
 export default async function OrderPage({ params }: { params: { id: string } }) {
+    await requireAdmin();
     const order = await getOrder(params.id);
     const TIME_ZONE = 'Asia/Jerusalem';
 

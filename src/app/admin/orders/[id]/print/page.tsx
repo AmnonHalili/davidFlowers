@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import { getOrder } from "@/app/actions/order-actions";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -6,6 +7,7 @@ import Image from "next/image";
 import PrintButton from "./PrintButton";
 
 export default async function OrderPrintPage({ params }: { params: { id: string } }) {
+    await requireAdmin();
     const order = await getOrder(params.id);
 
     if (!order) {

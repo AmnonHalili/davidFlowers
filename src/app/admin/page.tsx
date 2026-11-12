@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import { Package, ShoppingCart, TrendingUp, Users, DollarSign } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { toZonedTime } from 'date-fns-tz';
@@ -140,6 +141,7 @@ async function getStats() {
 }
 
 export default async function AdminDashboard() {
+    await requireAdmin();
     const stats = await getStats();
 
     return (

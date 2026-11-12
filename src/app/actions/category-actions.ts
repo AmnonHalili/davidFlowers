@@ -1,10 +1,13 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 import prisma from '@/lib/prisma';
 import { DiscountType } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 export async function getCategoriesWithPromotions() {
+    await requireAdmin();
     try {
         const categories = await prisma.category.findMany({
             orderBy: [
@@ -33,6 +36,7 @@ export type CategoryPromotionData = {
 };
 
 export async function updateCategoryPromotion(id: string, data: CategoryPromotionData) {
+    await requireAdmin();
     try {
         await prisma.category.update({
             where: { id },
@@ -54,6 +58,7 @@ export async function updateCategoryPromotion(id: string, data: CategoryPromotio
 }
 
 export async function createCategory(name: string) {
+    await requireAdmin();
     try {
         const slug = name.trim().toLowerCase().replace(/\s+/g, '-');
 
@@ -81,6 +86,7 @@ export async function createCategory(name: string) {
 }
 
 export async function updateCategoriesOrder(categoryOrders: { id: string; order: number }[]) {
+    await requireAdmin();
     try {
         // Use a transaction to update all orders
         await prisma.$transaction(
@@ -102,6 +108,7 @@ export async function updateCategoriesOrder(categoryOrders: { id: string; order:
 }
 
 export async function updateCategoryDetails(id: string, name: string, isHidden?: boolean) {
+    await requireAdmin();
     try {
         await prisma.category.update({
             where: { id },
@@ -121,6 +128,7 @@ export async function updateCategoryDetails(id: string, name: string, isHidden?:
 }
 
 export async function deleteCategory(id: string) {
+    await requireAdmin();
     try {
         await prisma.category.delete({
             where: { id }

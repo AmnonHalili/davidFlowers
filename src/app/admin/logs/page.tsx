@@ -1,9 +1,11 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
 import { format } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLogsPage() {
+    await requireAdmin();
     let logs: any[] = [];
     let error = null;
 

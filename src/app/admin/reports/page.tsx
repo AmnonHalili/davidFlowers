@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import { Suspense } from 'react';
 import MonthSelector from '@/components/admin/MonthSelector';
 import ExportButton from '@/components/admin/ExportButton';
@@ -12,6 +13,7 @@ interface PageProps {
 }
 
 export default async function ReportsPage({ searchParams }: PageProps) {
+    await requireAdmin();
     const year = Number(searchParams.year) || new Date().getFullYear();
     const month = Number(searchParams.month) || new Date().getMonth() + 1;
 

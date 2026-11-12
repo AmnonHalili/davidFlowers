@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import { getAllGalleryImages } from '@/app/actions/gallery-actions';
 import AdminGalleryClient from '@/components/admin/AdminGalleryClient';
 import { ImageIcon } from 'lucide-react';
@@ -7,6 +8,7 @@ export const metadata = {
 };
 
 export default async function AdminGalleryPage() {
+    await requireAdmin();
     const images = await getAllGalleryImages();
 
     return (

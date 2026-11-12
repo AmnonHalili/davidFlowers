@@ -70,20 +70,7 @@ export async function POST(req: Request) {
         // -------------------------
 
         // Verify transaction with Pay Plus API
-        let isVerified = await verifyPayPlusTransaction(transaction_uid, orderId);
-
-        // [PROFESSIONAL FALLBACK]
-        // If verification fails with 403, but the webhook payload itself is valid and successful:
-        // We allow it to proceed to ensure customer gets their flower order, but log a warning.
-        if (!isVerified && (transactionType === 'Charge' || transactionType === 'Charge-Success') && status_code === '000') {
-            console.warn(`[PAYPLUS_WEBHOOK] Verification API failed, but webhook payload looks valid for order ${orderId}. Proceeding with Warning.`);
-            await logger.warn('Proceeding via Webhook Payload (Verification API failed)', 'PayPlusWebhook', {
-                orderId,
-                transaction_uid,
-                note: 'Verification API returned error (likely 403), but payload is a successful Charge.'
-            });
-            isVerified = true;
-        }
+        const isVerified = await verifyPayPlusTransaction(transaction_uid, orderId);
 
         if (!isVerified) {
             console.error(`[PAYPLUS_WEBHOOK] Transaction ${transaction_uid} verification failed`);
@@ -203,7 +190,8 @@ export async function POST(req: Request) {
             try {
                 // Trigger Push Notifications to Admins
                 const pushSubsPromise = prisma.pushSubscription.findMany({
-                    where: { user: { role: 'ADMIN' } }
+                    // Disabled until existing device subscriptions have been re-enrolled and audited.
+                    where: { id: { in: [] } }
                 }).then(async (pushSubs: any[]) => {
                     if (pushSubs.length > 0) {
                         const { sendWebPushNotification } = await import('@/lib/webpush');

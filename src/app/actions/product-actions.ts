@@ -1,5 +1,7 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -7,6 +9,7 @@ import { redirect } from 'next/navigation';
 import { CATEGORIES, getCategoryName } from '@/lib/categories';
 
 export async function createProduct(formData: FormData) {
+    await requireAdmin();
     const name = formData.get('name') as string;
     let price = parseFloat(formData.get('price') as string);
     let stock = parseInt(formData.get('stock') as string) || 0;
@@ -115,6 +118,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+    await requireAdmin();
     const name = formData.get('name') as string;
     let price = parseFloat(formData.get('price') as string);
     let stock = parseInt(formData.get('stock') as string) || 0;
@@ -223,6 +227,7 @@ export async function updateProduct(id: string, formData: FormData) {
 }
 
 export async function deleteProduct(formData: FormData) {
+    await requireAdmin();
     const productId = formData.get('productId') as string;
 
     // In a real app, delete images from cloud storage here first
