@@ -3,7 +3,7 @@ import { logger } from "@/lib/logger";
 export async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId: string): Promise<boolean> {
     const payPlusApiKey = process.env.PAYPLUS_API_KEY || process.env.PAY_PLUS_API_KEY;
     const payPlusSecretKey = process.env.PAYPLUS_SECRET_KEY || process.env.PAY_PLUS_SECRET_KEY;
-    const payPlusTerminalId = process.env.PAYPLUS_TERMINAL_ID;
+    const payPlusTerminalId = process.env.PAYPLUS_TERMINAL_ID || process.env.PAY_PLUS_TERMINAL_ID;
 
     if (!payPlusApiKey || !payPlusSecretKey) {
         console.error('[PAYPLUS_WEBHOOK] Missing verification configuration');

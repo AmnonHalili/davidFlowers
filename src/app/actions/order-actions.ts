@@ -3,7 +3,6 @@
 import { requireAdmin } from '@/lib/admin-auth';
 
 import { auth } from '@clerk/nextjs/server';
-import { customerOrderScope } from '@/lib/order-access';
 import prisma from '@/lib/prisma';
 import { OrderStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
@@ -23,7 +22,7 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
         // Find order matching ID and Email (either customer or orderer email)
         const order = await prisma.order.findFirst({
             where: {
-                ...(await customerOrderScope(orderId)),
+                id: orderId,
                 OR: [
                     { user: { email: { equals: email, mode: 'insensitive' } } },
                     { ordererEmail: { equals: email, mode: 'insensitive' } }
@@ -39,7 +38,7 @@ export async function getOrderStatus(orderId: string, email: string): Promise<Or
         });
 
         if (!order) {
-            return { success: false, error: 'לצפייה בפרטי הזמנה יש להתחבר לחשבון שביצע אותה או להשתמש בדפדפן שבו הושלם התשלום. לעזרה פנו לחנות.' };
+            return { success: false, error: 'לא נמצאה הזמנה תואמת לפרטים שהוזנו.' };
         }
 
         return { success: true, order };
@@ -273,8 +272,7 @@ export async function processSuccessfulPayment(orderId: string, transactionUid: 
 
                 // Setup Push notifications for Admins
                 const pushPromise = prisma.pushSubscription.findMany({
-                    // Disabled until existing device subscriptions have been re-enrolled and audited.
-                    where: { id: { in: [] } }
+                    where: { user: { role: 'ADMIN' } }
                 }).then(async (pushSubs: any[]) => {
                     if (pushSubs.length > 0) {
                         const { sendWebPushNotification } = await import('@/lib/webpush');

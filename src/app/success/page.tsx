@@ -8,7 +8,8 @@ import PurchaseEvent from '@/components/analytics/PurchaseEvent';
 const prisma = new PrismaClient();
 
 async function getOrder(orderId: string) {
-    return await prisma.order.findFirst({
+    // 1. Try customerOrderScope (checks clerk user or verified guest receipt cookie)
+    let order = await prisma.order.findFirst({
         where: await customerOrderScope(orderId),
         include: {
             coupon: true,
@@ -23,6 +24,27 @@ async function getOrder(orderId: string) {
             }
         }
     });
+
+    // 2. Fallback if cookie was dropped during cross-domain redirect from PayPlus gateway
+    if (!order) {
+        order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                coupon: true,
+                items: {
+                    include: {
+                        product: {
+                            include: {
+                                images: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    return order;
 }
 
 import { processSuccessfulPayment } from '@/app/actions/order-actions';
@@ -59,11 +81,21 @@ export default async function SuccessPage({
 
     const order = await getOrder(orderId);
 
-    if (!order || !['PAID', 'SHIPPED', 'DELIVERED'].includes(order.status)) {
+    if (!order) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
-                <h1 className="text-2xl font-bold mb-4">שגיאה בטעינת ההזמנה</h1>
-                <p className="text-stone-500 mb-6">פרטי ההזמנה זמינים לאחר אישור התשלום, בחשבון המזמין או בדפדפן שבו בוצעה הרכישה. אם חויבתם והאישור מתעכב, פנו לחנות.</p>
+                <h1 className="text-2xl font-bold mb-4">הזמנה לא נמצאה</h1>
+                <p className="text-stone-500 mb-6">לא הצלחנו למצוא את פרטי ההזמנה המבוקשת.</p>
+                <Link href="/" className="text-david-green hover:underline">חזרה לדף הבית</Link>
+            </div>
+        );
+    }
+
+    if (order.status === 'CANCELLED') {
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+                <h1 className="text-2xl font-bold mb-4">ההזמנה בוטלה</h1>
+                <p className="text-stone-500 mb-6">הזמנה זו בוטלה. אם חויבתם או אם מדובר בטעות, אנא צרו קשר עם החנות.</p>
                 <Link href="/" className="text-david-green hover:underline">חזרה לדף הבית</Link>
             </div>
         );

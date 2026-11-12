@@ -257,11 +257,13 @@ export async function POST(req: Request) {
             customerEmail: ordererEmail // Use input email
         });
 
-        grantGuestReceipt(order.id);
-        return NextResponse.json({
+        const response = NextResponse.json({
             url: paymentUrl,
             orderId: order.id
         });
+
+        grantGuestReceipt(order.id, response);
+        return response;
 
     } catch (error) {
         console.error('[CHECKOUT_ERROR]', error);
@@ -279,10 +281,10 @@ async function createPayPlusPayment(data: {
 }): Promise<string> {
     const { orderId, amount, customerName, customerPhone, customerEmail } = data;
 
-    // Check if Pay Plus is configured
-    const payPlusApiKey = process.env.PAYPLUS_API_KEY;
-    const payPlusSecretKey = process.env.PAYPLUS_SECRET_KEY;
-    const payPlusTerminalId = process.env.PAYPLUS_TERMINAL_ID;
+    // Check if Pay Plus is configured (support both PAYPLUS_ and PAY_PLUS_ naming)
+    const payPlusApiKey = process.env.PAYPLUS_API_KEY || process.env.PAY_PLUS_API_KEY;
+    const payPlusSecretKey = process.env.PAYPLUS_SECRET_KEY || process.env.PAY_PLUS_SECRET_KEY;
+    const payPlusTerminalId = process.env.PAYPLUS_TERMINAL_ID || process.env.PAY_PLUS_TERMINAL_ID;
 
     // MOCK MODE - Development without API keys
     if (!payPlusApiKey || !payPlusSecretKey || !payPlusTerminalId) {
