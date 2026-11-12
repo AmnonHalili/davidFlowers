@@ -15,9 +15,9 @@ export default async function CancelPage({
                 <XCircle className="w-8 h-8 text-red-600" />
             </div>
 
-            <h1 className="text-3xl font-serif font-bold text-stone-900 mb-2">ההזמנה בוטלה</h1>
+            <h1 className="text-3xl font-serif font-bold text-stone-900 mb-2">התשלום לא אושר בעמוד זה</h1>
             <p className="text-stone-500 max-w-md mb-8">
-                תהליך התשלום לא הושלם. לא חויבת עבור הזמנה זו.
+                עמוד זה אינו מאשר חיוב או ביטול. אם מופיע חיוב או שאינכם בטוחים במצב ההזמנה, פנו לחנות לפני ניסיון תשלום נוסף.
                 {orderId && <span className="block text-xs mt-2 text-stone-400">מספר הזמנה: {orderId}</span>}
                 <span className="block mt-2">אם נתקלת בבעיה, נשמח לעזור לך בצ'אט או בטלפון.</span>
             </p>

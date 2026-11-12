@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireAdmin } from '@/lib/admin-auth';
 import { Package, ShoppingCart, TrendingUp, Users, DollarSign } from 'lucide-react';
 import prisma from '@/lib/prisma';
@@ -142,10 +143,14 @@ async function getStats() {
 
 export default async function AdminDashboard() {
     await requireAdmin();
+    const reviewCount = await prisma.paymentVerification.count({ where: { fulfillmentState: 'REQUIRES_REVIEW' } });
     const stats = await getStats();
 
     return (
         <div className="p-10 space-y-10 max-w-[1600px] mx-auto">
+            {reviewCount > 0 && <Link href="/admin/payment-review" className="block border border-orange-300 bg-orange-50 p-4 mb-6 text-orange-900">
+                {reviewCount} תשלומים אומתו ודורשים התאמה — אין לבקש תשלום נוסף
+            </Link>}
 
             {/* Header */}
             <div className="flex justify-between items-end">

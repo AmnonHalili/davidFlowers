@@ -1,4 +1,5 @@
-import { grantGuestReceipt } from '@/lib/order-access';
+import { validCartItems, usableCoupon } from '@/lib/checkout-validation';
+import { initiatePaymentAttempt, readPaymentAttempt } from '@/lib/payment-attempt';
 import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
             selectedCity,
             shippingCost: clientShippingCost = 0,
             newsletterConsent, // Added
-            orderId // 🆕 Support for updating a draft
+            attemptId // Server-issued, durable payment-link attempt
         } = body;
 
         const SHIPPING_COSTS: Record<string, number> = {
@@ -45,9 +46,13 @@ export async function POST(req: Request) {
             'כפר סילבר': 45
         };
 
+        if (typeof attemptId !== 'string') return NextResponse.json({ error: 'Payment attempt required' }, { status: 400 });
+        const priorAttempt = await readPaymentAttempt(attemptId);
+        if (priorAttempt) return NextResponse.json(priorAttempt, { status: priorAttempt.state === 'UNRESOLVED' ? 202 : 200, headers: { 'Cache-Control': 'no-store' } });
+
         // Validation
-        if (!items || items.length === 0) {
-            return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+        if (!validCartItems(items)) {
+            return NextResponse.json({ error: 'Invalid cart quantities' }, { status: 400 });
         }
 
         // Validate all required contact info
@@ -70,13 +75,21 @@ export async function POST(req: Request) {
         // 1. Fetch products to get real prices
         const productIds = items.map((item: any) => item.productId);
         const dbProducts = await prisma.product.findMany({
-            where: { id: { in: productIds } }
+            where: { id: { in: productIds } }, include: { categories: true }
         });
 
         // 2. Validate and Calculate Totals
         let calculatedSubtotal = 0;
         let latestAvailableFrom: Date | null = null;
 
+        const requiredStock = new Map<string, number>();
+        for (const item of items) requiredStock.set(item.productId, (requiredStock.get(item.productId) || 0) + item.quantity);
+        for (const [id, quantity] of requiredStock) {
+            const product = dbProducts.find(p => p.id === id);
+            if (!product || product.stock < quantity || (product.availableFrom && product.availableFrom > new Date() && !product.allowPreorder)) {
+                return NextResponse.json({ error: 'Product unavailable' }, { status: 400 });
+            }
+        }
         const validItems = items.map((item: any) => {
             const product = dbProducts.find(p => p.id === item.productId) as any;
             if (!product) throw new Error(`Product not found: ${item.productId}`);
@@ -91,12 +104,17 @@ export async function POST(req: Request) {
 
             let basePrice = Number(product.price);
 
-            // Extract the variable price based on selected size if applicable
-            if (product.isVariablePrice && item.selectedSize && product.variations) {
-                const variations = product.variations as Record<string, any>;
-                if (variations[item.selectedSize]) {
-                    basePrice = Number(variations[item.selectedSize].price);
-                }
+            if (product.isVariablePrice) {
+                const variations = product.variations as Record<string, any> | null;
+                const size = typeof item.selectedSize === 'string' ? item.selectedSize.trim().toLowerCase() : '';
+                const matches = Object.entries(variations || {}).filter(([key, value]) => key.toLowerCase() === size || value?.label?.toLowerCase() === size);
+                if (!size || matches.length !== 1) throw new Error('Invalid product variant');
+                const [key, variant] = matches[0];
+                const demand = items.filter(other => other.productId === item.productId &&
+                    typeof other.selectedSize === 'string' && [key.toLowerCase(), variant.label?.toLowerCase()].includes(other.selectedSize.trim().toLowerCase()))
+                    .reduce((total, other) => total + other.quantity, 0);
+                if (!Number.isSafeInteger(variant.stock) || variant.stock < demand) throw new Error('Variant unavailable');
+                basePrice = Number(variant.price);
             }
 
             // Calculate effective price (Sale vs Regular)
@@ -104,14 +122,16 @@ export async function POST(req: Request) {
                 price: basePrice,
                 salePrice: product.salePrice ? Number(product.salePrice) : null,
                 saleStartDate: product.saleStartDate,
-                saleEndDate: product.saleEndDate
+                saleEndDate: product.saleEndDate, categories: product.categories
             });
 
-            calculatedSubtotal += effectivePrice * item.quantity;
+            if (!Number.isFinite(effectivePrice) || effectivePrice < 0) throw new Error('Invalid product price');
+            const unitPrice = Math.round(effectivePrice * 100) / 100;
+            calculatedSubtotal = Math.round((calculatedSubtotal + unitPrice * item.quantity) * 100) / 100;
 
             return {
                 ...item,
-                price: effectivePrice // Override client price with server price
+                price: unitPrice // Override client price with server price
             };
         });
 
@@ -164,6 +184,7 @@ export async function POST(req: Request) {
         if (couponId) {
             const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
 
+            if (!usableCoupon(coupon)) return NextResponse.json({ error: 'Coupon unavailable' }, { status: 400 });
             if (coupon) {
                 // Validation: First Order Only
                 if (coupon.isFirstOrderOnly) {
@@ -173,7 +194,7 @@ export async function POST(req: Request) {
                                 ...(userId ? [{ user: { clerkId: userId } }] : []),
                                 { ordererEmail: ordererEmail }
                             ],
-                            status: { not: 'CANCELLED' }
+                            status: { in: ['PAID', 'SHIPPED', 'DELIVERED'] }
                         }
                     });
 
@@ -198,7 +219,9 @@ export async function POST(req: Request) {
 
         // Final Calculation
         // Discount applies to subtotal, shipping is added after
-        const totalAmount = Math.max(0, calculatedSubtotal - discountAmount + finalShippingCost);
+        discountAmount = Math.round(discountAmount * 100) / 100;
+        const totalAmount = Math.max(0, Math.round((calculatedSubtotal - discountAmount + finalShippingCost) * 100) / 100);
+        if (totalAmount <= 0) return NextResponse.json({ error: 'Invalid payment amount' }, { status: 400 });
 
         // 3. CREATE OR UPDATE ORDER IN DATABASE (PENDING STATUS)
         const orderData = {
@@ -231,40 +254,11 @@ export async function POST(req: Request) {
             }
         };
 
-        const order = await prisma.order.create({ data: orderData });
-
-        // 2. UPDATE USER PROFILE (If logged in)
-        if (userId) {
-            await prisma.user.update({
-                where: { clerkId: userId },
-                data: {
-                    phone: ordererPhone,
-                    // Don't override name with recipient name anymore, maybe ordererName?
-                    // Let's keep existing logic or maybe update name if empty?
-                    // User might be ordering for someone else, so changing their profile name to recipient name is bad specificially in this new flow.
-                    // But maybe update address if delivery?
-                    ...(shippingMethod === 'delivery' && shippingAddress ? { address: `${shippingAddress}, ${selectedCity}` } : {}),
-                }
-            }).catch(err => console.error('Error updating user profile:', err));
-        }
-
-        // 3. CREATE PAY PLUS PAYMENT
-        const paymentUrl = await createPayPlusPayment({
-            orderId: order.id,
-            amount: Number(totalAmount),
-            customerName: ordererName, // Use Orderer Name for billing
-            customerPhone: ordererPhone,
-            customerEmail: ordererEmail // Use input email
-        });
-
-        grantGuestReceipt(order.id);
-        return NextResponse.json({
-            url: paymentUrl,
-            orderId: order.id
-        });
+        const result = await initiatePaymentAttempt(attemptId, orderData, createPayPlusPayment);
+        return NextResponse.json(result, { status: result.state === 'UNRESOLVED' ? 202 : 200, headers: { 'Cache-Control': 'no-store' } });
 
     } catch (error) {
-        console.error('[CHECKOUT_ERROR]', error);
+        console.error('Checkout attempt could not be completed');
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -297,7 +291,7 @@ async function createPayPlusPayment(data: {
 
         // Correct endpoint according to latest documentation
         const response = await fetch('https://restapi.payplus.co.il/api/v1.0/PaymentPages/generateLink', {
-            method: 'POST',
+            method: 'POST', redirect: 'error', signal: AbortSignal.timeout(15000),
             headers: {
                 'Authorization': JSON.stringify({
                     'api_key': payPlusApiKey,
@@ -331,12 +325,12 @@ async function createPayPlusPayment(data: {
         const result = await response.json();
 
         if (!response.ok) {
-            console.error(`[PAY_PLUS_ERROR] Status: ${response.status}`, result);
+            console.error('Payment link request failed', { status: response.status });
             throw new Error(`Pay Plus API error: ${result.message || result.status_text || response.status}`);
         }
 
         if (result.status === 'error' || !result.data?.payment_page_link) {
-            console.error('[PAY_PLUS_ERROR] API returned error state:', result);
+            console.error('Payment link response could not be confirmed');
             throw new Error(result.message || 'No payment link returned from Pay Plus');
         }
 
@@ -344,7 +338,7 @@ async function createPayPlusPayment(data: {
         return result.data.payment_page_link;
 
     } catch (error: any) {
-        console.error('[PAY_PLUS_ERROR] Process failed:', error);
+        console.error('Payment link outcome is unresolved');
         // Throw the error instead of falling back to mock success in production
         throw new Error(`PayPlus failed: ${error.message}`);
     }

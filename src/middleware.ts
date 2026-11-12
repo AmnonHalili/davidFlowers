@@ -15,7 +15,7 @@ export default clerkMiddleware(async (auth, req) => {
     const isPaused = process.env.NEXT_PUBLIC_SITE_PAUSED === 'true';
 
     // If site is paused, redirect everything except admin and the paused page
-    if (isPaused && !isAdminRoute(req) && !isPausedPageRoute(req)) {
+    if (isPaused && !isAdminRoute(req) && !isPausedPageRoute(req) && req.nextUrl.pathname !== '/api/webhooks/payplus') {
         const url = req.nextUrl.clone();
         url.pathname = '/paused';
         return NextResponse.redirect(url);

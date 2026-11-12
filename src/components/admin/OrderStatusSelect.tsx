@@ -21,6 +21,12 @@ export default function OrderStatusSelect({ orderId, currentStatus, fullWidth = 
         icon: any,
         description: string
     }> = {
+        PAYMENT_REVIEW: {
+            label: "חיוב אומת — נדרש טיפול",
+            styles: "bg-orange-50 text-orange-900 border-orange-300",
+            icon: Clock,
+            description: "התשלום אומת אך ההזמנה לא אושרה להכנה. יש לבצע התאמה לפני שינוי סטטוס."
+        },
         PENDING: {
             label: "ממתין לתשלום",
             styles: "bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500/20",
@@ -116,7 +122,7 @@ export default function OrderStatusSelect({ orderId, currentStatus, fullWidth = 
                 <select
                     value={status}
                     onChange={(e) => handleStatusChange(e.target.value as OrderStatus)}
-                    disabled={isLoading}
+                    disabled={isLoading || status === 'PAYMENT_REVIEW'}
                     className="
                         absolute inset-0 w-full h-full opacity-0 cursor-pointer
                         disabled:cursor-not-allowed z-10

@@ -59,6 +59,17 @@ export default async function SuccessPage({
 
     const order = await getOrder(orderId);
 
+    const reviewPayment = order
+        ? await prisma.paymentVerification.findFirst({ where: { orderId: order.id, fulfillmentState: 'REQUIRES_REVIEW' }, select: { transactionId: true } })
+        : null;
+    if (order?.status === 'PAYMENT_REVIEW' || reviewPayment) {
+        return <main dir="rtl" className="mx-auto max-w-xl px-6 py-24 text-center">
+            <h1 className="text-2xl mb-4">התשלום אומת ונדרש טיפול בהזמנה</h1>
+            <p>נדרשת התאמה של חיוב להזמנה. אין לבצע תשלום נוסף. פנו לחנות לבירור מצב ההזמנה, להשלמת הטיפול או לבדיקת אפשרות ההחזר.</p>
+            <Link className="underline mt-6 inline-block" href="/">חזרה לחנות</Link>
+        </main>;
+    }
+
     if (!order || !['PAID', 'SHIPPED', 'DELIVERED'].includes(order.status)) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">

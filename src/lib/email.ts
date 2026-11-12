@@ -1,3 +1,4 @@
+import { createGuestReceiptLink } from './order-access';
 import { Resend } from 'resend';
 import { OrderConfirmationEmail } from './emails/order-confirmation';
 import { toZonedTime } from 'date-fns-tz';
@@ -8,6 +9,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export interface SendOrderConfirmationData {
     to: string;
     orderNumber: string;
+    isGuest?: boolean;
     customerName: string;
     items: Array<{
         name: string;
@@ -57,7 +59,7 @@ export async function sendOrderConfirmation(data: SendOrderConfirmationData) {
             from: finalFromEmail,
             to: data.to,
             subject: `אישור הזמנה ${data.orderNumber} - דוד פרחים`,
-            react: OrderConfirmationEmail(data),
+            react: OrderConfirmationEmail({ ...data, receiptUrl: data.isGuest ? createGuestReceiptLink(data.orderNumber) : undefined }),
         });
 
         if (error) {

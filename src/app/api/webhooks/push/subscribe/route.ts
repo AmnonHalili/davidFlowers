@@ -9,36 +9,7 @@ export async function POST(req: Request) {
         const user = await currentUser();
         if (!user) return new NextResponse('Unauthorized', { status: 401 });
         if (!isAdminIdentity(user)) return new NextResponse('Forbidden', { status: 403 });
-        const dbUser = await prisma.user.findUnique({ where: { clerkId: user.id } });
-        if (!dbUser) return new NextResponse('Forbidden', { status: 403 });
-
-        const subscription = await req.json();
-
-        if (!subscription || !subscription.endpoint || !subscription.keys) {
-            return new NextResponse('Invalid subscription data', { status: 400 });
-        }
-
-        // Save or update the subscription in the database
-        await prisma.pushSubscription.upsert({
-            where: {
-                endpoint: subscription.endpoint,
-            },
-            create: {
-                userId: dbUser.id,
-                endpoint: subscription.endpoint,
-                p256dh: subscription.keys.p256dh,
-                auth: subscription.keys.auth,
-                userAgent: req.headers.get('user-agent') || 'Unknown Device'
-            },
-            update: {
-                userId: dbUser.id,
-                p256dh: subscription.keys.p256dh,
-                auth: subscription.keys.auth,
-                userAgent: req.headers.get('user-agent') || 'Unknown Device'
-            }
-        });
-
-        return NextResponse.json({ success: true, message: 'Subscription saved' });
+        return NextResponse.json({ success: false, code: 'PUSH_PAUSED', message: 'Device notifications are temporarily paused; re-enrollment is not yet available.' }, { status: 503 });
 
     } catch (error) {
         console.error('[PUSH_SUBSCRIBE_ERROR]', error);

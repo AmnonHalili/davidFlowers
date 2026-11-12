@@ -377,6 +377,22 @@ export default function CartDrawer() {
         }
         setIsCheckingOut(true);
         try {
+            const prepare = async (orderId: string | null) => {
+                const response = await fetch('/api/checkout/prepare', { method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: orderId || undefined }) });
+                if (!response.ok) throw new Error('Checkout preparation unavailable');
+                return response.json();
+            };
+            let prepared = await prepare(draftOrderId);
+            if (prepared.requiresDraft) {
+                const draft = await saveDraftOrder({ items, ordererName, ordererPhone, ordererEmail });
+                if (!draft.success || !draft.orderId) throw new Error('Draft unavailable');
+                setDraftOrderId(draft.orderId);
+                prepared = await prepare(draft.orderId);
+            }
+            if (!prepared.attemptId) throw new Error('Payment attempt unavailable');
+            setDraftOrderId(prepared.orderId);
+            if (prepared.resumeRequired && !window.confirm('קיים ניסיון קודם להזמנה בסכום ' + prepared.amount + ' ₪. להמשיך לבדוק את אותו ניסיון? אין לפתוח תשלום נוסף אם התוצאה אינה ידועה.')) return;
             const response = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: {
@@ -398,22 +414,30 @@ export default function CartDrawer() {
                     selectedCity: shippingMethod === 'delivery' ? selectedCity : null,
                     shippingCost: currentShippingCost,
                     newsletterConsent: newsletterConsent, // 🆕
-                    orderId: draftOrderId // Re-use the draft we captured!
+                    attemptId: prepared.attemptId
                 }),
             });
 
-            if (!response.ok) throw new Error('Checkout failed');
+            if (!response.ok) {
+                throw new Error('Checkout failed');
+            }
 
             const data = await response.json();
 
-            // Clear cart logic should be here (via context ideally, but maybe done in success page if we redirect)
-            // For now, assume redirect handles it or user manually clears? 
-            // In a better flow, backend doesn't clear cart. Frontend does if success.
-            // But we'll just follow the redirect.
+            if (data.state === 'UNRESOLVED') {
+                toast.error(data.message || 'ניסיון התשלום בבדיקה. אין לשלם שוב. פנו לחנות.');
+                return;
+            }
+            if (data.state === 'VERIFIED') {
+                window.location.href = `/success?orderId=${encodeURIComponent(data.orderId)}`;
+                return;
+            }
+            if (data.state !== 'LINK_READY' || !data.url) throw new Error('Payment result unavailable');
             window.location.href = data.url;
         } catch (error) {
             console.error('Checkout error:', error);
-            alert('אירעה שגיאה במעבר לתשלום. אנא נסה שנית.');
+            alert('לא ניתן לאשר את תוצאת הניסיון. אין לפתוח תשלום חדש. בדיקה חוזרת תבדוק את אותו ניסיון; אם הבעיה נמשכת פנו לחנות.');
+        } finally {
             setIsCheckingOut(false);
         }
     };
@@ -1186,7 +1210,6 @@ export default function CartDrawer() {
                                                                 ordererName,
                                                                 ordererPhone,
                                                                 ordererEmail,
-                                                                clerkId: clerkUser?.id,
                                                                 orderId: draftOrderId || undefined
                                                             });
                                                             if (res.success && res.orderId) {

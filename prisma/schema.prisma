@@ -237,6 +237,7 @@ enum DiscountType {
 }
 
 enum OrderStatus {
+  PAYMENT_REVIEW
   PENDING
   PAID
   SHIPPED
@@ -325,4 +326,33 @@ model GalleryImage {
   createdAt DateTime @default(now())
 
   @@index([isVisible, takenAt])
+}
+
+// Append-only verified payment facts survive fulfillment failures and order state races.
+model PaymentVerification {
+  transactionId     String   @id
+  orderId           String
+  amount            Decimal
+  currency          String
+  verifiedAt        DateTime @default(now())
+  fulfillmentState  String   @default("REQUIRES_REVIEW")
+  orderStatusAtVerification String
+
+  @@index([orderId])
+  @@index([fulfillmentState])
+}
+
+// One irreversible provider-link attempt per prepared order. Unknown outcomes are never auto-retried.
+model PaymentAttempt {
+  id                 String   @id @default(cuid())
+  orderId            String   @unique
+  subject            String?
+  draftVersion       DateTime
+  state              String   @default("PREPARED")
+  requestFingerprint String?
+  paymentUrl         String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([state])
 }
