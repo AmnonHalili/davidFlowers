@@ -141,9 +141,10 @@ import { sendOrderStatusEmail } from '@/lib/email-service';
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     await requireAdmin();
+    if (status === 'PAYMENT_REVIEW') return { success: false, error: 'Use payment reconciliation' };
     try {
         const order = await prisma.order.update({
-            where: { id: orderId },
+            where: { id: orderId, status: { not: 'PAYMENT_REVIEW' } },
             data: { status },
             include: {
                 user: true,

@@ -25,11 +25,15 @@ if (!testUrl) {
     const order = await seed('order-concurrent', product.id);
     notices = 0;
     const results = await Promise.all([finalizePayment(order.id, 'tx-concurrent'), finalizePayment(order.id, 'tx-concurrent')]);
-    assert.ok(results.every(r => r.success));
+    assert.ok(results.some(r => r.success));
+    assert.ok(results.every(r => r.success || r.requiresReconciliation));
     assert.equal((await db.product.findUnique({ where: { id: product.id } })).stock, 9); assert.equal(notices, 2);
     await db.order.update({ where: { id: order.id }, data: { status: 'DELIVERED' } });
     await finalizePayment(order.id, 'tx-concurrent');
     assert.equal((await db.order.findUnique({ where: { id: order.id } })).status, 'DELIVERED'); assert.equal(notices, 2);
+    assert.equal((await finalizePayment(order.id, 'tx-unexpected-second-charge')).requiresReconciliation, true);
+    assert.equal((await db.paymentVerification.findUnique({ where: { transactionId: 'tx-unexpected-second-charge' } })).fulfillmentState, 'REQUIRES_REVIEW');
+    assert.equal((await db.product.findUnique({ where: { id: product.id } })).stock, 9); assert.equal(notices, 2);
   });
   test('real PostgreSQL: different concurrent orders do not lose variable inventory updates', async () => {
     const product = await db.product.create({ data: { name: 'Synthetic variant', slug: 'synthetic-two', description: 'fake', price: 100, stock: 10,
@@ -44,10 +48,13 @@ if (!testUrl) {
     const product = await db.product.create({ data: { name: 'Synthetic empty', slug: 'synthetic-three', description: 'fake', price: 100, stock: 0 } });
     const a = await seed('order-empty', product.id); notices = 0;
     assert.equal((await finalizePayment(a.id, 'tx-empty')).success, false);
-    const untouched = await db.order.findUnique({ where: { id: a.id } }); assert.equal(untouched.status, 'PENDING'); assert.equal(untouched.payplusTransactionId, null); assert.equal(notices, 0);
+    const untouched = await db.order.findUnique({ where: { id: a.id } }); assert.equal(untouched.status, 'PAYMENT_REVIEW'); assert.equal(untouched.payplusTransactionId, 'tx-empty'); assert.equal(notices, 0);
+    const fact = await db.paymentVerification.findUnique({ where: { transactionId: 'tx-empty' } });
+    assert.equal(fact.fulfillmentState, 'REQUIRES_REVIEW'); assert.equal(fact.amount.toString(), '100');
     const cancelled = await seed('order-cancelled', product.id, 'CANCELLED');
     assert.equal((await finalizePayment(cancelled.id, 'tx-cancelled')).success, false);
     assert.equal((await db.order.findUnique({ where: { id: cancelled.id } })).status, 'CANCELLED');
+    assert.equal((await db.paymentVerification.findUnique({ where: { transactionId: 'tx-cancelled' } })).fulfillmentState, 'REQUIRES_REVIEW');
   });
   test('real PostgreSQL: draft capability supports reuse atomically, rejects replay/paid overwrite/user switch', async () => {
     const jar = new Map(); let userId = null;
@@ -95,6 +102,47 @@ if (!testUrl) {
     await assert.rejects(() => persist(makeData(99), initial.id, false));
     const items = await db.orderItem.findMany({ where: { orderId: initial.id } });
     assert.equal(items.length, 1); assert.equal(items[0].quantity, winnerQuantity);
+  });
+
+  test('real PostgreSQL: two verified buyers of the last unit retain both payment facts but only one fulfills', async () => {
+    const product = await db.product.create({ data: { name: 'Last unit', slug: 'synthetic-last', description: 'fake', price: 100, stock: 1 } });
+    const a = await seed('last-a', product.id); const b = await seed('last-b', product.id); notices = 0;
+    const results = await Promise.all([finalizePayment(a.id, 'tx-last-a'), finalizePayment(b.id, 'tx-last-b')]);
+    assert.equal(results.filter(r => r.success).length, 1); assert.equal(results.filter(r => r.requiresReconciliation).length, 1);
+    const orders = await db.order.findMany({ where: { id: { in: [a.id, b.id] } } });
+    assert.equal(orders.filter(o => o.status === 'PAID').length, 1); assert.equal(orders.filter(o => o.status === 'PAYMENT_REVIEW').length, 1);
+    assert.ok(orders.every(o => o.payplusTransactionId)); assert.equal((await db.product.findUnique({ where: { id: product.id } })).stock, 0);
+    assert.equal(await db.paymentVerification.count({ where: { orderId: { in: [a.id, b.id] } } }), 2); assert.equal(notices, 2);
+    const pending = orders.find(o => o.status === 'PAYMENT_REVIEW');
+    assert.equal((await finalizePayment(pending.id, pending.payplusTransactionId)).requiresReconciliation, true); assert.equal(notices, 2);
+  });
+  test('real PostgreSQL: variant error after verified charge retains evidence and rolls back prior stock writes', async () => {
+    const good = await db.product.create({ data: { id: 'aaa-good', name: 'Good', slug: 'synthetic-good', description: 'fake', price: 50, stock: 5 } });
+    const bad = await db.product.create({ data: { id: 'zzz-bad', name: 'Bad variant', slug: 'synthetic-bad', description: 'fake', price: 50, stock: 5, isVariablePrice: true, variations: {} } });
+    const order = await seed('bad-variant-order', good.id);
+    await db.orderItem.create({ data: { orderId: order.id, productId: bad.id, price: 50, quantity: 1, selectedSize: 'missing' } });
+    const result = await finalizePayment(order.id, 'tx-bad-variant'); assert.equal(result.requiresReconciliation, true);
+    assert.equal((await db.product.findUnique({ where: { id: good.id } })).stock, 5);
+    assert.equal((await db.order.findUnique({ where: { id: order.id } })).status, 'PAYMENT_REVIEW');
+    assert.equal((await db.paymentVerification.findUnique({ where: { transactionId: 'tx-bad-variant' } })).fulfillmentState, 'REQUIRES_REVIEW');
+  });
+  test('real PostgreSQL: changed/cancelled order after provider verification keeps durable charge without fulfillment', async () => {
+    const product = await db.product.create({ data: { name: 'Changed', slug: 'synthetic-changed', description: 'fake', price: 100, stock: 5 } });
+    for (const cancel of [false, true]) {
+      const order = await seed(cancel ? 'cancel-during-verification' : 'change-during-verification', product.id);
+      const txId = cancel ? 'tx-cancel-during' : 'tx-change-during';
+      const loadRace = loader({ '@/lib/prisma': { __esModule: true, default: db },
+        '@/lib/payplus': { verifyPayPlusTransaction: async () => {
+          await db.order.update({ where: { id: order.id }, data: { ...(cancel ? { status: 'CANCELLED' } : {}), updatedAt: new Date(Date.now() + 1000) } });
+          return { amountMinor: 10000, currency: 'ILS' };
+        } }, '@/lib/email': { sendAdminNotification: async () => { throw Error('must not notify fulfillment'); }, sendOrderConfirmation: async () => { throw Error('must not notify fulfillment'); } },
+      });
+      const result = await loadRace('src/lib/payment-finalization.ts').finalizePayment(order.id, txId);
+      assert.equal(result.requiresReconciliation, true);
+      const fact = await db.paymentVerification.findUnique({ where: { transactionId: txId } }); assert.equal(fact.fulfillmentState, 'REQUIRES_REVIEW');
+      const current = await db.order.findUnique({ where: { id: order.id } }); assert.equal(current.status, cancel ? 'CANCELLED' : 'PENDING');
+    }
+    assert.equal((await db.product.findUnique({ where: { id: product.id } })).stock, 5);
   });
 
 }

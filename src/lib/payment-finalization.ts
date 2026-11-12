@@ -5,27 +5,46 @@ import { verifyPayPlusTransaction } from '@/lib/payplus';
 import { sendAdminNotification, sendOrderConfirmation } from '@/lib/email';
 
 const settled = ['PAID', 'SHIPPED', 'DELIVERED'];
+const reviewRequired = () => ({ success: false, requiresReconciliation: true, error: 'Verified payment requires store reconciliation; do not pay again' });
 
 export async function finalizePayment(orderId: string, transactionUid: string) {
     if (!/^[a-zA-Z0-9_-]{1,128}$/.test(orderId) || !/^[a-zA-Z0-9_-]{1,128}$/.test(transactionUid)) return { success: false, error: 'Invalid reference' };
     const snapshot = await prisma.order.findUnique({ where: { id: orderId } });
     if (!snapshot) return { success: false, error: 'Payment cannot be confirmed' };
     // No status regression, no duplicate effects, and no fulfillment of cancelled/draft orders.
-    if (settled.includes(snapshot.status)) return snapshot.payplusTransactionId === transactionUid
-        ? { success: true, alreadyProcessed: true } : { success: false, error: 'Transaction mismatch' };
-    if (snapshot.status !== 'PENDING' || snapshot.shippingAddress === 'Draft' || snapshot.payplusTransactionId) return { success: false, error: 'Order cannot be fulfilled' };
+    if (settled.includes(snapshot.status) && snapshot.payplusTransactionId === transactionUid) return { success: true, alreadyProcessed: true };
+    if (snapshot.status === 'PAYMENT_REVIEW' && snapshot.payplusTransactionId === transactionUid) return reviewRequired();
+    if (snapshot.shippingAddress === 'Draft') return { success: false, error: 'Order cannot be fulfilled' };
 
     const verified = await verifyPayPlusTransaction(transactionUid, orderId, snapshot.totalAmount.toString());
     if (!verified) return { success: false, error: 'Verification failed; contact the store if charged' };
+
+    // Persist the gateway fact independently of inventory so a rollback cannot erase money received.
+    // Upsert never overwrites a previously recorded transaction's binding or amount.
+    const fact = await prisma.paymentVerification.upsert({
+        where: { transactionId: transactionUid }, update: {},
+        create: { transactionId: transactionUid, orderId, amount: snapshot.totalAmount, currency: verified.currency, orderStatusAtVerification: snapshot.status },
+    });
+    if (fact.orderId !== orderId || fact.amount.toString() !== snapshot.totalAmount.toString() || fact.currency !== verified.currency) return reviewRequired();
+    if (fact.fulfillmentState === 'FULFILLED' || snapshot.status !== 'PENDING' || snapshot.payplusTransactionId) return reviewRequired(); // Keep cancellation state; the durable charge fact remains in the review queue.
+    const paymentClaim = await prisma.order.updateMany({
+        where: { id: orderId, status: 'PENDING', payplusTransactionId: null, totalAmount: snapshot.totalAmount,
+            updatedAt: snapshot.updatedAt, shippingAddress: { not: 'Draft' } },
+        data: { status: 'PAYMENT_REVIEW', payplusTransactionId: transactionUid },
+    });
+    if (paymentClaim.count !== 1) {
+        const current = await prisma.order.findUnique({ where: { id: orderId } });
+        return current && settled.includes(current.status) && current.payplusTransactionId === transactionUid
+            ? { success: true, alreadyProcessed: true } : reviewRequired();
+    }
 
     let completed = null;
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
             completed = await prisma.$transaction(async tx => {
                 const claim = await tx.order.updateMany({
-                    where: { id: orderId, status: 'PENDING', payplusTransactionId: null,
-                        totalAmount: snapshot.totalAmount, updatedAt: snapshot.updatedAt, shippingAddress: { not: 'Draft' } },
-                    data: { status: 'PAID', payplusTransactionId: transactionUid },
+                    where: { id: orderId, status: 'PAYMENT_REVIEW', payplusTransactionId: transactionUid, totalAmount: snapshot.totalAmount },
+                    data: { status: 'PAID' },
                 });
                 if (claim.count !== 1) return null;
                 const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: true, user: true } });
@@ -57,14 +76,15 @@ export async function finalizePayment(orderId: string, transactionUid: string) {
                         if (stock.count !== 1) throw new Error('Insufficient stock');
                     }
                 }
+                await tx.paymentVerification.update({ where: { transactionId: transactionUid }, data: { fulfillmentState: 'FULFILLED' } });
                 return tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: { include: { product: true } }, user: true } });
             }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
             break;
         } catch (error) {
             if ((error as { code?: string }).code === 'P2034' && attempt < 2) continue;
-            // Transaction rollback includes both payment claim and all inventory changes.
+            // Only fulfillment/inventory rolls back. The verified fact and PAYMENT_REVIEW state are already durable.
             console.error('Payment requires reconciliation');
-            return { success: false, error: 'Payment requires store reconciliation' };
+            return reviewRequired();
         }
     }
     if (!completed) {

@@ -1,6 +1,6 @@
 # Security follow-up — draft, not approved for production
 
-Base: production containment 8d38f9c. No production data/configuration changes are part of this work. No schema migration is required. Build remains `prisma generate && next build`.
+Base: production containment 8d38f9c. No production data/configuration changes are part of this work. An additive schema migration is now required before this draft can run: PaymentVerification ledger plus PAYMENT_REVIEW enum value. It has been tested only against the original schema in isolated local PostgreSQL. Production migration requires separate approval and a reviewed migration-history/baseline plan; do not run db push or blindly migrate an unbaselined existing database. Build remains `prisma generate && next build`.
 
 ## Payment integrity (priority)
 
@@ -8,7 +8,11 @@ Both callback and success processing call one finalizer. It uses documented auth
 
 Official reference inspected 2026-11-12: https://docs.payplus.co.il/reference/post_transactions-view (including its downloadable `.md` OpenAPI schema and 200 response example). The earlier `Transactions/GetStatus` contract could not be established. `PaymentPages/ipn` and `ipn-full` reference examples were empty objects, so this implementation does not assume their response layout. Callback reference: https://docs.payplus.co.il/reference/get_yourdomain-yourendpoint . GET and POST routing hints are supported; both reverify through View.
 
-A SERIALIZABLE database transaction conditionally claims an unchanged PENDING non-draft order, decrements inventory, and records the unique transaction ID together. Serialization conflicts retry, at most three attempts. Already PAID/SHIPPED/DELIVERED orders never regress. CANCELLED orders and cancelled/refund provider records cannot be fulfilled. Exact variant key/label matching replaces substring guessing. Stock shortfalls roll back the claim and require operator reconciliation; this code never initiates a refund or another charge.
+Authenticated successful Charge evidence is first upserted into a durable PaymentVerification ledger with immutable transaction/order/amount/currency binding and the order status at verification. The default fulfillmentState is REQUIRES_REVIEW. This insert is committed independently of inventory. Even a concurrent cancellation or failed optimistic order claim cannot erase the fact. A PENDING order is then conditionally marked PAYMENT_REVIEW with its transaction ID; cancelled orders keep their cancellation state and remain discoverable through the ledger review queue.
+
+A separate SERIALIZABLE transaction conditionally claims the reviewed payment for fulfillment, updates stock, marks the order PAID and marks the ledger FULFILLED together. Serialization conflicts retry at most three times. Inventory failures roll back fulfillment only; PAYMENT_REVIEW and the ledger survive. Replayed callbacks do not automatically retry review-state fulfillment. Already PAID/SHIPPED/DELIVERED orders never regress. The admin dashboard exposes a review count and /admin/payment-review queue; normal status controls cannot clear PAYMENT_REVIEW. The authorized receipt page shows an explicit “do not pay again” message for any unresolved recorded charge, including cancelled/changed orders.
+
+Exact variant key/label matching replaces substring guessing. Stock shortages require reconciliation, not a second payment. This code never initiates refunds or another charge. There is no automated reconciliation completion action yet; an operator must inspect provider evidence and inventory under a separately reviewed procedure.
 
 Only the committed winner attempts customer/admin email. Calls are awaited rather than abandoned after response. This is **at-most-once notification attempt**, not guaranteed delivery: a process crash after commit or failed delivery requires reconciliation. A durable transactional outbox with idempotent downstream delivery remains a separate reliability change. Push remains off. Refund callbacks are acknowledged for reconciliation; automated refund accounting/stock restoration is not implemented. The documented cancellation flag is checked, but live provider semantics for historical refunds still require validation.
 
@@ -44,3 +48,11 @@ Automated synthetic tests cover direct action denials, capabilities, input abuse
 Browser inventory contained no David Flowers tab or explicit authorized test account. No one was logged out and no customer was impersonated. Real signed-in customer/admin checks need a legitimate session or user-provided test-account access; this remains a rollout check.
 
 Do not merge/deploy until independent security/payment review, operator acceptance of the listed operational tradeoffs, and explicit coordinated authorization. Never rollback to the pre-containment vulnerable deployment.
+
+## Additional unresolved payment-attempt issue
+
+A timeout after GenerateLink may leave an active provider payment page even if the application did not receive its URL. A retry can create another order/link. This PR does not add a persistent payment-attempt idempotency key or a provider-page cancellation protocol. Do not claim the whole payment journey is fully idempotent: finalization is idempotent per order/transaction, while payment initiation needs separate coordinated design and provider contract validation.
+
+## Migration and updated evidence
+
+The additive SQL was applied to an isolated PostgreSQL instance initialized from the exact production-containment schema; production was not touched. Eight integration tests now cover last-unit competing buyers, verified-charge inventory/variant errors, cancellation/change during verification, prior-stock rollback, duplicates and draft races. Both verified last-unit buyers retain payment ledger records; exactly one fulfills. No generic unpaid state replaces an inventory-failed verified payment. Database outages before evidence can be persisted still require provider callback retries/operator reconciliation; the application cannot promise persistence while its database is unavailable.

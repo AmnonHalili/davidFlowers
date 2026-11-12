@@ -6,6 +6,7 @@ interface StatusBadgeProps {
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
     const styles = {
+        PAYMENT_REVIEW: "bg-orange-100 text-orange-900 border-orange-300",
         PENDING: "bg-yellow-100 text-yellow-800 border-yellow-200",
         PAID: "bg-blue-100 text-blue-800 border-blue-200",
         SHIPPED: "bg-purple-100 text-purple-800 border-purple-200",
@@ -14,6 +15,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     };
 
     const labels = {
+        PAYMENT_REVIEW: "חיוב אומת — נדרש טיפול",
         PENDING: "ממתין",
         PAID: "שולם",
         SHIPPED: "נשלח",
