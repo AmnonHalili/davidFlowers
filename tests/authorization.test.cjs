@@ -10,7 +10,7 @@ function harness(handler) {
   let identity = null;
   let reads = 0;
   const jar = new Map();
-  const env = { ADMIN_EMAILS: 'owner@example.test', CLERK_SECRET_KEY: 'fake-test-key' };
+  const env = { ADMIN_EMAILS: 'owner@example.test', CLERK_SECRET_KEY: 'fake-test-key', ORDER_ACCESS_SECRET: 'synthetic-order-secret-0123456789012345' };
   const db = new Proxy({}, { get: (_, model) => new Proxy({}, { get: (_, method) => async (args) => {
     reads++; if (handler) return handler(model, method, args); return method === 'findMany' ? [] : null;
   }}) });
@@ -24,10 +24,11 @@ function harness(handler) {
       'server-only': {}, '@clerk/nextjs/server': { currentUser: async () => identity, auth: async () => ({ userId: identity?.id || null }) },
       '@/lib/prisma': { __esModule: true, default: db }, '@prisma/client': { PrismaClient: function() { return db; } },
       'next/server': { NextResponse: class { constructor(body, init) { this.status = init.status; } } }, 'next/navigation': {}, 'next/cache': { revalidatePath() {} }, 'next/headers': { cookies: () => ({ get: k => jar.has(k) ? { value: jar.get(k) } : undefined, set: (k,v) => jar.set(k,v) }) },
-      '@/lib/email': {}, '@/lib/email-service': {}, '@/lib/payplus': {}, 'resend': {}, 'date-fns': {}, crypto,
+      '@/lib/payment-finalization': {}, '@/lib/email': {}, '@/lib/email-service': {}, '@/lib/payplus': {}, 'resend': {}, 'date-fns': {}, crypto,
     };
     vm.runInNewContext(code, { exports, require: name => {
       if (name in mocks) return mocks[name];
+      if (name.startsWith('.')) return load(path.join(path.dirname(file), name) + '.ts');
       if (name.startsWith('@/')) return load('src/' + name.slice(2) + '.ts');
       throw new Error('Unexpected import: ' + name);
     }, process: { env }, Buffer, console, Date });
@@ -71,9 +72,9 @@ test('customer read scope cannot select another owner; guest receipts cannot be 
   assert.equal((await a.customerOrderScope('other')).userId, '__no_authenticated_owner__');
   h.setIdentity(customer); assert.equal((await a.customerOrderScope('other')).user.clerkId, 'customer');
   h.setIdentity(null); a.grantGuestReceipt('own');
-  assert.deepEqual(JSON.parse(JSON.stringify(await a.customerOrderScope('own'))), { id: 'own' });
+  assert.deepEqual(JSON.parse(JSON.stringify(await a.customerOrderScope('own'))), { id: 'own', userId: null });
   assert.equal((await a.customerOrderScope('other')).userId, '__no_authenticated_owner__');
-  h.jar.set('order_receipt', 'other:forged'); assert.equal((await a.customerOrderScope('other')).userId, '__no_authenticated_owner__');
+  h.jar.set('order_receipt_other', 'other:forged'); assert.equal((await a.customerOrderScope('other')).userId, '__no_authenticated_owner__');
 });
 test('repeat sign-in cannot promote and sync never relinks an existing email', async () => {
   const source = fs.readFileSync('src/lib/user-sync.ts', 'utf8');
@@ -101,14 +102,13 @@ test('push subscription API rejects missing session and contaminated role before
 });
 test('draft capture ignores attacker identity and existing paid-order ID', async () => {
   const calls = [];
-  const h = harness((model, method, args) => { calls.push({ model, method, args }); return { id: 'new-draft' }; });
+  const h = harness((model, method, args) => { calls.push({ model, method, args }); return { id: 'new-draft', updatedAt: new Date() }; });
   h.setIdentity(customer);
   const result = await h.load('src/app/actions/order-actions.ts').saveDraftOrder({
     orderId: 'victim-paid-order', clerkId: 'victim', ordererName: 'Fake', ordererPhone: '000', ordererEmail: 'fake@example.test',
     items: [{ productId: 'fake-product', price: 1, quantity: 1 }],
   });
-  assert.equal(result.orderId, 'new-draft'); assert.equal(calls.length, 1);
-  assert.equal(calls[0].method, 'create'); assert.equal(calls[0].args.data.user.connect.clerkId, 'customer');
+  assert.equal(result.success, false); assert.equal(calls.length, 0);
 });
 test('sync creates only customers and cannot relink another Clerk account by verified email', async () => {
   let record = null; let creates = 0;
@@ -124,4 +124,13 @@ test('sync creates only customers and cannot relink another Clerk account by ver
     return args.where.email ? { id: 'existing-owner', clerkId: 'different-clerk' } : null;
   });
   other.setIdentity(customer); assert.equal(await other.load('src/lib/user-sync.ts').syncUser(), null);
+});
+
+test('draft capture without any signing key returns no reusable ID so checkout can create fresh', async () => {
+  const calls = [];
+  const h = harness((model, method, args) => { calls.push({ model, method, args }); return { id: 'new-draft', updatedAt: new Date() }; });
+  delete h.env.ORDER_ACCESS_SECRET; delete h.env.CLERK_SECRET_KEY;
+  const result = await h.load('src/app/actions/order-actions.ts').saveDraftOrder({ ordererName: 'Fake', ordererPhone: '000', ordererEmail: 'fake@example.test',
+    items: [{ productId: 'fake-product', price: 1, quantity: 1 }] });
+  assert.equal(result.success, true); assert.equal(result.orderId, undefined); assert.equal(calls.length, 1);
 });

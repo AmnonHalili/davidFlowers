@@ -1,3 +1,5 @@
+import { validCartItems, usableCoupon } from '@/lib/checkout-validation';
+import { persistDraftOrder } from '@/lib/draft-order';
 import { grantGuestReceipt } from '@/lib/order-access';
 import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
@@ -46,8 +48,8 @@ export async function POST(req: Request) {
         };
 
         // Validation
-        if (!items || items.length === 0) {
-            return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+        if (!validCartItems(items)) {
+            return NextResponse.json({ error: 'Invalid cart quantities' }, { status: 400 });
         }
 
         // Validate all required contact info
@@ -70,13 +72,21 @@ export async function POST(req: Request) {
         // 1. Fetch products to get real prices
         const productIds = items.map((item: any) => item.productId);
         const dbProducts = await prisma.product.findMany({
-            where: { id: { in: productIds } }
+            where: { id: { in: productIds } }, include: { categories: true }
         });
 
         // 2. Validate and Calculate Totals
         let calculatedSubtotal = 0;
         let latestAvailableFrom: Date | null = null;
 
+        const requiredStock = new Map<string, number>();
+        for (const item of items) requiredStock.set(item.productId, (requiredStock.get(item.productId) || 0) + item.quantity);
+        for (const [id, quantity] of requiredStock) {
+            const product = dbProducts.find(p => p.id === id);
+            if (!product || product.stock < quantity || (product.availableFrom && product.availableFrom > new Date() && !product.allowPreorder)) {
+                return NextResponse.json({ error: 'Product unavailable' }, { status: 400 });
+            }
+        }
         const validItems = items.map((item: any) => {
             const product = dbProducts.find(p => p.id === item.productId) as any;
             if (!product) throw new Error(`Product not found: ${item.productId}`);
@@ -91,12 +101,17 @@ export async function POST(req: Request) {
 
             let basePrice = Number(product.price);
 
-            // Extract the variable price based on selected size if applicable
-            if (product.isVariablePrice && item.selectedSize && product.variations) {
-                const variations = product.variations as Record<string, any>;
-                if (variations[item.selectedSize]) {
-                    basePrice = Number(variations[item.selectedSize].price);
-                }
+            if (product.isVariablePrice) {
+                const variations = product.variations as Record<string, any> | null;
+                const size = typeof item.selectedSize === 'string' ? item.selectedSize.trim().toLowerCase() : '';
+                const matches = Object.entries(variations || {}).filter(([key, value]) => key.toLowerCase() === size || value?.label?.toLowerCase() === size);
+                if (!size || matches.length !== 1) throw new Error('Invalid product variant');
+                const [key, variant] = matches[0];
+                const demand = items.filter(other => other.productId === item.productId &&
+                    typeof other.selectedSize === 'string' && [key.toLowerCase(), variant.label?.toLowerCase()].includes(other.selectedSize.trim().toLowerCase()))
+                    .reduce((total, other) => total + other.quantity, 0);
+                if (!Number.isSafeInteger(variant.stock) || variant.stock < demand) throw new Error('Variant unavailable');
+                basePrice = Number(variant.price);
             }
 
             // Calculate effective price (Sale vs Regular)
@@ -104,14 +119,16 @@ export async function POST(req: Request) {
                 price: basePrice,
                 salePrice: product.salePrice ? Number(product.salePrice) : null,
                 saleStartDate: product.saleStartDate,
-                saleEndDate: product.saleEndDate
+                saleEndDate: product.saleEndDate, categories: product.categories
             });
 
-            calculatedSubtotal += effectivePrice * item.quantity;
+            if (!Number.isFinite(effectivePrice) || effectivePrice < 0) throw new Error('Invalid product price');
+            const unitPrice = Math.round(effectivePrice * 100) / 100;
+            calculatedSubtotal = Math.round((calculatedSubtotal + unitPrice * item.quantity) * 100) / 100;
 
             return {
                 ...item,
-                price: effectivePrice // Override client price with server price
+                price: unitPrice // Override client price with server price
             };
         });
 
@@ -164,6 +181,7 @@ export async function POST(req: Request) {
         if (couponId) {
             const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
 
+            if (!usableCoupon(coupon)) return NextResponse.json({ error: 'Coupon unavailable' }, { status: 400 });
             if (coupon) {
                 // Validation: First Order Only
                 if (coupon.isFirstOrderOnly) {
@@ -173,7 +191,7 @@ export async function POST(req: Request) {
                                 ...(userId ? [{ user: { clerkId: userId } }] : []),
                                 { ordererEmail: ordererEmail }
                             ],
-                            status: { not: 'CANCELLED' }
+                            status: { in: ['PAID', 'SHIPPED', 'DELIVERED'] }
                         }
                     });
 
@@ -198,7 +216,9 @@ export async function POST(req: Request) {
 
         // Final Calculation
         // Discount applies to subtotal, shipping is added after
-        const totalAmount = Math.max(0, calculatedSubtotal - discountAmount + finalShippingCost);
+        discountAmount = Math.round(discountAmount * 100) / 100;
+        const totalAmount = Math.max(0, Math.round((calculatedSubtotal - discountAmount + finalShippingCost) * 100) / 100);
+        if (totalAmount <= 0) return NextResponse.json({ error: 'Invalid payment amount' }, { status: 400 });
 
         // 3. CREATE OR UPDATE ORDER IN DATABASE (PENDING STATUS)
         const orderData = {
@@ -231,7 +251,7 @@ export async function POST(req: Request) {
             }
         };
 
-        const order = await prisma.order.create({ data: orderData });
+        const order = await persistDraftOrder(orderData, orderId, true);
 
         // 2. UPDATE USER PROFILE (If logged in)
         if (userId) {
@@ -257,7 +277,7 @@ export async function POST(req: Request) {
             customerEmail: ordererEmail // Use input email
         });
 
-        grantGuestReceipt(order.id);
+        if (!userId && !order.userId) grantGuestReceipt(order.id);
         return NextResponse.json({
             url: paymentUrl,
             orderId: order.id

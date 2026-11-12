@@ -14,6 +14,7 @@ import {
 
 interface OrderConfirmationEmailProps {
     orderNumber: string;
+    receiptUrl?: string;
     customerName: string;
     items: Array<{
         name: string;
@@ -29,6 +30,7 @@ interface OrderConfirmationEmailProps {
 
 export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
     orderNumber,
+    receiptUrl,
     customerName,
     items,
     totalAmount,
@@ -62,6 +64,10 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
                         <Text style={orderNumberValue}>{orderNumber}</Text>
                     </Section>
 
+                    {receiptUrl && <Text style={paragraph}>
+                        <a href={receiptUrl}>צפייה מאובטחת בהזמנה</a><br />
+                        הקישור אישי ותקף לשבעה ימים. אין להעבירו לאחרים. בהזמנה שבוצעה בחשבון יש להתחבר לחשבון המזמין.
+                    </Text>}
                     {/* Order Items */}
                     <Heading style={sectionTitle}>פרטי ההזמנה</Heading>
                     {items.map((item, index) => (

@@ -2,6 +2,9 @@
 
 import { requireAdmin } from '@/lib/admin-auth';
 
+import { validCartItems } from '@/lib/checkout-validation';
+import { orderCapabilitiesAvailable } from '@/lib/order-capabilities';
+import { persistDraftOrder } from '@/lib/draft-order';
 import { auth } from '@clerk/nextjs/server';
 import { customerOrderScope } from '@/lib/order-access';
 import prisma from '@/lib/prisma';
@@ -84,7 +87,7 @@ export async function saveDraftOrder(data: {
         const { userId: clerkId } = await auth();
 
         // Basic validation
-        if (!items || items.length === 0 || !ordererPhone || !ordererName) {
+        if (!validCartItems(items) || !ordererPhone || !ordererName) {
             return { success: false, error: 'Missing basic info' };
         }
 
@@ -110,9 +113,9 @@ export async function saveDraftOrder(data: {
             }
         };
 
-        const order = await prisma.order.create({ data: orderData });
+        const order = await persistDraftOrder(orderData, data.orderId, false);
 
-        return { success: true, orderId: order.id };
+        return { success: true, orderId: orderCapabilitiesAvailable() ? order.id : undefined };
     } catch (error) {
         console.error('Error saving draft order:', error);
         return { success: false, error: 'Failed to save draft' };

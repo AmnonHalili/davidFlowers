@@ -402,7 +402,10 @@ export default function CartDrawer() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Checkout failed');
+            if (!response.ok) {
+                setDraftOrderId(null); // A stale/used draft must not be retried as an update.
+                throw new Error('Checkout failed');
+            }
 
             const data = await response.json();
 
@@ -1186,7 +1189,6 @@ export default function CartDrawer() {
                                                                 ordererName,
                                                                 ordererPhone,
                                                                 ordererEmail,
-                                                                clerkId: clerkUser?.id,
                                                                 orderId: draftOrderId || undefined
                                                             });
                                                             if (res.success && res.orderId) {
