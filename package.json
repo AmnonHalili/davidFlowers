@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
-    "test:authorization": "node --test tests/authorization.test.cjs"
+    "test:authorization": "node --test tests/authorization.test.cjs",
+    "test:security": "node --test tests/authorization.test.cjs tests/order-capabilities.test.cjs tests/checkout-input.test.cjs tests/payment.test.cjs",
+    "test:payments:postgres": "node --test tests/payment-postgres.test.cjs"
   },
   "dependencies": {
     "@clerk/localizations": "^3.32.1",

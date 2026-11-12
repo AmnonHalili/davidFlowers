@@ -1,98 +1,53 @@
-import { logger } from "@/lib/logger";
+import 'server-only';
 
-export async function verifyPayPlusTransaction(transactionUid: string, expectedOrderId: string): Promise<boolean> {
-    const payPlusApiKey = process.env.PAYPLUS_API_KEY || process.env.PAY_PLUS_API_KEY;
-    const payPlusSecretKey = process.env.PAYPLUS_SECRET_KEY || process.env.PAY_PLUS_SECRET_KEY;
-    const payPlusTerminalId = process.env.PAYPLUS_TERMINAL_ID;
+export type ExpectedPayment = { orderId: string; transactionUid: string; amount: string; currency: 'ILS'; terminalUid: string };
+export type VerifiedPayment = { orderId: string; transactionUid: string; amountMinor: number; currency: 'ILS' };
 
-    if (!payPlusApiKey || !payPlusSecretKey) {
-        console.error('[PAYPLUS_WEBHOOK] Missing verification configuration');
-        return false;
-    }
+// Do not use binary floating-point rounding to turn a mismatched amount into a match.
+export function moneyToMinor(value: unknown): number | null {
+    if (typeof value !== 'string' && typeof value !== 'number') return null;
+    const text = String(value);
+    if (!/^\d+(?:\.\d{1,2})?$/.test(text)) return null;
+    const [whole, fraction = ''] = text.split('.');
+    const result = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+    return Number.isSafeInteger(result) && result > 0 ? result : null;
+}
 
+// Official Transactions/View 200 response: results + data[]; no callback fields are trusted.
+// https://docs.payplus.co.il/reference/post_transactions-view
+export function parseVerifiedPayment(payload: unknown, expected: ExpectedPayment): VerifiedPayment | null {
+    if (!payload || typeof payload !== 'object') return null;
+    const response = payload as any;
+    if (response.results?.status !== 'success' || response.results?.code !== 0 || !Array.isArray(response.data) || response.data.length !== 1) return null;
+    const entry = response.data[0];
+    const transaction = entry?.transaction;
+    const amountMinor = moneyToMinor(transaction?.amount);
+    const expectedMinor = moneyToMinor(expected.amount);
+    if (!transaction || transaction.transaction_uid !== expected.transactionUid || transaction.more_info !== expected.orderId ||
+        transaction.transaction_type !== 'Charge' || transaction.status_code !== '000' || transaction.transaction_is_cancelled !== false ||
+        transaction.currency !== expected.currency || entry.data?.terminal_uid !== expected.terminalUid ||
+        amountMinor === null || expectedMinor === null || amountMinor !== expectedMinor) return null;
+    return { orderId: expected.orderId, transactionUid: expected.transactionUid, amountMinor, currency: expected.currency };
+}
+
+export async function verifyPayPlusTransaction(transactionUid: string, orderId: string, amount: string): Promise<VerifiedPayment | null> {
+    const apiKey = process.env.PAYPLUS_API_KEY || process.env.PAY_PLUS_API_KEY;
+    const secretKey = process.env.PAYPLUS_SECRET_KEY || process.env.PAY_PLUS_SECRET_KEY;
+    const terminalUid = process.env.PAYPLUS_TERMINAL_ID;
+    if (!apiKey || !secretKey || !terminalUid) return null;
     try {
-        console.log(`[PAYPLUS_VERIFY] Verifying transaction ${transactionUid} for order ${expectedOrderId}`);
-
-        // Try Transactions/GetStatus with terminal_uid
-        const response = await fetch(
-            `https://restapi.payplus.co.il/api/v1.0/Transactions/GetStatus`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': JSON.stringify({
-                        'api_key': payPlusApiKey,
-                        'secret_key': payPlusSecretKey
-                    }),
-                    'api-key': payPlusApiKey,
-                    'secret-key': payPlusSecretKey,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    transaction_uid: transactionUid,
-                    terminal_uid: payPlusTerminalId // Some endpoints require identifying the terminal
-                })
-            }
-        );
-
+        const response = await fetch('https://restapi.payplus.co.il/api/v1.0/Transactions/View', {
+            method: 'POST', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(10000),
+            headers: { 'api-key': apiKey, 'secret-key': secretKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transaction_uid: transactionUid }),
+        });
         if (!response.ok) {
-            const errorText = await response.text();
-
-            // If it's a 403, it's likely IP restriction on PayPlus side (common with Vercel)
-            // Log the restriction but keep verification fail-closed.
-            if (response.status === 403) {
-                console.warn(`[PAYPLUS_VERIFY] 403 Forbidden: API restricted (likely IP). Payment remains unverified.`);
-                await logger.warn('PayPlus Verification API Restricted (403)', 'PayPlusVerify', {
-                    note: 'PayPlus GetStatus API returned 403. This is often an IP whitelist requirement. Payment remains unverified and requires operator reconciliation.',
-                    transactionUid
-                });
-            } else {
-                console.error(`[PAYPLUS_VERIFY] API error: ${response.status} - ${errorText}`);
-                await logger.error('PayPlus Verification API Error', 'PayPlusVerify', {
-                    status: response.status,
-                    body: errorText
-                });
-            }
-            return false;
+            console.error('Payment verification unavailable', { status: response.status });
+            return null;
         }
-
-        const result = await response.json();
-
-        if (result.status === 'error') {
-            console.error(`[PAYPLUS_VERIFY] PayPlus returned error:`, result);
-            await logger.error('PayPlus Verification Returned Error', 'PayPlusVerify', { result });
-            return false;
-        }
-
-        const transaction = result.data;
-        if (!transaction) {
-            await logger.error('Verification Failed: No Transaction Data', 'PayPlusVerify', { result });
-            return false;
-        }
-
-        // Verify transaction details
-        if (transaction.status_code !== '000') {
-            console.error(`[PAYPLUS_VERIFY] Transaction failed with status: ${transaction.status_code}`);
-            await logger.error('Verification Failed: Bad Status', 'PayPlusVerify', { statusCode: transaction.status_code, transaction });
-            return false;
-        }
-
-        // more_info field in PayPlus contains the exact Order ID (passed during checkout)
-        if (transaction.more_info !== expectedOrderId) {
-            console.error(`[PAYPLUS_VERIFY] Order ID mismatch: ${transaction.more_info} !== ${expectedOrderId}`);
-            await logger.error('Verification Failed: Order ID Mismatch', 'PayPlusVerify', {
-                expected: expectedOrderId,
-                received: transaction.more_info,
-                full_transaction: transaction
-            });
-            return false;
-        }
-
-        console.log(`✅ Transaction ${transactionUid} verified successfully`);
-        return true;
-
-    } catch (error: any) {
-        console.error('[PAYPLUS_VERIFY_ERROR]', error);
-        await logger.error('Verification Logic Exception', 'PayPlusVerify', { message: error.message });
-        return false;
+        return parseVerifiedPayment(await response.json(), { orderId, transactionUid, amount, currency: 'ILS', terminalUid });
+    } catch {
+        console.error('Payment verification failed');
+        return null;
     }
 }
