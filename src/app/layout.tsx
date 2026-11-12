@@ -1,3 +1,4 @@
+import { isAdminIdentity } from '@/lib/admin-auth';
 import type { Metadata } from 'next';
 import { Heebo, Frank_Ruhl_Libre, Bellefair, Assistant } from 'next/font/google';
 import './globals.css';
@@ -120,29 +121,7 @@ export default async function RootLayout({
     }
   }
 
-  let isAdmin = false;
-
-  if (user) {
-    try {
-      const dbUser = await prisma.user.findUnique({
-        where: { clerkId: user.id }
-      });
-
-      const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.replace(/['"]+/g, '').trim().toLowerCase());
-      const userEmail = user.emailAddresses[0]?.emailAddress?.toLowerCase();
-
-      if (dbUser?.role === 'ADMIN' || (userEmail && adminEmails.includes(userEmail))) {
-        isAdmin = true;
-      }
-    } catch (error) {
-      console.error("Layout: Failed to check admin status", error);
-    }
-  }
-
-  // FORCE ADMIN IN DEVELOPMENT
-  if (process.env.NODE_ENV === 'development') {
-    isAdmin = true;
-  }
+  const isAdmin = isAdminIdentity(user);
 
   // Fetch Announcement Bar Config
   const announcementConfig = await getSiteConfig('announcement_bar');

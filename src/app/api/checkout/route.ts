@@ -1,3 +1,4 @@
+import { grantGuestReceipt } from '@/lib/order-access';
 import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
@@ -230,21 +231,7 @@ export async function POST(req: Request) {
             }
         };
 
-        let order;
-        if (orderId) {
-            // If we have a draft order, clear old items and update
-            await prisma.orderItem.deleteMany({ where: { orderId } });
-            order = await prisma.order.update({
-                where: { id: orderId },
-                data: orderData
-            });
-            console.log(`✅ Draft Order updated: ${order.id}`);
-        } else {
-            order = await prisma.order.create({
-                data: orderData
-            });
-            console.log(`✅ New Order created: ${order.id}`);
-        }
+        const order = await prisma.order.create({ data: orderData });
 
         // 2. UPDATE USER PROFILE (If logged in)
         if (userId) {
@@ -270,6 +257,7 @@ export async function POST(req: Request) {
             customerEmail: ordererEmail // Use input email
         });
 
+        grantGuestReceipt(order.id);
         return NextResponse.json({
             url: paymentUrl,
             orderId: order.id
@@ -298,8 +286,7 @@ async function createPayPlusPayment(data: {
 
     // MOCK MODE - Development without API keys
     if (!payPlusApiKey || !payPlusSecretKey || !payPlusTerminalId) {
-        console.warn('⚠️  Pay Plus not configured - using MOCK mode');
-        return `${process.env.NEXT_PUBLIC_APP_URL}/success?orderId=${orderId}&mock=true`;
+        throw new Error('Payment configuration unavailable');
     }
 
     // REAL PAY PLUS MODE

@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
 import { Mail, Copy, Download, Users } from 'lucide-react';
 import { Metadata } from 'next';
@@ -39,6 +40,7 @@ async function getSubscribers() {
 }
 
 export default async function MarketingPage() {
+    await requireAdmin();
     const subscribers = await getSubscribers();
 
     return (

@@ -1,3 +1,5 @@
+import { currentUser } from '@clerk/nextjs/server';
+import { isAdminIdentity } from '@/lib/admin-auth';
 import { syncUser } from '@/lib/user-sync';
 import { SignOutButton } from '@clerk/nextjs';
 import { Package, Calendar, Settings, LogOut, ShoppingBag, Clock, CheckCircle, XCircle } from 'lucide-react';
@@ -9,6 +11,7 @@ const prisma = new PrismaClient();
 
 export default async function AccountPage() {
     const user = await syncUser();
+    const isAdmin = isAdminIdentity(await currentUser());
 
     if (!user) {
         return <div>Connecting...</div>;
@@ -47,9 +50,9 @@ export default async function AccountPage() {
                     </div>
                     <div className="flex flex-col gap-2">
                         <div className="bg-stone-900 text-white px-6 py-2 text-sm rounded-full text-center">
-                            {user.role === 'ADMIN' ? 'מנהל מערכת' : 'חבר מועדון'}
+                            {isAdmin ? 'מנהל מערכת' : 'חבר מועדון'}
                         </div>
-                        {user.role === 'ADMIN' && (
+                        {isAdmin && (
                             <Link href="/admin" className="text-xs text-center border-b border-stone-900 pb-0.5 hover:opacity-70">
                                 כניסה לממשק ניהול ←
                             </Link>

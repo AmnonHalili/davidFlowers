@@ -1,5 +1,7 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 import { PrismaClient } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
@@ -18,6 +20,7 @@ export async function getSiteConfig(key: string) {
 }
 
 export async function updateSiteConfig(key: string, value: any) {
+    await requireAdmin();
     try {
         await prisma.siteConfig.upsert({
             where: { key },

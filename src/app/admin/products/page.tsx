@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PrismaClient, Prisma } from '@prisma/client';
@@ -17,6 +18,7 @@ export default async function ProductsPage({
         category?: string;
     };
 }) {
+    await requireAdmin();
     const query = searchParams?.search || '';
     const categorySlug = searchParams?.category;
 

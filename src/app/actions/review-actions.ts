@@ -1,5 +1,8 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
+import { auth } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
 import { ReviewStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
@@ -18,9 +21,10 @@ export async function createReview(data: {
         let isVerified = false;
 
         // If a Clerk ID is provided, find the corresponding database user record
-        if (data.userId) {
+        const { userId } = await auth();
+        if (userId) {
             const user = await prisma.user.findUnique({
-                where: { clerkId: data.userId },
+                where: { clerkId: userId },
                 select: { id: true }
             });
 
@@ -145,6 +149,7 @@ export async function getProductRatingSummary(productId: string) {
 }
 
 export async function getAllReviews(): Promise<{ success: true; reviews: any[] } | { success: false; error: string }> {
+    await requireAdmin();
     try {
         const reviews = await prisma.review.findMany({
             include: {
@@ -168,6 +173,7 @@ export async function getAllReviews(): Promise<{ success: true; reviews: any[] }
 }
 
 export async function updateReviewStatus(reviewId: string, status: 'APPROVED' | 'REJECTED' | 'PENDING') {
+    await requireAdmin();
     try {
         const review = await prisma.review.update({
             where: { id: reviewId },
@@ -187,6 +193,7 @@ export async function updateReviewStatus(reviewId: string, status: 'APPROVED' | 
 }
 
 export async function deleteReview(reviewId: string) {
+    await requireAdmin();
     try {
         await prisma.review.delete({
             where: { id: reviewId }

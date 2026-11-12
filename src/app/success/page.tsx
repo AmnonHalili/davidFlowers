@@ -1,3 +1,4 @@
+import { customerOrderScope } from '@/lib/order-access';
 import Link from 'next/link';
 import { CheckCircle2, Package, MapPin, Calendar, ArrowLeft } from 'lucide-react';
 import { PrismaClient } from '@prisma/client';
@@ -7,8 +8,8 @@ import PurchaseEvent from '@/components/analytics/PurchaseEvent';
 const prisma = new PrismaClient();
 
 async function getOrder(orderId: string) {
-    return await prisma.order.findUnique({
-        where: { id: orderId },
+    return await prisma.order.findFirst({
+        where: await customerOrderScope(orderId),
         include: {
             coupon: true,
             items: {
@@ -58,11 +59,11 @@ export default async function SuccessPage({
 
     const order = await getOrder(orderId);
 
-    if (!order) {
+    if (!order || !['PAID', 'SHIPPED', 'DELIVERED'].includes(order.status)) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
                 <h1 className="text-2xl font-bold mb-4">שגיאה בטעינת ההזמנה</h1>
-                <p className="text-stone-500 mb-6">לא הצלחנו למצוא את פרטי ההזמנה המבוקשת.</p>
+                <p className="text-stone-500 mb-6">פרטי ההזמנה זמינים לאחר אישור התשלום, בחשבון המזמין או בדפדפן שבו בוצעה הרכישה. אם חויבתם והאישור מתעכב, פנו לחנות.</p>
                 <Link href="/" className="text-david-green hover:underline">חזרה לדף הבית</Link>
             </div>
         );

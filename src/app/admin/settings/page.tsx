@@ -1,7 +1,9 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import { getSiteConfig } from '@/app/actions/site-config-actions';
 import AnnouncementSettingsForm from '@/components/admin/AnnouncementSettingsForm';
 
 export default async function SettingsPage() {
+    await requireAdmin();
     const config = await getSiteConfig('announcement_bar');
 
     const initialConfig = config || {

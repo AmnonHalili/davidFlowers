@@ -1,9 +1,12 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 import prisma from '@/lib/prisma';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
 
 export async function getMonthlyReport(year: number, month: number) {
+    await requireAdmin();
     // Note: month is 1-12
     const startDate = new Date(year, month - 1, 1);
     const endDate = endOfMonth(startDate);

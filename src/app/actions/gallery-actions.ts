@@ -1,5 +1,7 @@
 'use server';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
@@ -12,12 +14,14 @@ export async function getGalleryImages() {
 }
 
 export async function getAllGalleryImages() {
+    await requireAdmin();
     return await prisma.galleryImage.findMany({
         orderBy: { takenAt: 'desc' },
     });
 }
 
 export async function addGalleryImage(data: { url: string; caption?: string }) {
+    await requireAdmin();
     const image = await prisma.galleryImage.create({
         data: {
             url: data.url,
@@ -31,6 +35,7 @@ export async function addGalleryImage(data: { url: string; caption?: string }) {
 }
 
 export async function toggleGalleryImageVisibility(id: string) {
+    await requireAdmin();
     const current = await prisma.galleryImage.findUnique({ where: { id } });
     if (!current) return { success: false };
 
@@ -44,6 +49,7 @@ export async function toggleGalleryImageVisibility(id: string) {
 }
 
 export async function deleteGalleryImage(id: string) {
+    await requireAdmin();
     await prisma.galleryImage.delete({ where: { id } });
     revalidatePath('/');
     revalidatePath('/admin/gallery');

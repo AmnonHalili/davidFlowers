@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/admin-auth';
 import { getOrders } from "@/app/actions/order-actions";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import Link from "next/link";
@@ -12,6 +13,7 @@ export default async function AdminOrdersPage({
 }: {
     searchParams: { status?: string }
 }) {
+    await requireAdmin();
     const status = searchParams.status as OrderStatus | undefined;
     const orders = await getOrders(status);
     const TIME_ZONE = 'Asia/Jerusalem';

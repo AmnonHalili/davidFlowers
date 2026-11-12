@@ -6,8 +6,8 @@ export async function verifyPayPlusTransaction(transactionUid: string, expectedO
     const payPlusTerminalId = process.env.PAYPLUS_TERMINAL_ID;
 
     if (!payPlusApiKey || !payPlusSecretKey) {
-        console.warn('[PAYPLUS_WEBHOOK] Missing API keys - skipping verification in dev/mock mode');
-        return true;
+        console.error('[PAYPLUS_WEBHOOK] Missing verification configuration');
+        return false;
     }
 
     try {
