@@ -58,7 +58,7 @@ export async function preparePaymentAttempt(orderId?: string) {
             } else {
                 const order = await prisma.order.findUnique({ where: { id: active.orderId }, select: { totalAmount: true } });
                 grantAttempt(active);
-                return { attemptId: active.id, orderId: active.orderId, state: active.state,
+                return { attemptId: active.id, orderId: active.orderId, state: result.state,
                     resumeRequired: active.orderId !== orderId, amount: order?.totalAmount.toString() };
             }
         }
@@ -84,12 +84,12 @@ export async function paymentAttemptResult(attempt: PaymentAttempt) {
     // The ledger is authoritative even if the subsequent attempt-state write failed or crashed.
     // Recheck immediately before exposing a URL, including the initial GenerateLink response.
     const fact = await prisma.paymentVerification.findFirst({ where: { orderId: attempt.orderId }, select: { transactionId: true } });
-    const order = await prisma.order.findUnique({ where: { id: attempt.orderId }, select: { status: true, payplusTransactionId: true } });
+    const order = await prisma.order.findUnique({ where: { id: attempt.orderId }, select: { status: true, payplusTransactionId: true, shippingAddress: true } });
     if (!order) throw new Error('Checkout order unavailable');
     if (fact || order.payplusTransactionId || ['PAID', 'SHIPPED', 'DELIVERED', 'PAYMENT_REVIEW'].includes(order.status)) {
         return { state: 'VERIFIED' as const, orderId: attempt.orderId };
     }
-    if (attempt.state === 'LINK_READY' && attempt.paymentUrl) return { state: 'LINK_READY' as const, url: attempt.paymentUrl, orderId: attempt.orderId };
+    if (attempt.state === 'LINK_READY' && attempt.paymentUrl && order.status === 'PENDING' && order.shippingAddress !== 'Draft') return { state: 'LINK_READY' as const, url: attempt.paymentUrl, orderId: attempt.orderId };
     if (attempt.state === 'VERIFIED') return { state: 'VERIFIED' as const, orderId: attempt.orderId };
     return { state: 'UNRESOLVED' as const, orderId: attempt.orderId,
         message: 'ניסיון התשלום עדיין בבדיקה. אין להתחיל תשלום חדש. נסו לבדוק את אותו ניסיון שוב או פנו לחנות.' };

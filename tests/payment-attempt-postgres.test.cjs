@@ -127,4 +127,19 @@ else {
     assert.equal((await f.readPaymentAttempt(p.attemptId)).state, 'VERIFIED');
   });
 
+  test('cancelled or draft orders never reissue a saved link on read or resume', async () => {
+    const f = await fixture(); const p = await f.preparePaymentAttempt(f.order.id); let calls = 0;
+    const gateway = async () => { calls++; return 'https://synthetic.example.test/payment'; };
+    await f.initiatePaymentAttempt(p.attemptId, f.data, gateway);
+    for (const data of [{ status: 'CANCELLED' }, { status: 'PENDING', shippingAddress: 'Draft' }]) {
+      await db.order.update({ where: { id: f.order.id }, data });
+      const read = await f.readPaymentAttempt(p.attemptId);
+      assert.equal(read.state, 'UNRESOLVED'); assert.equal(read.url, undefined);
+      const resumed = await f.preparePaymentAttempt(); assert.equal(resumed.attemptId, p.attemptId); assert.equal(resumed.state, 'UNRESOLVED');
+      const retry = await f.initiatePaymentAttempt(p.attemptId, f.data, gateway);
+      assert.equal(retry.state, 'UNRESOLVED'); assert.equal(retry.url, undefined);
+      assert.equal(calls, 1);
+    }
+  });
+
 }
