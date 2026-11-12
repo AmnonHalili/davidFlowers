@@ -341,3 +341,18 @@ model PaymentVerification {
   @@index([orderId])
   @@index([fulfillmentState])
 }
+
+// One irreversible provider-link attempt per prepared order. Unknown outcomes are never auto-retried.
+model PaymentAttempt {
+  id                 String   @id @default(cuid())
+  orderId            String   @unique
+  subject            String?
+  draftVersion       DateTime
+  state              String   @default("PREPARED")
+  requestFingerprint String?
+  paymentUrl         String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([state])
+}

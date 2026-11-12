@@ -5,14 +5,14 @@ import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { issueOrderCapability, verifyOrderCapability, DRAFT_LIFETIME_SECONDS } from './order-capabilities';
 
-const cookieName = (id: string) => `order_draft_${id}`;
+export const draftCookieName = (id: string) => `order_draft_${id}`;
 
 // Nested item replacement and the PENDING/version/ownership predicates are one atomic DB write.
 export async function persistDraftOrder(data: Prisma.OrderCreateInput, orderId: string | undefined, finalize: boolean) {
     const { userId } = await auth();
     let order;
     if (orderId) {
-        const grant = verifyOrderCapability(cookies().get(cookieName(orderId))?.value, 'draft');
+        const grant = verifyOrderCapability(cookies().get(draftCookieName(orderId))?.value, 'draft');
         if (!grant || grant.orderId !== orderId || grant.subject !== userId) throw new Error('Draft access expired; start a new checkout');
         order = await prisma.order.update({
             where: {
@@ -30,11 +30,11 @@ export async function persistDraftOrder(data: Prisma.OrderCreateInput, orderId: 
         order = await prisma.order.create({ data });
     }
     if (finalize) {
-        cookies().delete(cookieName(order.id));
+        cookies().delete(draftCookieName(order.id));
     } else {
         const token = issueOrderCapability({ purpose: 'draft', orderId: order.id, subject: userId,
             version: order.updatedAt.toISOString(), expiresAt: Date.now() + DRAFT_LIFETIME_SECONDS * 1000 });
-        if (token) cookies().set(cookieName(order.id), token, {
+        if (token) cookies().set(draftCookieName(order.id), token, {
             httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/',
             maxAge: DRAFT_LIFETIME_SECONDS,
         });

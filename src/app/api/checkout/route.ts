@@ -1,6 +1,5 @@
 import { validCartItems, usableCoupon } from '@/lib/checkout-validation';
-import { persistDraftOrder } from '@/lib/draft-order';
-import { grantGuestReceipt } from '@/lib/order-access';
+import { initiatePaymentAttempt, readPaymentAttempt } from '@/lib/payment-attempt';
 import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
@@ -31,7 +30,7 @@ export async function POST(req: Request) {
             selectedCity,
             shippingCost: clientShippingCost = 0,
             newsletterConsent, // Added
-            orderId // 🆕 Support for updating a draft
+            attemptId // Server-issued, durable payment-link attempt
         } = body;
 
         const SHIPPING_COSTS: Record<string, number> = {
@@ -46,6 +45,10 @@ export async function POST(req: Request) {
             'בת הדר': 45,
             'כפר סילבר': 45
         };
+
+        if (typeof attemptId !== 'string') return NextResponse.json({ error: 'Payment attempt required' }, { status: 400 });
+        const priorAttempt = await readPaymentAttempt(attemptId);
+        if (priorAttempt) return NextResponse.json(priorAttempt, { status: priorAttempt.state === 'UNRESOLVED' ? 202 : 200, headers: { 'Cache-Control': 'no-store' } });
 
         // Validation
         if (!validCartItems(items)) {
@@ -251,40 +254,11 @@ export async function POST(req: Request) {
             }
         };
 
-        const order = await persistDraftOrder(orderData, orderId, true);
-
-        // 2. UPDATE USER PROFILE (If logged in)
-        if (userId) {
-            await prisma.user.update({
-                where: { clerkId: userId },
-                data: {
-                    phone: ordererPhone,
-                    // Don't override name with recipient name anymore, maybe ordererName?
-                    // Let's keep existing logic or maybe update name if empty?
-                    // User might be ordering for someone else, so changing their profile name to recipient name is bad specificially in this new flow.
-                    // But maybe update address if delivery?
-                    ...(shippingMethod === 'delivery' && shippingAddress ? { address: `${shippingAddress}, ${selectedCity}` } : {}),
-                }
-            }).catch(err => console.error('Error updating user profile:', err));
-        }
-
-        // 3. CREATE PAY PLUS PAYMENT
-        const paymentUrl = await createPayPlusPayment({
-            orderId: order.id,
-            amount: Number(totalAmount),
-            customerName: ordererName, // Use Orderer Name for billing
-            customerPhone: ordererPhone,
-            customerEmail: ordererEmail // Use input email
-        });
-
-        if (!userId && !order.userId) grantGuestReceipt(order.id);
-        return NextResponse.json({
-            url: paymentUrl,
-            orderId: order.id
-        });
+        const result = await initiatePaymentAttempt(attemptId, orderData, createPayPlusPayment);
+        return NextResponse.json(result, { status: result.state === 'UNRESOLVED' ? 202 : 200, headers: { 'Cache-Control': 'no-store' } });
 
     } catch (error) {
-        console.error('[CHECKOUT_ERROR]', error);
+        console.error('Checkout attempt could not be completed');
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -317,7 +291,7 @@ async function createPayPlusPayment(data: {
 
         // Correct endpoint according to latest documentation
         const response = await fetch('https://restapi.payplus.co.il/api/v1.0/PaymentPages/generateLink', {
-            method: 'POST',
+            method: 'POST', redirect: 'error', signal: AbortSignal.timeout(15000),
             headers: {
                 'Authorization': JSON.stringify({
                     'api_key': payPlusApiKey,
@@ -351,12 +325,12 @@ async function createPayPlusPayment(data: {
         const result = await response.json();
 
         if (!response.ok) {
-            console.error(`[PAY_PLUS_ERROR] Status: ${response.status}`, result);
+            console.error('Payment link request failed', { status: response.status });
             throw new Error(`Pay Plus API error: ${result.message || result.status_text || response.status}`);
         }
 
         if (result.status === 'error' || !result.data?.payment_page_link) {
-            console.error('[PAY_PLUS_ERROR] API returned error state:', result);
+            console.error('Payment link response could not be confirmed');
             throw new Error(result.message || 'No payment link returned from Pay Plus');
         }
 
@@ -364,7 +338,7 @@ async function createPayPlusPayment(data: {
         return result.data.payment_page_link;
 
     } catch (error: any) {
-        console.error('[PAY_PLUS_ERROR] Process failed:', error);
+        console.error('Payment link outcome is unresolved');
         // Throw the error instead of falling back to mock success in production
         throw new Error(`PayPlus failed: ${error.message}`);
     }

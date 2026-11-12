@@ -2,7 +2,7 @@ import 'server-only';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 export type OrderCapability = {
-    purpose: 'receipt' | 'draft';
+    purpose: 'receipt' | 'draft' | 'checkout';
     orderId: string;
     expiresAt: number;
     subject?: string | null;
@@ -40,9 +40,10 @@ export function verifyOrderCapability(token: string | undefined, purpose: OrderC
         const claims = JSON.parse(Buffer.from(parts[0], 'base64url').toString()) as OrderCapability;
         if (claims.purpose !== purpose || typeof claims.orderId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(claims.orderId)) return null;
         if (!Number.isSafeInteger(claims.expiresAt) || claims.expiresAt <= now) return null;
-        const maxLifetime = purpose === 'receipt' ? RECEIPT_LIFETIME_SECONDS : DRAFT_LIFETIME_SECONDS;
+        const maxLifetime = purpose === 'draft' ? DRAFT_LIFETIME_SECONDS : RECEIPT_LIFETIME_SECONDS;
         if (claims.expiresAt > now + maxLifetime * 1000) return null;
         if (purpose === 'receipt' && (process.env.ORDER_RECEIPT_REVOKED_IDS || '').split(',').map(id => id.trim()).includes(claims.orderId)) return null;
+        if (purpose === 'checkout' && !(claims.subject === null || typeof claims.subject === 'string')) return null;
         if (purpose === 'draft' && (typeof claims.version !== 'string' || !Number.isFinite(Date.parse(claims.version)) || !(claims.subject === null || typeof claims.subject === 'string'))) return null;
         return claims;
     } catch { return null; }

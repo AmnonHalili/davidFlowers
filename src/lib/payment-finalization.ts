@@ -26,6 +26,7 @@ export async function finalizePayment(orderId: string, transactionUid: string) {
         create: { transactionId: transactionUid, orderId, amount: snapshot.totalAmount, currency: verified.currency, orderStatusAtVerification: snapshot.status },
     });
     if (fact.orderId !== orderId || fact.amount.toString() !== snapshot.totalAmount.toString() || fact.currency !== verified.currency) return reviewRequired();
+    await prisma.paymentAttempt.updateMany({ where: { orderId }, data: { state: 'VERIFIED' } });
     if (fact.fulfillmentState === 'FULFILLED' || snapshot.status !== 'PENDING' || snapshot.payplusTransactionId) return reviewRequired(); // Keep cancellation state; the durable charge fact remains in the review queue.
     const paymentClaim = await prisma.order.updateMany({
         where: { id: orderId, status: 'PENDING', payplusTransactionId: null, totalAmount: snapshot.totalAmount,
