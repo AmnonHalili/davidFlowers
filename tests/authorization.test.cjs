@@ -6,13 +6,13 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const crypto = require('node:crypto');
 
-function harness() {
+function harness(handler) {
   let identity = null;
   let reads = 0;
   const jar = new Map();
   const env = { ADMIN_EMAILS: 'owner@example.test', CLERK_SECRET_KEY: 'fake-test-key' };
   const db = new Proxy({}, { get: (_, model) => new Proxy({}, { get: (_, method) => async (args) => {
-    reads++; return method === 'findMany' ? [] : null;
+    reads++; if (handler) return handler(model, method, args); return method === 'findMany' ? [] : null;
   }}) });
   const cache = {};
   function load(file) {
@@ -23,7 +23,7 @@ function harness() {
     const mocks = {
       'server-only': {}, '@clerk/nextjs/server': { currentUser: async () => identity, auth: async () => ({ userId: identity?.id || null }) },
       '@/lib/prisma': { __esModule: true, default: db }, '@prisma/client': { PrismaClient: function() { return db; } },
-      'next/navigation': {}, 'next/cache': { revalidatePath() {} }, 'next/headers': { cookies: () => ({ get: k => jar.has(k) ? { value: jar.get(k) } : undefined, set: (k,v) => jar.set(k,v) }) },
+      'next/server': { NextResponse: class { constructor(body, init) { this.status = init.status; } } }, 'next/navigation': {}, 'next/cache': { revalidatePath() {} }, 'next/headers': { cookies: () => ({ get: k => jar.has(k) ? { value: jar.get(k) } : undefined, set: (k,v) => jar.set(k,v) }) },
       '@/lib/email': {}, '@/lib/email-service': {}, '@/lib/payplus': {}, 'resend': {}, 'date-fns': {}, crypto,
     };
     vm.runInNewContext(code, { exports, require: name => {
@@ -91,4 +91,37 @@ test('every server admin page gates before its body and checkout cannot overwrit
     const source = fs.readFileSync(file, 'utf8'); assert.doesNotMatch(source, /orderItem\.deleteMany/);
   }
   const source = fs.readFileSync('src/app/cancel/page.tsx', 'utf8'); assert.doesNotMatch(source, /prisma\.order\.update/);
+});
+
+test('push subscription API rejects missing session and contaminated role before parsing body', async () => {
+  const h = harness(); const { POST } = h.load('src/app/api/webhooks/push/subscribe/route.ts');
+  assert.equal((await POST({})).status, 401);
+  h.setIdentity(customer); assert.equal((await POST({})).status, 403);
+  assert.equal(h.reads(), 0);
+});
+test('draft capture ignores attacker identity and existing paid-order ID', async () => {
+  const calls = [];
+  const h = harness((model, method, args) => { calls.push({ model, method, args }); return { id: 'new-draft' }; });
+  h.setIdentity(customer);
+  const result = await h.load('src/app/actions/order-actions.ts').saveDraftOrder({
+    orderId: 'victim-paid-order', clerkId: 'victim', ordererName: 'Fake', ordererPhone: '000', ordererEmail: 'fake@example.test',
+    items: [{ productId: 'fake-product', price: 1, quantity: 1 }],
+  });
+  assert.equal(result.orderId, 'new-draft'); assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, 'create'); assert.equal(calls[0].args.data.user.connect.clerkId, 'customer');
+});
+test('sync creates only customers and cannot relink another Clerk account by verified email', async () => {
+  let record = null; let creates = 0;
+  const h = harness((model, method, args) => {
+    if (method === 'findUnique') return record;
+    if (method === 'create') { creates++; record = { id: 'fake-db-user', ...args.data }; return record; }
+    throw new Error('Unexpected mutation');
+  });
+  h.setIdentity(customer); const sync = h.load('src/lib/user-sync.ts').syncUser;
+  assert.equal((await sync()).role, 'CUSTOMER'); await sync(); assert.equal(creates, 1);
+  const other = harness((model, method, args) => {
+    if (method !== 'findUnique') throw new Error('Forbidden identity relink');
+    return args.where.email ? { id: 'existing-owner', clerkId: 'different-clerk' } : null;
+  });
+  other.setIdentity(customer); assert.equal(await other.load('src/lib/user-sync.ts').syncUser(), null);
 });

@@ -38,11 +38,11 @@ export async function verifyPayPlusTransaction(transactionUid: string, expectedO
             const errorText = await response.text();
 
             // If it's a 403, it's likely IP restriction on PayPlus side (common with Vercel)
-            // We downgrade this to WARN because the system handles it via payload verification
+            // Log the restriction but keep verification fail-closed.
             if (response.status === 403) {
-                console.warn(`[PAYPLUS_VERIFY] 403 Forbidden: API restricted (likely IP). Falling back to payload verification.`);
+                console.warn(`[PAYPLUS_VERIFY] 403 Forbidden: API restricted (likely IP). Payment remains unverified.`);
                 await logger.warn('PayPlus Verification API Restricted (403)', 'PayPlusVerify', {
-                    note: 'PayPlus GetStatus API returned 403. This is often an IP whitelist requirement. Falling back to secure payload check.',
+                    note: 'PayPlus GetStatus API returned 403. This is often an IP whitelist requirement. Payment remains unverified and requires operator reconciliation.',
                     transactionUid
                 });
             } else {
