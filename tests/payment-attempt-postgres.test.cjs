@@ -16,12 +16,14 @@ else {
       '@clerk/nextjs/server': { auth: async () => ({ userId }) },
       'next/headers': { cookies: () => ({ get: k => jar.has(k) ? { value: jar.get(k) } : undefined, set: (k,v) => jar.set(k,v), delete: k => jar.delete(k) }) },
       './order-access': { grantGuestReceipt: () => {} },
+      '@/lib/payplus': { verifyPayPlusTransaction: async () => ({ amountMinor: 10000, currency: 'ILS' }) },
+      '@/lib/email': { sendAdminNotification: async () => { throw Error('No notification expected'); }, sendOrderConfirmation: async () => { throw Error('No notification expected'); } },
     }, { process: { env: { ORDER_ACCESS_SECRET: 'synthetic-order-secret-0123456789012345' } } });
     const product = await db.product.create({ data: { name: 'Attempt synthetic', slug: `attempt-${++sequence}`, description: 'fake', price: 100, stock: 10 } });
     const data = { recipientName: 'Synthetic', ordererName: 'Synthetic', ordererEmail: 'synthetic@example.test', shippingAddress: 'Draft', totalAmount: 100,
       items: { create: [{ product: { connect: { id: product.id } }, quantity: 1, price: 100 }] } };
     const order = await load('src/lib/draft-order.ts').persistDraftOrder(data, undefined, false);
-    return { ...load('src/lib/payment-attempt.ts'), jar, order, data: { ...data, shippingAddress: 'Synthetic pickup' }, switchUser: () => { userId = 'another-user'; } };
+    return { ...load('src/lib/payment-attempt.ts'), ...load('src/lib/payment-finalization.ts'), jar, order, data: { ...data, shippingAddress: 'Synthetic pickup' }, switchUser: () => { userId = 'another-user'; } };
   }
   test('concurrent prepare and initiation produce one attempt, one provider request and one item set', async () => {
     const f = await fixture();
@@ -66,4 +68,63 @@ else {
     assert.equal((await f.initiatePaymentAttempt(p.attemptId, f.data, gateway)).state, 'VERIFIED');
     f.switchUser(); await assert.rejects(() => f.initiatePaymentAttempt(p.attemptId, f.data, gateway)); assert.equal(calls, 0);
   });
+  test('durable charge survives attempt-closure failure; stale LINK_READY cannot return a URL or call provider', async () => {
+    const delegate = { ...db.paymentAttempt, updateMany: async args => {
+      if (args.data.state === 'VERIFIED') throw Error('Synthetic crash after ledger insertion');
+      return db.paymentAttempt.updateMany(args);
+    } };
+    const proxy = new Proxy(db, { get: (target, key) => key === 'paymentAttempt' ? delegate : Reflect.get(target, key) });
+    const f = await fixture(proxy); const p = await f.preparePaymentAttempt(f.order.id); let calls = 0;
+    const gateway = async () => { calls++; return 'https://synthetic.example.test/payment'; };
+    await f.initiatePaymentAttempt(p.attemptId, f.data, gateway);
+    await assert.rejects(() => f.finalizePayment(f.order.id, 'tx-attempt-closure-failure'));
+    assert.equal((await db.paymentAttempt.findUnique({ where: { id: p.attemptId } })).state, 'LINK_READY');
+    assert.ok(await db.paymentVerification.findUnique({ where: { transactionId: 'tx-attempt-closure-failure' } }));
+    const read = await f.readPaymentAttempt(p.attemptId); assert.equal(read.state, 'VERIFIED'); assert.equal(read.url, undefined);
+    const retry = await f.initiatePaymentAttempt(p.attemptId, f.data, gateway); assert.equal(retry.state, 'VERIFIED'); assert.equal(retry.url, undefined);
+    assert.equal((await f.preparePaymentAttempt()).state, 'VERIFIED'); assert.equal(calls, 1);
+  });
+  test('charge recorded during GenerateLink response blocks initial payable URL despite stale attempt state', async () => {
+    const f = await fixture(); const p = await f.preparePaymentAttempt(f.order.id); let calls = 0;
+    const result = await f.initiatePaymentAttempt(p.attemptId, f.data, async () => {
+      calls++;
+      await db.paymentVerification.create({ data: { transactionId: 'tx-initiation-race', orderId: f.order.id, amount: 100, currency: 'ILS', orderStatusAtVerification: 'PENDING' } });
+      return 'https://synthetic.example.test/payment';
+    });
+    assert.equal(result.state, 'VERIFIED'); assert.equal(result.url, undefined); assert.equal(calls, 1);
+    assert.equal((await f.readPaymentAttempt(p.attemptId)).state, 'VERIFIED');
+  });
+  test('PREPARED form rejection and reload recover the same editable draft without provider access', async () => {
+    const f = await fixture(); const p = await f.preparePaymentAttempt(f.order.id);
+    f.jar.delete('order_draft_' + f.order.id); // A reload lost client ID, and the short draft cookie expired.
+    const resumed = await f.preparePaymentAttempt();
+    assert.equal(resumed.attemptId, p.attemptId); assert.equal(resumed.orderId, f.order.id); assert.equal(resumed.resumeRequired, false);
+    assert.ok(f.jar.has('order_draft_' + f.order.id));
+    assert.equal(await f.readPaymentAttempt(p.attemptId), null);
+    let calls = 0;
+    const result = await f.initiatePaymentAttempt(p.attemptId, { ...f.data, recipientName: 'Corrected synthetic form' }, async () => { calls++; return 'https://synthetic.example.test/payment'; });
+    assert.equal(result.state, 'LINK_READY'); assert.equal(calls, 1);
+    assert.equal((await db.order.findUnique({ where: { id: f.order.id } })).recipientName, 'Corrected synthetic form');
+  });
+
+  test('read racing a durable charge ignores the previously loaded LINK_READY snapshot; paid order also blocks without ledger', async () => {
+    let inject = false;
+    const delegate = { ...db.paymentAttempt, findUnique: async args => {
+      const snapshot = await db.paymentAttempt.findUnique(args);
+      if (inject && snapshot) {
+        inject = false;
+        await db.paymentVerification.create({ data: { transactionId: 'tx-read-race', orderId: snapshot.orderId, amount: 100, currency: 'ILS', orderStatusAtVerification: 'PENDING' } });
+      }
+      return snapshot;
+    } };
+    const proxy = new Proxy(db, { get: (target, key) => key === 'paymentAttempt' ? delegate : Reflect.get(target, key) });
+    const f = await fixture(proxy); const p = await f.preparePaymentAttempt(f.order.id);
+    await f.initiatePaymentAttempt(p.attemptId, f.data, async () => 'https://synthetic.example.test/payment');
+    inject = true;
+    const result = await f.readPaymentAttempt(p.attemptId); assert.equal(result.state, 'VERIFIED'); assert.equal(result.url, undefined);
+    await db.paymentVerification.delete({ where: { transactionId: 'tx-read-race' } }); // synthetic legacy paid-order scenario
+    await db.order.update({ where: { id: f.order.id }, data: { status: 'PAID', payplusTransactionId: 'tx-legacy' } });
+    assert.equal((await f.readPaymentAttempt(p.attemptId)).state, 'VERIFIED');
+  });
+
 }

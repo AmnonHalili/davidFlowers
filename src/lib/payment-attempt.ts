@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
 import { Prisma, PaymentAttempt } from '@prisma/client';
 import prisma from '@/lib/prisma';
-import { issueOrderCapability, verifyOrderCapability, orderCapabilitiesAvailable, RECEIPT_LIFETIME_SECONDS } from './order-capabilities';
+import { issueOrderCapability, verifyOrderCapability, orderCapabilitiesAvailable, RECEIPT_LIFETIME_SECONDS, DRAFT_LIFETIME_SECONDS } from './order-capabilities';
 import { draftCookieName } from './draft-order';
 import { grantGuestReceipt } from './order-access';
 
@@ -36,11 +36,31 @@ export async function preparePaymentAttempt(orderId?: string) {
     const activeGrant = verifyOrderCapability(cookies().get('active_checkout_attempt')?.value, 'checkout');
     if (activeGrant && activeGrant.subject === userId) {
         const active = await prisma.paymentAttempt.findUnique({ where: { id: activeGrant.orderId } });
-        if (active && active.subject === userId && !closed(active) && !(active.state === 'PREPARED' && active.orderId === orderId)) {
-            const order = await prisma.order.findUnique({ where: { id: active.orderId }, select: { totalAmount: true } });
-            grantAttempt(active);
-            return { attemptId: active.id, orderId: active.orderId, state: active.state,
-                resumeRequired: active.orderId !== orderId, amount: order?.totalAmount.toString() };
+        if (active && active.subject === userId && !closed(active)) {
+            const result = await paymentAttemptResult(active);
+            if (result.state === 'VERIFIED') {
+                grantAttempt(active);
+                return { attemptId: active.id, orderId: active.orderId, state: 'VERIFIED', resumeRequired: false };
+            }
+            if (active.state === 'PREPARED') {
+                // No provider call can have started in PREPARED. Recover this same draft, even after
+                // reload or invalid form submission; never silently replace an uncertain attempt.
+                const draft = await prisma.order.findFirst({ where: { id: active.orderId, status: 'PENDING',
+                    payplusTransactionId: null, shippingAddress: 'Draft',
+                    ...(userId ? { user: { clerkId: userId } } : { userId: null }) } });
+                if (!draft) throw new Error('Prepared draft changed');
+                const token = issueOrderCapability({ purpose: 'draft', orderId: draft.id, subject: userId,
+                    version: draft.updatedAt.toISOString(), expiresAt: Date.now() + DRAFT_LIFETIME_SECONDS * 1000 });
+                if (!token) throw new Error('Checkout signing configuration unavailable');
+                cookies().set(draftCookieName(draft.id), token, { httpOnly: true, secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax', path: '/', maxAge: DRAFT_LIFETIME_SECONDS });
+                orderId = draft.id;
+            } else {
+                const order = await prisma.order.findUnique({ where: { id: active.orderId }, select: { totalAmount: true } });
+                grantAttempt(active);
+                return { attemptId: active.id, orderId: active.orderId, state: active.state,
+                    resumeRequired: active.orderId !== orderId, amount: order?.totalAmount.toString() };
+            }
         }
     }
     if (!orderId) return { requiresDraft: true };
@@ -60,7 +80,15 @@ export async function preparePaymentAttempt(orderId?: string) {
     return { attemptId: refreshed.id, orderId, state: refreshed.state, resumeRequired: false, amount: order.totalAmount.toString() };
 }
 
-export function paymentAttemptResult(attempt: PaymentAttempt) {
+export async function paymentAttemptResult(attempt: PaymentAttempt) {
+    // The ledger is authoritative even if the subsequent attempt-state write failed or crashed.
+    // Recheck immediately before exposing a URL, including the initial GenerateLink response.
+    const fact = await prisma.paymentVerification.findFirst({ where: { orderId: attempt.orderId }, select: { transactionId: true } });
+    const order = await prisma.order.findUnique({ where: { id: attempt.orderId }, select: { status: true, payplusTransactionId: true } });
+    if (!order) throw new Error('Checkout order unavailable');
+    if (fact || order.payplusTransactionId || ['PAID', 'SHIPPED', 'DELIVERED', 'PAYMENT_REVIEW'].includes(order.status)) {
+        return { state: 'VERIFIED' as const, orderId: attempt.orderId };
+    }
     if (attempt.state === 'LINK_READY' && attempt.paymentUrl) return { state: 'LINK_READY' as const, url: attempt.paymentUrl, orderId: attempt.orderId };
     if (attempt.state === 'VERIFIED') return { state: 'VERIFIED' as const, orderId: attempt.orderId };
     return { state: 'UNRESOLVED' as const, orderId: attempt.orderId,
@@ -69,7 +97,8 @@ export function paymentAttemptResult(attempt: PaymentAttempt) {
 
 export async function readPaymentAttempt(id: string) {
     const attempt = await attemptIdentity(id);
-    return attempt.state === 'PREPARED' ? null : paymentAttemptResult(attempt);
+    const result = await paymentAttemptResult(attempt);
+    return attempt.state === 'PREPARED' && result.state !== 'VERIFIED' ? null : result;
 }
 
 type ProviderOrder = { orderId: string; amount: number; customerName: string; customerPhone: string; customerEmail: string };
@@ -77,7 +106,8 @@ type ProviderOrder = { orderId: string; amount: number; customerName: string; cu
 export async function initiatePaymentAttempt(id: string, data: Prisma.OrderCreateInput,
     createLink: (order: ProviderOrder) => Promise<string>) {
     const attempt = await attemptIdentity(id);
-    if (attempt.state !== 'PREPARED') return paymentAttemptResult(attempt);
+    const prior = await paymentAttemptResult(attempt);
+    if (attempt.state !== 'PREPARED' || prior.state === 'VERIFIED') return prior;
     const requestFingerprint = createHash('sha256').update(JSON.stringify(data)).digest('hex');
     const order = await prisma.$transaction(async tx => {
         const claim = await tx.paymentAttempt.updateMany({ where: { id, state: 'PREPARED' },
@@ -99,7 +129,7 @@ export async function initiatePaymentAttempt(id: string, data: Prisma.OrderCreat
         const stored = await prisma.paymentAttempt.updateMany({ where: { id, state: 'REQUESTING' }, data: { state: 'LINK_READY', paymentUrl: url } });
         if (stored.count !== 1) return paymentAttemptResult(await prisma.paymentAttempt.findUniqueOrThrow({ where: { id } }));
         cookies().delete(draftCookieName(order.id));
-        return { state: 'LINK_READY' as const, url, orderId: order.id };
+        return paymentAttemptResult(await prisma.paymentAttempt.findUniqueOrThrow({ where: { id } }));
     } catch {
         // Timeout, malformed success, HTTP failure and failed result persistence are all uncertain outcomes.
         // Never reset to PREPARED or issue a replacement link automatically.

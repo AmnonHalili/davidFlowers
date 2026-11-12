@@ -391,10 +391,7 @@ export default function CartDrawer() {
                 prepared = await prepare(draft.orderId);
             }
             if (!prepared.attemptId) throw new Error('Payment attempt unavailable');
-            if (prepared.resumeRequired && prepared.state === 'PREPARED') {
-                toast.error('קיימת הזמנה קודמת שטרם נשלחה לתשלום. פנו לחנות לפני התחלת הזמנה אחרת.');
-                return;
-            }
+            setDraftOrderId(prepared.orderId);
             if (prepared.resumeRequired && !window.confirm('קיים ניסיון קודם להזמנה בסכום ' + prepared.amount + ' ₪. להמשיך לבדוק את אותו ניסיון? אין לפתוח תשלום נוסף אם התוצאה אינה ידועה.')) return;
             const response = await fetch('/api/checkout', {
                 method: 'POST',
