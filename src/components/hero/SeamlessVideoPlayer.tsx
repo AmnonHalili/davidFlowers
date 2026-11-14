@@ -6,45 +6,50 @@ import { motion } from 'framer-motion';
 interface SeamlessVideoPlayerProps {
     videos: string[];
     poster?: string;
+    overlayOpacity?: number;
+    showDots?: boolean;
 }
 
-export default function SeamlessVideoPlayer({ videos, poster }: SeamlessVideoPlayerProps) {
+export default function SeamlessVideoPlayer({
+    videos,
+    poster = '/hero-bg.jpg',
+    overlayOpacity = 35,
+    showDots = true,
+}: SeamlessVideoPlayerProps) {
+    const validVideos = videos.length > 0 ? videos : ['/David-Video.mp4'];
     const [currentIndex, setCurrentIndex] = useState(0);
     const [shouldLoadAll, setShouldLoadAll] = useState(false);
     const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
     useEffect(() => {
-        // Lazy load the rest of the videos after a short delay
+        // Lazy load the rest of the videos after a short delay to keep initial page load fast
         const timer = setTimeout(() => {
             setShouldLoadAll(true);
-        }, 4000);
+        }, 3000);
         return () => clearTimeout(timer);
     }, []);
 
     useEffect(() => {
-        // Pause all videos first
+        // Pause all other videos
         videoRefs.current.forEach((video, index) => {
             if (video && index !== currentIndex) {
                 video.pause();
-                // Don't reset time immediately to allow smooth cross-fade if needed, 
-                // but here we want to ensure next play starts from 0 if it's a loop.
-                // Resetting usually safer for "looping playlist" logic.
                 video.currentTime = 0;
             }
         });
 
-        // When currentIndex changes, ensure the new video plays from the start
+        // Play the active video
         const currentVideo = videoRefs.current[currentIndex];
         if (currentVideo) {
             currentVideo.currentTime = 0;
             const playPromise = currentVideo.play();
             if (playPromise !== undefined) {
-                playPromise.catch((error) => {
-                    console.error("Video play error:", error);
+                playPromise.catch(() => {
+                    // Autoplay with muted is allowed by all browsers, but handle silently if restricted
                 });
             }
         }
-    }, [currentIndex, shouldLoadAll]); // Re-run when new videos might be mounted
+    }, [currentIndex, shouldLoadAll]);
 
     useEffect(() => {
         const handleInteraction = () => {
@@ -65,7 +70,7 @@ export default function SeamlessVideoPlayer({ videos, poster }: SeamlessVideoPla
         };
     }, [currentIndex]);
 
-    const videosToRender = shouldLoadAll ? videos : [videos[0]];
+    const videosToRender = shouldLoadAll ? validVideos : [validVideos[0]];
 
     return (
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-stone-900">
@@ -75,7 +80,7 @@ export default function SeamlessVideoPlayer({ videos, poster }: SeamlessVideoPla
                     className="absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-1000"
                     style={{
                         backgroundImage: `url(${poster})`,
-                        opacity: currentIndex === 0 ? 1 : 0 // Fade out poster when switching, or keep it as reliable background
+                        opacity: currentIndex === 0 ? 1 : 0,
                     }}
                 />
             )}
@@ -85,7 +90,7 @@ export default function SeamlessVideoPlayer({ videos, poster }: SeamlessVideoPla
 
                 return (
                     <motion.video
-                        key={src}
+                        key={src + index}
                         ref={(el) => {
                             if (el) {
                                 el.defaultMuted = true;
@@ -94,26 +99,58 @@ export default function SeamlessVideoPlayer({ videos, poster }: SeamlessVideoPla
                             videoRefs.current[index] = el;
                         }}
                         src={src}
-                        muted // Muted is required for autoplay
+                        muted
                         playsInline
-                        autoPlay={index === 0} // Autoplay first video
-                        loop={false}
+                        autoPlay={index === 0}
+                        loop={validVideos.length === 1} // Loop if single video
                         poster={index === 0 ? poster : undefined}
                         initial={{ opacity: 0 }}
                         animate={{
-                            opacity: isCurrent ? 1 : 0, // Fully visible when current
-                            zIndex: isCurrent ? 2 : 1
+                            opacity: isCurrent ? 1 : 0,
+                            zIndex: isCurrent ? 2 : 1,
                         }}
-                        transition={{ duration: 1.5, ease: "easeInOut" }} // Smoother cross-fade
+                        transition={{ duration: 1.5, ease: 'easeInOut' }}
                         onEnded={() => {
-                            if (isCurrent) {
-                                setCurrentIndex((prev) => (prev + 1) % videos.length);
+                            if (isCurrent && validVideos.length > 1) {
+                                setCurrentIndex((prev) => (prev + 1) % validVideos.length);
                             }
                         }}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
                     />
                 );
             })}
+
+            {/* Configurable Darkness Tint */}
+            <div
+                className="absolute inset-0 pointer-events-none transition-colors duration-500 z-10"
+                style={{
+                    backgroundColor: `rgba(15, 26, 19, ${overlayOpacity / 100})`,
+                }}
+            />
+
+            {/* Gradient Overlay for Text Readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0F1A13]/80 via-transparent to-[#0F1A13]/30 pointer-events-none z-10" />
+
+            {/* Multi-video switch dots */}
+            {showDots && validVideos.length > 1 && (
+                <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 pointer-events-auto">
+                    {validVideos.map((_, idx) => {
+                        const isActive = idx === currentIndex;
+                        return (
+                            <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setCurrentIndex(idx)}
+                                aria-label={`עבור לסרטון ${idx + 1}`}
+                                className={`transition-all duration-300 rounded-full h-2 ${isActive
+                                    ? 'w-6 bg-david-beige shadow-sm shadow-white/30'
+                                    : 'w-2 bg-white/40 hover:bg-white/70'
+                                    }`}
+                            />
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }

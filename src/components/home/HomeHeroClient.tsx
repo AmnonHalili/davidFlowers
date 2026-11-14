@@ -4,50 +4,87 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
+import HeroImageSlider from '@/components/hero/HeroImageSlider';
+import { HeroConfig, DEFAULT_HERO_CONFIG } from '@/types/hero';
 
 interface HomeHeroClientProps {
-    videos: string[];
+    config?: HeroConfig;
+    videos?: string[]; // Backwards compatibility fallback
 }
 
-export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
+export default function HomeHeroClient({ config, videos }: HomeHeroClientProps) {
     const { scrollY } = useScroll();
     const y1 = useTransform(scrollY, [0, 500], [0, 150]);
 
-    return (
-        <section className="relative h-[85vh] md:h-screen w-full overflow-hidden">
-            {/* Background - Video */}
-            <div className="absolute inset-0 bg-stone-900">
-                {videos.length > 0 ? (
-                    <SeamlessVideoPlayer videos={videos} poster="/hero-bg.jpg" />
-                ) : (
-                    <div className="w-full h-full bg-stone-900" />
-                )}
+    const activeConfig: HeroConfig = config || {
+        ...DEFAULT_HERO_CONFIG,
+        items: videos && videos.length > 0
+            ? videos.map((v, i) => ({ id: `vid-${i}`, url: v, type: 'VIDEO' as const }))
+            : DEFAULT_HERO_CONFIG.items,
+    };
 
-                {/* Cinematic Warm Overlay (Sepia/Deep Green Tint) */}
-                <div className="absolute inset-0 bg-[#0F1A13]/25 mix-blend-multiply z-10" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0F1A13]/70 via-transparent to-[#0F1A13]/20 z-10" />
+    // Separate or extract media
+    const videoUrls = activeConfig.items
+        .filter((item) => item.type === 'VIDEO')
+        .map((item) => item.url);
+
+    const imageItems = activeConfig.items.filter((item) => item.type === 'IMAGE');
+
+    return (
+        <section className="relative h-[85vh] md:h-screen w-full overflow-hidden group">
+            {/* Background Media - Video or Image Carousel */}
+            <div className="absolute inset-0 bg-stone-950">
+                {activeConfig.mode === 'IMAGE' && imageItems.length > 0 ? (
+                    <HeroImageSlider
+                        items={imageItems}
+                        intervalSeconds={activeConfig.slideInterval}
+                        transitionEffect={activeConfig.transitionEffect}
+                        slideDirection={activeConfig.slideDirection}
+                        showDots={activeConfig.showDots}
+                        showArrows={activeConfig.showArrows}
+                        overlayOpacity={activeConfig.overlayOpacity}
+                    />
+                ) : (
+                    <SeamlessVideoPlayer
+                        videos={videoUrls.length > 0 ? videoUrls : ['/David-Video.mp4']}
+                        poster="/hero-bg.jpg"
+                        overlayOpacity={activeConfig.overlayOpacity}
+                        showDots={activeConfig.showDots}
+                    />
+                )}
             </div>
 
             {/* Parallax Botanical Element (Floating Rose Petal Effect) */}
-            <motion.div
-                style={{ y: y1, rotate: scrollY }}
-                className="absolute top-[15%] right-[10%] md:right-[20%] opacity-40 blur-[1px] z-20 pointer-events-none hidden md:block"
-            >
-                <Image src="/medium-zer.png" alt="Floating Petal" width={192} height={192} className="object-contain drop-shadow-2xl" />
-            </motion.div>
+            {activeConfig.enableParallaxPetal !== false && (
+                <motion.div
+                    style={{ y: y1, rotate: scrollY }}
+                    className="absolute top-[15%] right-[10%] md:right-[20%] opacity-40 blur-[1px] z-20 pointer-events-none hidden md:block"
+                >
+                    <Image
+                        src="/medium-zer.png"
+                        alt="Floating Petal"
+                        width={192}
+                        height={192}
+                        className="object-contain drop-shadow-2xl"
+                    />
+                </motion.div>
+            )}
 
             {/* Hero Content */}
-            <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-32 pb-24 md:pt-36 md:pb-12 z-20">
+            <div className="relative h-full flex flex-col justify-center items-center text-center text-white p-6 pt-32 pb-24 md:pt-36 md:pb-12 z-20 pointer-events-none">
                 <motion.div
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="space-y-8 max-w-4xl"
+                    className="space-y-8 max-w-4xl pointer-events-auto"
                 >
-
                     <h1 className="font-bellefair text-white drop-shadow-2xl shadow-black/70 tracking-wide flex flex-col items-center">
-                        <span className="text-7xl md:text-8xl lg:text-[7rem] drop-shadow-glow mb-2">פרחי דוד</span>
-                        <span className="text-xl md:text-2xl font-sans font-light tracking-[0.2em] md:tracking-[0.3em] text-white/95">אומנות השזירה באשקלון</span>
+                        <span className="text-7xl md:text-8xl lg:text-[7rem] drop-shadow-glow mb-2">
+                            פרחי דוד
+                        </span>
+                        <span className="text-xl md:text-2xl font-sans font-light tracking-[0.2em] md:tracking-[0.3em] text-white/95">
+                            {activeConfig.badgeText || 'אומנות השזירה באשקלון'}
+                        </span>
                     </h1>
 
                     <p className="font-bellefair text-2xl md:text-4xl text-[#F5F5F5] italic mt-6 opacity-95 drop-shadow-md">
@@ -65,10 +102,10 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
                         >
                             <Link
                                 href="#best-sellers"
-                                className="group relative flex items-center justify-center gap-3 px-14 py-5 bg-david-green border border-david-green/50 text-white uppercase tracking-[0.25em] text-xs font-bold rounded-full overflow-hidden transition-all duration-500 hover:shadow-[0_0_40px_rgba(58,80,68,0.4)]"
+                                className="group/btn relative flex items-center justify-center gap-3 px-14 py-5 bg-david-green border border-david-green/50 text-white uppercase tracking-[0.25em] text-xs font-bold rounded-full overflow-hidden transition-all duration-500 hover:shadow-[0_0_40px_rgba(58,80,68,0.4)]"
                             >
                                 <span className="relative z-10 text-david-beige">להזמנת משלוח</span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
                             </Link>
                         </motion.div>
 
@@ -95,7 +132,7 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 1.5, duration: 1 }}
-                        className="absolute bottom-16 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 text-white/40"
+                        className="absolute bottom-16 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 text-white/40 pointer-events-none"
                     >
                         <span className="text-[10px] tracking-[0.2em] font-light uppercase">גלו עוד</span>
                         <motion.div
@@ -108,7 +145,7 @@ export default function HomeHeroClient({ videos }: HomeHeroClientProps) {
             </div>
 
             {/* Marquee Strip */}
-            <div className="absolute bottom-0 left-0 right-0 bg-david-green text-david-beige py-2 md:py-3 overflow-hidden whitespace-nowrap z-20">
+            <div className="absolute bottom-0 left-0 right-0 bg-david-green text-david-beige py-2 md:py-3 overflow-hidden whitespace-nowrap z-20 pointer-events-auto">
                 <motion.div
                     animate={{ x: [0, -1000] }}
                     transition={{ repeat: Infinity, duration: 30, ease: "linear" }}

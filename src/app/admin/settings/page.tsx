@@ -1,24 +1,36 @@
 import { requireAdmin } from '@/lib/admin-auth';
 import { getSiteConfig } from '@/app/actions/site-config-actions';
-import AnnouncementSettingsForm from '@/components/admin/AnnouncementSettingsForm';
+import { getHeroConfig } from '@/app/actions/hero-actions';
+import AdminSettingsTabs from '@/components/admin/AdminSettingsTabs';
+
+export const metadata = {
+    title: 'הגדרות אתר | פרחי דוד אדמין',
+};
 
 export default async function SettingsPage() {
     await requireAdmin();
-    const config = await getSiteConfig('announcement_bar');
 
-    const initialConfig = config || {
+    const [announcementConfig, heroConfig] = await Promise.all([
+        getSiteConfig('announcement_bar'),
+        getHeroConfig(),
+    ]);
+
+    const initialAnnouncement = announcementConfig || {
         isActive: false,
-        text: ''
+        text: '',
     };
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-stone-800">הגדרות אתר</h1>
-            <p className="text-stone-600">ניהול הודעות מערכת, מבצעים והגדרות כלליות.</p>
-
-            <div className="border-t border-stone-200 pt-6">
-                <AnnouncementSettingsForm initialConfig={initialConfig} />
+            <div>
+                <h1 className="text-3xl font-bold text-stone-800">הגדרות אתר</h1>
+                <p className="text-stone-600 mt-1">ניהול מסך ה-Hero הראשי, הודעות מערכת, מבצעים והגדרות כלליות.</p>
             </div>
+
+            <AdminSettingsTabs
+                heroConfig={heroConfig}
+                announcementConfig={initialAnnouncement}
+            />
         </div>
     );
 }

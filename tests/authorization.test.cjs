@@ -44,6 +44,7 @@ const privileged = {
   'product-actions': ['createProduct','updateProduct','deleteProduct'],
   'review-actions': ['getAllReviews','updateReviewStatus','deleteReview'],
   'site-config-actions': ['updateSiteConfig'], 'report-actions': ['getMonthlyReport'],
+  'hero-actions': ['updateHeroConfig'],
   'demo-actions': ['createDemoOrder'], 'debug-email': ['sendTestEmailAction'], 'order-actions': ['getOrders','getOrder','updateOrderStatus'],
 };
 for (const [file, names] of Object.entries(privileged)) for (const name of names) {

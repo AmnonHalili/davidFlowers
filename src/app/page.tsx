@@ -1,24 +1,20 @@
 import Link from 'next/link';
 import { Flower2 } from 'lucide-react';
-import SeamlessVideoPlayer from '@/components/hero/SeamlessVideoPlayer';
 import CategoryExplorer from '@/components/home/CategoryExplorer';
 import InstagramFeed from '@/components/home/InstagramFeed';
 import CustomerTestimonials from '@/components/home/CustomerTestimonials';
 import TrustBar from '@/components/home/TrustBar';
 import LiveGallery from '@/components/home/LiveGallery';
 import { getVisibleCategories } from '@/app/actions/product-actions';
+import { getHeroConfig } from '@/app/actions/hero-actions';
 import HomeHeroClient from '@/components/home/HomeHeroClient';
 import HomeSEOContent from '@/components/home/HomeSEOContent';
 
-// Configuration for Hero Videos
-const HERO_VIDEOS = [
-  '/David-Video.mp4',
-  '/David-Video2.mp4',
-  '/kling_20260116_Text_to_Video_Close_up_s_5012_0.mp4'
-];
-
 export default async function Home() {
-  const categoriesRes = await getVisibleCategories();
+  const [categoriesRes, heroConfig] = await Promise.all([
+    getVisibleCategories(),
+    getHeroConfig(),
+  ]);
   const categories = categoriesRes.success ? categoriesRes.categories : [];
 
   const jsonLd = {
@@ -89,7 +85,7 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <HomeHeroClient videos={HERO_VIDEOS} />
+      <HomeHeroClient config={heroConfig} />
 
       {/* Trust Signals - Visible above the fold */}
       <TrustBar />
