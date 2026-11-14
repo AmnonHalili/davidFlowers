@@ -133,7 +133,7 @@ export default function SeamlessVideoPlayer({
 
             {/* Multi-video switch dots */}
             {showDots && validVideos.length > 1 && (
-                <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 pointer-events-auto">
+                <div className="absolute bottom-14 md:bottom-20 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pointer-events-auto">
                     {validVideos.map((_, idx) => {
                         const isActive = idx === currentIndex;
                         return (
@@ -142,11 +142,15 @@ export default function SeamlessVideoPlayer({
                                 type="button"
                                 onClick={() => setCurrentIndex(idx)}
                                 aria-label={`עבור לסרטון ${idx + 1}`}
-                                className={`transition-all duration-300 rounded-full h-2 ${isActive
-                                    ? 'w-6 bg-david-beige shadow-sm shadow-white/30'
-                                    : 'w-2 bg-white/40 hover:bg-white/70'
-                                    }`}
-                            />
+                                className="p-1 flex items-center justify-center focus:outline-none rounded-full"
+                            >
+                                <span
+                                    className={`block transition-all duration-300 rounded-full h-2 ${isActive
+                                        ? 'w-6 bg-david-beige shadow-sm shadow-white/30'
+                                        : 'w-2 bg-white/40 hover:bg-white/70'
+                                        }`}
+                                />
+                            </button>
                         );
                     })}
                 </div>

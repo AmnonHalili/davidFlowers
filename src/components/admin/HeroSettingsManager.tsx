@@ -799,17 +799,17 @@ export default function HeroSettingsManager({ initialConfig, isDemo = false }: H
             </div>
 
             {/* Bottom Save Bar */}
-            <div className="sticky bottom-4 z-40 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-stone-200 shadow-xl flex items-center justify-between">
-                <div className="flex items-center gap-2 text-stone-600 text-xs">
-                    <Info className="w-4 h-4 text-david-green" />
+            <div className="sticky bottom-4 z-40 bg-white/95 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-xl flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                <div className="flex items-center gap-2 text-stone-600 text-xs text-center sm:text-right">
+                    <Info className="w-4 h-4 text-david-green shrink-0" />
                     <span>כל שינוי שתשמור יתעדכן באופן מיידי בכל הדפים באתר ללא צורך בריענון.</span>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-end gap-2.5">
                     <button
                         type="button"
                         onClick={handleReset}
-                        className="px-4 py-2 border border-stone-300 rounded-xl text-stone-600 hover:text-stone-900 text-xs font-medium"
+                        className="flex-1 sm:flex-initial px-4 py-2.5 border border-stone-300 rounded-xl text-stone-600 hover:text-stone-900 text-xs font-medium"
                     >
                         איפוס
                     </button>
@@ -817,7 +817,7 @@ export default function HeroSettingsManager({ initialConfig, isDemo = false }: H
                         type="button"
                         onClick={handleSave}
                         disabled={isPending}
-                        className="flex items-center gap-2 px-7 py-2.5 bg-david-green hover:bg-david-green/90 text-white rounded-xl text-sm font-bold shadow-md transition-all disabled:opacity-50"
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 sm:px-7 py-2.5 bg-david-green hover:bg-david-green/90 text-white rounded-xl text-sm font-bold shadow-md transition-all disabled:opacity-50"
                     >
                         <Save className="w-4 h-4" />
                         {isPending ? 'שומר שינויים...' : 'שמור שינויים'}

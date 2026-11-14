@@ -31,7 +31,6 @@ export default function HeroImageSlider({
     const validItems = items.length > 0 ? items : [{ id: 'fallback', url: '/hero-bg.jpg', type: 'IMAGE' as const }];
     const [[currentIndex, direction], setPage] = useState<[number, number]>([0, 0]);
     const [isHovered, setIsHovered] = useState(false);
-    const touchStartX = useRef<number | null>(null);
 
     const paginate = useCallback((newDirection: number) => {
         setPage(([curr]) => {
@@ -60,25 +59,35 @@ export default function HeroImageSlider({
         return () => clearInterval(timer);
     }, [validItems.length, intervalSeconds, isHovered, paginate, slideDirection]);
 
-    // Touch swipe support for mobile
+    // Touch swipe support for mobile with directional discrimination
+    const touchStartX = useRef<number | null>(null);
+    const touchStartY = useRef<number | null>(null);
+
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
     };
 
     const handleTouchEnd = (e: React.TouchEvent) => {
-        if (touchStartX.current === null) return;
+        if (touchStartX.current === null || touchStartY.current === null) return;
         const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
         const deltaX = touchEndX - touchStartX.current;
-        const swipeThreshold = 45; // pixels
+        const deltaY = touchEndY - touchStartY.current;
+        const swipeThreshold = 40; // pixels
 
-        if (deltaX > swipeThreshold) {
-            // Swiped right -> In RTL view or standard gesture, go to previous / right slide
-            paginate(-1);
-        } else if (deltaX < -swipeThreshold) {
-            // Swiped left -> Go to next slide
-            paginate(1);
+        // Only trigger slide when horizontal swipe exceeds vertical movement (prevents hijacking vertical page scroll)
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThreshold) {
+            if (deltaX > 0) {
+                // Swiped right -> In RTL view or standard gesture, go to previous / right slide
+                paginate(-1);
+            } else {
+                // Swiped left -> Go to next slide
+                paginate(1);
+            }
         }
         touchStartX.current = null;
+        touchStartY.current = null;
     };
 
     // Animation variants based on transition effect
@@ -174,7 +183,7 @@ export default function HeroImageSlider({
                         type="button"
                         onClick={() => paginate(-1)}
                         aria-label="תמונה קודמת"
-                        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-95 text-white/80 hover:text-white backdrop-blur-md border border-white/20 transition-all shadow-lg opacity-80 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
+                        className="absolute right-3 md:right-8 top-1/2 -translate-y-1/2 z-30 min-w-[44px] min-h-[44px] p-2.5 md:p-3 rounded-full bg-black/25 hover:bg-black/50 active:scale-95 text-white/90 hover:text-white backdrop-blur-md border border-white/20 transition-all shadow-lg flex items-center justify-center opacity-70 hover:opacity-100 focus:opacity-100"
                     >
                         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
@@ -183,7 +192,7 @@ export default function HeroImageSlider({
                         type="button"
                         onClick={() => paginate(1)}
                         aria-label="תמונה הבאה"
-                        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-95 text-white/80 hover:text-white backdrop-blur-md border border-white/20 transition-all shadow-lg opacity-80 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
+                        className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-30 min-w-[44px] min-h-[44px] p-2.5 md:p-3 rounded-full bg-black/25 hover:bg-black/50 active:scale-95 text-white/90 hover:text-white backdrop-blur-md border border-white/20 transition-all shadow-lg flex items-center justify-center opacity-70 hover:opacity-100 focus:opacity-100"
                     >
                         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
@@ -192,7 +201,7 @@ export default function HeroImageSlider({
 
             {/* Progress Dots Pagination */}
             {showDots && validItems.length > 1 && (
-                <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10">
+                <div className="absolute bottom-14 md:bottom-20 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pointer-events-auto">
                     {validItems.map((item, idx) => {
                         const isActive = idx === currentIndex;
                         return (
@@ -201,11 +210,15 @@ export default function HeroImageSlider({
                                 type="button"
                                 onClick={() => goToSlide(idx)}
                                 aria-label={`עבור לשקופית ${idx + 1}`}
-                                className={`transition-all duration-300 rounded-full h-2 ${isActive
-                                    ? 'w-6 bg-david-beige shadow-sm shadow-white/30'
-                                    : 'w-2 bg-white/40 hover:bg-white/70'
-                                    }`}
-                            />
+                                className="p-1 flex items-center justify-center focus:outline-none rounded-full"
+                            >
+                                <span
+                                    className={`block transition-all duration-300 rounded-full h-2 ${isActive
+                                        ? 'w-6 bg-david-beige shadow-sm shadow-white/30'
+                                        : 'w-2 bg-white/40 hover:bg-white/70'
+                                        }`}
+                                />
+                            </button>
                         );
                     })}
                 </div>
