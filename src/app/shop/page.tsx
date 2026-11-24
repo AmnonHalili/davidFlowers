@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import ProductCard from '@/components/shop/ProductCard';
 import FilterBar from '@/components/shop/FilterBar';
 import { auth } from '@clerk/nextjs/server';
+import { sortProductsByStock } from '@/lib/stock-utils';
 
 const prisma = new PrismaClient();
 
@@ -41,7 +42,7 @@ async function getProducts(params: { min?: number; max?: number; sort?: string }
                 categories: true
             }
         });
-        return products;
+        return sortProductsByStock(products);
     } catch (error) {
         console.error("Shop: Failed to fetch products", error);
         return [];

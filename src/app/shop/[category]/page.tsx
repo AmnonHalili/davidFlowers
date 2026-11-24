@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import ProductCard from '@/components/shop/ProductCard';
 import { notFound } from 'next/navigation';
+import { sortProductsByStock } from '@/lib/stock-utils';
 
 const prisma = new PrismaClient();
 
@@ -17,6 +18,9 @@ async function getCategory(slug: string) {
                 }
             }
         });
+        if (category && category.products) {
+            category.products = sortProductsByStock(category.products);
+        }
         return category;
     } catch (error) {
         console.error("Shop/Category: Failed to fetch category", error);

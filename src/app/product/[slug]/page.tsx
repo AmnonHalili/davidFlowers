@@ -11,6 +11,7 @@ import { ArrowRight, Star, TrendingUp } from 'lucide-react';
 import { calculateProductPrice } from '@/lib/price-utils';
 import { getRecentPurchaseCount, getProductRatingSummary } from '@/app/actions/review-actions';
 import ReviewSection from '@/components/product/ReviewSection';
+import { sortProductsByStock } from '@/lib/stock-utils';
 
 const prisma = new PrismaClient();
 
@@ -59,16 +60,18 @@ async function getRelatedProducts(currentProductId: string, categorySlug?: strin
     if (!categorySlug) return [];
 
     try {
-        return await prisma.product.findMany({
+        const products = await prisma.product.findMany({
             where: {
                 categories: {
                     some: { slug: categorySlug }
                 },
                 id: { not: currentProductId }
             },
-            take: 4,
+            take: 12,
+            orderBy: { updatedAt: 'desc' },
             include: { images: true, categories: true }
         });
+        return sortProductsByStock(products).slice(0, 4);
     } catch (error) {
         console.error("Product: Failed to fetch related products", error);
         return [];

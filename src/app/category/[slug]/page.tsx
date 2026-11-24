@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import ProductCard from '@/components/shop/ProductCard';
 import FilterBar from '@/components/shop/FilterBar';
 import { CATEGORIES } from '@/lib/categories';
+import { sortProductsByStock } from '@/lib/stock-utils';
 import { auth } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
 
@@ -106,6 +107,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                 categories: true
             }
         });
+        products = sortProductsByStock(products);
     } catch (error) {
         console.error("Category: Failed to fetch products", error);
     }

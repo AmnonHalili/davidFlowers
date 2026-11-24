@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { CATEGORIES, getCategoryName } from '@/lib/categories';
+import { sortProductsByStock } from '@/lib/stock-utils';
 
 export async function createProduct(formData: FormData) {
     await requireAdmin();
@@ -267,7 +268,7 @@ export async function searchProducts(query: string) {
                     { description: { contains: query, mode: 'insensitive' } },
                 ]
             },
-            take: 6,
+            take: 20,
             select: {
                 id: true,
                 name: true,
@@ -279,6 +280,8 @@ export async function searchProducts(query: string) {
                 availableFrom: true,
                 allowPreorder: true,
                 isPersonalizationEnabled: true,
+                isVariablePrice: true,
+                variations: true,
                 stock: true,
                 images: {
                     take: 1
@@ -291,11 +294,13 @@ export async function searchProducts(query: string) {
             }
         });
 
-        return products.map(p => ({
+        const safeProducts = products.map(p => ({
             ...p,
             price: Number(p.price),
             salePrice: p.salePrice ? Number(p.salePrice) : null
         }));
+
+        return sortProductsByStock(safeProducts).slice(0, 6);
     } catch (error) {
         console.error('Error searching products:', error);
         return [];
@@ -370,9 +375,8 @@ export async function getProductsByCategory(categorySlug: string, limit: number 
                         slug: slugFilter
                     }
                 }
-                // Removed stock filter to match category page behavior
             },
-            take: limit,
+            take: 100, // Fetch category pool so in-stock items can be prioritized
             orderBy: {
                 updatedAt: 'desc' // Match category page sort (recently updated)
             },
@@ -393,7 +397,10 @@ export async function getProductsByCategory(categorySlug: string, limit: number 
             salePrice: p.salePrice ? Number(p.salePrice) : null
         }));
 
-        return { success: true, products: safeProducts };
+        // In-stock products first, out-of-stock products last
+        const sortedProducts = sortProductsByStock(safeProducts);
+
+        return { success: true, products: limit ? sortedProducts.slice(0, limit) : sortedProducts };
 
     } catch (error) {
         console.error(`Error fetching products for category ${categorySlug}:`, error);

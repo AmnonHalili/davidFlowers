@@ -3,6 +3,7 @@
 import { auth } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { sortProductsByStock } from '@/lib/stock-utils';
 
 export async function toggleWishlist(productId: string) {
     const { userId } = await auth();
@@ -62,7 +63,7 @@ export async function getWishlist() {
             }
         });
 
-        return user?.favorites || [];
+        return sortProductsByStock(user?.favorites || []);
     } catch (error) {
         console.error('Error fetching wishlist:', error);
         return [];

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import WishlistButton from './WishlistButton';
 import { calculateProductPrice } from '@/lib/price-utils';
+import { isProductInStock } from '@/lib/stock-utils';
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import BouquetSizeSelector from '../product/BouquetSizeSelector';
@@ -39,13 +40,7 @@ export default function ProductCard({
     isVariablePrice, variations, isPersonalizationEnabled, maxPersonalizationChars,
     categories, ...props
 }: ProductCardProps) {
-    // For variable products, we sum all variations to see if any are in stock.
-    // This provides a safety net if the aggregate 'stock' field is not yet updated.
-    const totalVariationStock = isVariablePrice && variations
-        ? Object.values(variations).reduce((sum: number, v: any) => sum + (parseInt(v.stock) || 0), 0)
-        : stock;
-
-    const isOutOfStock = totalVariationStock <= 0;
+    const isOutOfStock = !isProductInStock({ stock, isVariablePrice, variations });
     const { addItem } = useCart();
 
     const { price: displayPrice, isOnSale, regularPrice, type, discountLabel } = calculateProductPrice({
